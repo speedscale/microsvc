@@ -1,0 +1,38 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: banking-app-base
+
+resources:
+  # Namespace and RBAC
+  - namespace/namespace.yaml
+  
+  # Database
+  - database/postgres-configmap.yaml
+  - database/postgres-pvc.yaml
+  - database/postgres-deployment.yaml
+  - database/postgres-service.yaml
+  
+  # ConfigMaps and Secrets
+  - configmaps/app-config.yaml
+  - configmaps/app-secrets.yaml
+  
+  # Microservices
+  - services/user-service-deployment.yaml
+  - services/user-service-service.yaml
+  - services/accounts-service-deployment.yaml
+  - services/accounts-service-service.yaml
+  - services/transactions-service-deployment.yaml
+  - services/transactions-service-service.yaml
+  - services/api-gateway-deployment.yaml
+  - services/api-gateway-service.yaml
+
+namespace: banking-app
+
+labels:
+- includeSelectors: true
+  pairs:
+    app.kubernetes.io/name: banking-app
+    app.kubernetes.io/version: v1.0.0
+    app.kubernetes.io/managed-by: kustomize
