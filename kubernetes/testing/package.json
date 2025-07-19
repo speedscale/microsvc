@@ -1,0 +1,14 @@
+{
+  "name": "banking-k8s-tests",
+  "version": "1.0.0",
+  "description": "End-to-end tests for banking application in Kubernetes",
+  "main": "test-script.js",
+  "scripts": {
+    "test": "node test-script.js"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.40.0",
+    "node-fetch": "^3.3.2"
+  },
+  "type": "module"
+}

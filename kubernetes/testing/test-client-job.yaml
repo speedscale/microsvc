@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: banking-e2e-test
+  namespace: banking-app
+  labels:
+    app.kubernetes.io/name: banking-app
+    app.kubernetes.io/component: test-client
+spec:
+  template:
+    metadata:
+      labels:
+        app: test-client
+        app.kubernetes.io/name: banking-app
+        app.kubernetes.io/component: test-client
+    spec:
+      serviceAccountName: banking-app-sa
+      restartPolicy: Never
+      containers:
+      - name: test-client
+        image: banking-test-client:latest
+        imagePullPolicy: Never  # For local minikube testing
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        env:
+        - name: NODE_ENV
+          value: "test"
+      initContainers:
+      - name: wait-for-api-gateway
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z api-gateway 80; do echo waiting for api-gateway; sleep 5; done;']
+  backoffLimit: 3

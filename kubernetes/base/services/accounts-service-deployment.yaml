@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: accounts-service
+  namespace: banking-app
+  labels:
+    app.kubernetes.io/name: banking-app
+    app.kubernetes.io/component: microservice
+    app.kubernetes.io/service: accounts-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: accounts-service
+      app.kubernetes.io/name: banking-app
+      app.kubernetes.io/component: microservice
+  template:
+    metadata:
+      labels:
+        app: accounts-service
+        app.kubernetes.io/name: banking-app
+        app.kubernetes.io/component: microservice
+        app.kubernetes.io/service: accounts-service
+    spec:
+      serviceAccountName: banking-app-sa
+      containers:
+      - name: accounts-service
+        image: banking-accounts-service:latest
+        imagePullPolicy: Never  # For local minikube testing
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: accounts-service-password
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: secret
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - configMapRef:
+            name: accounts-service-config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+      initContainers:
+      - name: wait-for-postgres
+        image: postgres:15-alpine
+        command: ['sh', '-c', 'until pg_isready -h postgres -p 5432; do echo waiting for postgres; sleep 2; done;']

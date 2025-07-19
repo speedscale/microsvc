@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: banking-app
+  labels:
+    app.kubernetes.io/name: banking-app
+    app.kubernetes.io/component: database
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+    name: postgres
+  selector:
+    app: postgres
+    app.kubernetes.io/name: banking-app
+    app.kubernetes.io/component: database
