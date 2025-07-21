@@ -11,12 +11,12 @@ build-backend:
 	@echo "Building backend services..."
 	@for service in $(SERVICES); do \
 		echo "Building $$service..."; \
-		cd backend/$$service && mvn clean package -DskipTests && cd ../..; \
+		(cd backend/$$service && mvn clean package -DskipTests) || exit 1; \
 	done
 
 build-frontend:
 	@echo "Building frontend..."
-	cd frontend && npm ci && npm run build
+	cd frontend && npm install && npm run build
 
 build-all: build-backend build-frontend
 
@@ -46,12 +46,12 @@ test-backend:
 	@echo "Running backend tests..."
 	@for service in $(SERVICES); do \
 		echo "Testing $$service..."; \
-		cd backend/$$service && mvn test && cd ../..; \
+		(cd backend/$$service && mvn test) || exit 1; \
 	done
 
 test-frontend:
 	@echo "Running frontend tests..."
-	cd frontend && npm ci && npm test -- --coverage --watchAll=false
+	cd frontend && npm install && npm test -- --coverage --watchAll=false
 
 test-all: test-backend test-frontend
 
@@ -96,9 +96,9 @@ ci-deploy: ci-build deploy-k8s
 clean:
 	@echo "Cleaning up..."
 	@for service in $(SERVICES); do \
-		cd backend/$$service && mvn clean && cd ../..; \
+		(cd backend/$$service && mvn clean) || true; \
 	done
-	cd frontend && rm -rf .next node_modules || true
+	(cd frontend && rm -rf .next node_modules) || true
 
 help:
 	@echo "Available targets:"
