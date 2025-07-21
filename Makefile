@@ -51,7 +51,7 @@ test-backend:
 
 test-frontend:
 	@echo "Running frontend tests..."
-	cd frontend && npm install && npm test -- --coverage --coverageThreshold='{}' --watchAll=false
+	cd frontend && rm -rf node_modules package-lock.json && npm install && npm test -- --coverage --coverageThreshold='{}' --watchAll=false
 
 test-all: test-backend test-frontend
 
