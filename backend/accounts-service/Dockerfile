@@ -14,14 +14,15 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Runtime image
-FROM amazoncorretto:20-alpine
+FROM amazoncorretto:20
 
 WORKDIR /app
 
-# Install curl for health checks and create non-root user
-RUN apk add --no-cache curl && \
-    addgroup -g 1001 -S appuser && \
-    adduser -S appuser -u 1001
+# Install necessary tools and create non-root user
+RUN yum update -y && \
+    yum install -y shadow-utils curl && \
+    groupadd -g 1001 appuser && \
+    useradd -u 1001 -g appuser -s /bin/bash appuser
 
 # Copy the built JAR file
 COPY --from=builder /app/target/accounts-service-*.jar app.jar
