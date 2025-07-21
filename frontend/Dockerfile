@@ -1,13 +1,14 @@
 # Multi-stage build for Next.js frontend
-FROM node:20-slim AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files  
+COPY package.json package-lock.json* ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies with clean registry and skip optional deps that might cause issues
+RUN npm config set registry https://registry.npmjs.org/ && \
+    npm ci --omit=optional --loglevel error || npm install --omit=optional --loglevel error
 
 # Copy source code
 COPY . .
@@ -16,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Runtime image
-FROM node:20-slim
+FROM node:20-alpine
 
 WORKDIR /app
 
@@ -38,9 +39,10 @@ USER nextjs
 # Expose port
 EXPOSE 3000
 
-# Health check
+# Health check (using curl which is available in Alpine)
+RUN apk add --no-cache curl
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
+    CMD curl -f http://localhost:3000 || exit 1
 
 # Run the application
 CMD ["node", "server.js"]
