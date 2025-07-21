@@ -25,8 +25,8 @@ spec:
       serviceAccountName: banking-app-sa
       containers:
       - name: api-gateway
-        image: ghcr.io/speedscale/microsvc/api-gateway:latest
-        imagePullPolicy: Always  # For local minikube testing
+        image: banking-api-gateway:latest
+        imagePullPolicy: Never  # For local minikube testing
         ports:
         - containerPort: 8080
           name: http
