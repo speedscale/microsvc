@@ -11,7 +11,7 @@ build-backend:
 	@echo "Building backend services..."
 	@for service in $(SERVICES); do \
 		echo "Building $$service..."; \
-		cd backend/$$service && ./mvnw clean package -DskipTests && cd ../..; \
+		cd backend/$$service && mvn clean package -DskipTests && cd ../..; \
 	done
 
 build-frontend:
@@ -46,7 +46,7 @@ test-backend:
 	@echo "Running backend tests..."
 	@for service in $(SERVICES); do \
 		echo "Testing $$service..."; \
-		cd backend/$$service && ./mvnw test && cd ../..; \
+		cd backend/$$service && mvn test && cd ../..; \
 	done
 
 test-frontend:
@@ -96,7 +96,7 @@ ci-deploy: ci-build deploy-k8s
 clean:
 	@echo "Cleaning up..."
 	@for service in $(SERVICES); do \
-		cd backend/$$service && ./mvnw clean && cd ../..; \
+		cd backend/$$service && mvn clean && cd ../..; \
 	done
 	cd frontend && rm -rf .next node_modules || true
 
