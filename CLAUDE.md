@@ -36,6 +36,7 @@ This project follows a phased implementation approach. Each phase must be comple
 - Maintain >80% test coverage for all services
 - Follow atomic transaction patterns in transactions-service
 - Store JWT tokens in HttpOnly cookies on frontend
+- **CRITICAL**: Always validate fixes locally before pushing to remote repository - run tests, builds, and Docker builds locally to ensure they work before triggering CI/CD pipelines
 
 ## Current Status
 
