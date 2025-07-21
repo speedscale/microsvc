@@ -32,7 +32,7 @@ describe('AccountsAPI', () => {
 
       const result = await AccountsAPI.getAccounts()
 
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts')
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts-service')
       expect(result).toEqual(mockResponse)
     })
 
@@ -64,7 +64,7 @@ describe('AccountsAPI', () => {
 
       const result = await AccountsAPI.getAccountsPaginated()
 
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts?page=0&size=10&sort=createdAt%2Cdesc')
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts-service?page=0&size=10&sort=createdAt%2Cdesc')
       expect(result).toEqual(mockResponse)
     })
 
@@ -74,7 +74,7 @@ describe('AccountsAPI', () => {
 
       await AccountsAPI.getAccountsPaginated(2, 5, 'balance,asc')
 
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts?page=2&size=5&sort=balance%2Casc')
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts-service?page=2&size=5&sort=balance%2Casc')
     })
   })
 
@@ -88,7 +88,7 @@ describe('AccountsAPI', () => {
 
       const result = await AccountsAPI.getAccount(1)
 
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts/1')
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts-service/1')
       expect(result).toEqual(mockResponse)
     })
   })
@@ -108,7 +108,7 @@ describe('AccountsAPI', () => {
 
       const result = await AccountsAPI.createAccount(accountData)
 
-      expect(mockApiClient.post).toHaveBeenCalledWith('/api/accounts', accountData)
+      expect(mockApiClient.post).toHaveBeenCalledWith('/api/accounts-service', accountData)
       expect(result).toEqual(mockResponse)
     })
 
@@ -141,7 +141,7 @@ describe('AccountsAPI', () => {
 
       const result = await AccountsAPI.updateAccount(1, accountData)
 
-      expect(mockApiClient.put).toHaveBeenCalledWith('/api/accounts/1', accountData)
+      expect(mockApiClient.put).toHaveBeenCalledWith('/api/accounts-service/1', accountData)
       expect(result).toEqual(mockResponse)
     })
   })
@@ -153,7 +153,7 @@ describe('AccountsAPI', () => {
 
       const result = await AccountsAPI.deleteAccount(1)
 
-      expect(mockApiClient.delete).toHaveBeenCalledWith('/api/accounts/1')
+      expect(mockApiClient.delete).toHaveBeenCalledWith('/api/accounts-service/1')
       expect(result).toEqual(mockResponse)
     })
   })
@@ -178,7 +178,7 @@ describe('AccountsAPI', () => {
 
       const result = await AccountsAPI.getAccountSummary()
 
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts/summary')
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts-service/summary')
       expect(result).toEqual(mockResponse)
     })
   })
@@ -193,7 +193,7 @@ describe('AccountsAPI', () => {
 
       const result = await AccountsAPI.getAccountBalance(1)
 
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts/1/balance')
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts-service/1/balance')
       expect(result).toEqual(mockResponse)
     })
   })
@@ -208,7 +208,7 @@ describe('AccountsAPI', () => {
 
       const result = await AccountsAPI.updateAccountStatus(1, 'FROZEN')
 
-      expect(mockApiClient.patch).toHaveBeenCalledWith('/api/accounts/1/status', { status: 'FROZEN' })
+      expect(mockApiClient.patch).toHaveBeenCalledWith('/api/accounts-service/1/status', { status: 'FROZEN' })
       expect(result).toEqual(mockResponse)
     })
   })
@@ -223,7 +223,7 @@ describe('AccountsAPI', () => {
 
       const result = await AccountsAPI.freezeAccount(1)
 
-      expect(mockApiClient.patch).toHaveBeenCalledWith('/api/accounts/1/status', { status: 'FROZEN' })
+      expect(mockApiClient.patch).toHaveBeenCalledWith('/api/accounts-service/1/status', { status: 'FROZEN' })
       expect(result).toEqual(mockResponse)
     })
   })
@@ -238,7 +238,7 @@ describe('AccountsAPI', () => {
 
       const result = await AccountsAPI.unfreezeAccount(1)
 
-      expect(mockApiClient.patch).toHaveBeenCalledWith('/api/accounts/1/status', { status: 'ACTIVE' })
+      expect(mockApiClient.patch).toHaveBeenCalledWith('/api/accounts-service/1/status', { status: 'ACTIVE' })
       expect(result).toEqual(mockResponse)
     })
   })
@@ -253,7 +253,7 @@ describe('AccountsAPI', () => {
 
       const result = await AccountsAPI.closeAccount(1)
 
-      expect(mockApiClient.patch).toHaveBeenCalledWith('/api/accounts/1/status', { status: 'CLOSED' })
+      expect(mockApiClient.patch).toHaveBeenCalledWith('/api/accounts-service/1/status', { status: 'CLOSED' })
       expect(result).toEqual(mockResponse)
     })
   })
@@ -268,7 +268,7 @@ describe('AccountsAPI', () => {
 
       const result = await AccountsAPI.getAccountsByType('CHECKING')
 
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts?type=CHECKING')
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts-service?type=CHECKING')
       expect(result).toEqual(mockResponse)
     })
   })
@@ -283,7 +283,7 @@ describe('AccountsAPI', () => {
 
       const result = await AccountsAPI.getAccountsByStatus('ACTIVE')
 
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts?status=ACTIVE')
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts-service?status=ACTIVE')
       expect(result).toEqual(mockResponse)
     })
   })
@@ -298,7 +298,7 @@ describe('AccountsAPI', () => {
 
       const result = await AccountsAPI.searchAccounts('checking')
 
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts/search?q=checking&page=0&size=10')
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts-service/search?q=checking&page=0&size=10')
       expect(result).toEqual(mockResponse)
     })
 
@@ -308,7 +308,7 @@ describe('AccountsAPI', () => {
 
       await AccountsAPI.searchAccounts('savings', 1, 5)
 
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts/search?q=savings&page=1&size=5')
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts-service/search?q=savings&page=1&size=5')
     })
   })
 })
