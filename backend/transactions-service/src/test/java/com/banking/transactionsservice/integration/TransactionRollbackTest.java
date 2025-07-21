@@ -67,11 +67,12 @@ class TransactionRollbackTest {
             transactionService.deposit(request, testUserId, testJwtToken);
         });
 
-        assertEquals("Failed to update account balance", exception.getMessage());
+        assertEquals("Deposit transaction failed: Failed to update account balance", exception.getMessage());
 
-        // Verify that no transaction was saved to database
+        // Verify that failed transaction was saved to database
         List<Transaction> transactions = transactionRepository.findAll();
-        assertEquals(0, transactions.size());
+        assertEquals(1, transactions.size());
+        assertEquals(Transaction.TransactionStatus.FAILED, transactions.get(0).getStatus());
 
         verify(accountsServiceClient, times(1)).validateAccountOwnership(testAccountId, testUserId, testJwtToken);
         verify(accountsServiceClient, times(1)).getAccountBalance(testAccountId, testJwtToken);
@@ -95,11 +96,12 @@ class TransactionRollbackTest {
             transactionService.withdraw(request, testUserId, testJwtToken);
         });
 
-        assertEquals("Failed to update account balance", exception.getMessage());
+        assertEquals("Withdrawal transaction failed: Failed to update account balance", exception.getMessage());
 
-        // Verify that no transaction was saved to database
+        // Verify that failed transaction was saved to database
         List<Transaction> transactions = transactionRepository.findAll();
-        assertEquals(0, transactions.size());
+        assertEquals(1, transactions.size());
+        assertEquals(Transaction.TransactionStatus.FAILED, transactions.get(0).getStatus());
 
         verify(accountsServiceClient, times(1)).validateAccountOwnership(testAccountId, testUserId, testJwtToken);
         verify(accountsServiceClient, times(1)).getAccountBalance(testAccountId, testJwtToken);
@@ -125,11 +127,12 @@ class TransactionRollbackTest {
             transactionService.transfer(request, testUserId, testJwtToken);
         });
 
-        assertEquals("Failed to update from account balance", exception.getMessage());
+        assertEquals("Transfer transaction failed: Failed to update from account balance", exception.getMessage());
 
-        // Verify that no transaction was saved to database
+        // Verify that failed transaction was saved to database
         List<Transaction> transactions = transactionRepository.findAll();
-        assertEquals(0, transactions.size());
+        assertEquals(1, transactions.size());
+        assertEquals(Transaction.TransactionStatus.FAILED, transactions.get(0).getStatus());
 
         verify(accountsServiceClient, times(1)).validateAccountOwnership(testAccountId, testUserId, testJwtToken);
         verify(accountsServiceClient, times(1)).getAccountBalance(testAccountId, testJwtToken);
@@ -159,11 +162,12 @@ class TransactionRollbackTest {
             transactionService.transfer(request, testUserId, testJwtToken);
         });
 
-        assertEquals("Failed to update to account balance", exception.getMessage());
+        assertEquals("Transfer transaction failed: Failed to update to account balance", exception.getMessage());
 
-        // Verify that no transaction was saved to database
+        // Verify that failed transaction was saved to database
         List<Transaction> transactions = transactionRepository.findAll();
-        assertEquals(0, transactions.size());
+        assertEquals(1, transactions.size());
+        assertEquals(Transaction.TransactionStatus.FAILED, transactions.get(0).getStatus());
 
         verify(accountsServiceClient, times(1)).validateAccountOwnership(testAccountId, testUserId, testJwtToken);
         verify(accountsServiceClient, times(1)).getAccountBalance(testAccountId, testJwtToken);
@@ -201,11 +205,12 @@ class TransactionRollbackTest {
             transactionService.transfer(request, testUserId, testJwtToken);
         });
 
-        assertEquals("Failed to update to account balance", exception.getMessage());
+        assertEquals("Transfer transaction failed: Failed to update to account balance", exception.getMessage());
 
-        // Verify that no transaction was saved to database
+        // Verify that failed transaction was saved to database
         List<Transaction> transactions = transactionRepository.findAll();
-        assertEquals(0, transactions.size());
+        assertEquals(1, transactions.size());
+        assertEquals(Transaction.TransactionStatus.FAILED, transactions.get(0).getStatus());
 
         // Verify compensation occurred
         verify(accountsServiceClient, times(2)).updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(testJwtToken));
@@ -270,10 +275,14 @@ class TransactionRollbackTest {
         });
 
         // Assert
-        // Verify that only one transaction was saved
+        // Verify that two transactions were saved (one successful, one failed)
         List<Transaction> transactions = transactionRepository.findAll();
-        assertEquals(1, transactions.size());
-        assertEquals(BigDecimal.valueOf(100.00), transactions.get(0).getAmount());
+        assertEquals(2, transactions.size());
+        // One should be successful with amount 100, one should be failed with amount 200
+        boolean hasSuccessful = transactions.stream().anyMatch(t -> t.getStatus() == Transaction.TransactionStatus.COMPLETED && t.getAmount().equals(BigDecimal.valueOf(100.00)));
+        boolean hasFailed = transactions.stream().anyMatch(t -> t.getStatus() == Transaction.TransactionStatus.FAILED && t.getAmount().equals(BigDecimal.valueOf(200.00)));
+        assertTrue(hasSuccessful);
+        assertTrue(hasFailed);
     }
 
     @Test
@@ -297,9 +306,10 @@ class TransactionRollbackTest {
 
         assertTrue(exception.getMessage().contains("Network timeout"));
 
-        // Verify that no transaction was saved to database
+        // Verify that failed transaction was saved to database
         List<Transaction> transactions = transactionRepository.findAll();
-        assertEquals(0, transactions.size());
+        assertEquals(1, transactions.size());
+        assertEquals(Transaction.TransactionStatus.FAILED, transactions.get(0).getStatus());
     }
 
     @Test
@@ -321,9 +331,9 @@ class TransactionRollbackTest {
             transactionService.transfer(request, testUserId, testJwtToken);
         });
 
-        assertEquals("Insufficient balance", exception.getMessage());
+        assertEquals("Insufficient balance for transfer", exception.getMessage());
 
-        // Verify that no transaction was saved to database
+        // Verify that no transaction was created since insufficient balance check happens before transaction creation
         List<Transaction> transactions = transactionRepository.findAll();
         assertEquals(0, transactions.size());
 

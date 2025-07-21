@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -33,9 +34,10 @@ public class TransactionController {
     
     
     @GetMapping
-    public ResponseEntity<List<TransactionResponse>> getUserTransactions(Authentication authentication) {
+    public ResponseEntity<List<TransactionResponse>> getUserTransactions() {
         Span span = tracer.spanBuilder("get-user-transactions").startSpan();
         try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Long userId = getUserIdFromAuthentication(authentication);
             logger.info("Fetching transactions for user: {}", userId);
             
@@ -56,10 +58,10 @@ public class TransactionController {
     @PostMapping("/deposit")
     public ResponseEntity<TransactionResponse> deposit(
             @Valid @RequestBody DepositRequest request,
-            Authentication authentication,
             HttpServletRequest httpRequest) {
         Span span = tracer.spanBuilder("process-deposit").startSpan();
         try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Long userId = getUserIdFromAuthentication(authentication);
             String jwtToken = httpRequest.getHeader("Authorization");
             
@@ -89,10 +91,10 @@ public class TransactionController {
     @PostMapping("/withdraw")
     public ResponseEntity<TransactionResponse> withdraw(
             @Valid @RequestBody WithdrawRequest request,
-            Authentication authentication,
             HttpServletRequest httpRequest) {
         Span span = tracer.spanBuilder("process-withdrawal").startSpan();
         try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Long userId = getUserIdFromAuthentication(authentication);
             String jwtToken = httpRequest.getHeader("Authorization");
             
@@ -122,10 +124,10 @@ public class TransactionController {
     @PostMapping("/transfer")
     public ResponseEntity<TransactionResponse> transfer(
             @Valid @RequestBody TransferRequest request,
-            Authentication authentication,
             HttpServletRequest httpRequest) {
         Span span = tracer.spanBuilder("process-transfer").startSpan();
         try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Long userId = getUserIdFromAuthentication(authentication);
             String jwtToken = httpRequest.getHeader("Authorization");
             
@@ -151,6 +153,15 @@ public class TransactionController {
         } finally {
             span.end();
         }
+    }
+    
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, Object>> healthCheck() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "UP");
+        response.put("service", "transactions-service");
+        
+        return ResponseEntity.ok(response);
     }
     
     private Long getUserIdFromAuthentication(Authentication authentication) {
