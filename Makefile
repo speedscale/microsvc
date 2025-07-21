@@ -62,9 +62,9 @@ test-frontend:
 test-all: test-backend test-frontend
 
 # Kubernetes targets
-.PHONY: k8s-deploy k8s-undeploy k8s-redeploy k8s-status k8s-cleanup update-images restore-local-images deploy undeploy redeploy status deploy-k8s cleanup-k8s
-k8s-deploy: restore-local-images
-	@echo "Deploying to Kubernetes..."
+.PHONY: k8s-deploy k8s-deploy-local k8s-undeploy k8s-redeploy k8s-status k8s-cleanup update-images restore-local-images deploy undeploy redeploy status deploy-k8s cleanup-k8s
+k8s-deploy: update-images
+	@echo "Deploying to Kubernetes with registry images..."
 	kubectl apply -k $(KUSTOMIZE_DIR)/
 
 k8s-undeploy:
@@ -82,6 +82,10 @@ k8s-status:
 	kubectl get svc -n $(NAMESPACE)
 
 k8s-cleanup: k8s-undeploy
+
+k8s-deploy-local: restore-local-images
+	@echo "Deploying to Kubernetes with local images..."
+	kubectl apply -k $(KUSTOMIZE_DIR)/
 
 # Production deployment (uses registry images)
 deploy: update-images
@@ -154,7 +158,7 @@ test-deployment:
 
 # Legacy minikube aliases (deprecated)
 .PHONY: minikube-deploy minikube-cleanup
-minikube-deploy: k8s-deploy
+minikube-deploy: k8s-deploy-local
 minikube-cleanup: k8s-cleanup
 
 # CI/CD targets
@@ -189,7 +193,8 @@ help:
 	@echo "  test-all           - Run all tests"
 	@echo ""
 	@echo "Kubernetes:"
-	@echo "  k8s-deploy         - Deploy to Kubernetes (local images)"
+	@echo "  k8s-deploy         - Deploy to Kubernetes (registry images)"
+	@echo "  k8s-deploy-local   - Deploy to Kubernetes (local images)"
 	@echo "  k8s-undeploy       - Remove application from Kubernetes"
 	@echo "  k8s-redeploy       - Remove and redeploy application"
 	@echo "  k8s-status         - Check deployment status"
