@@ -273,4 +273,17 @@ public class UserController {
         }
     }
 
+    /**
+     * Health check endpoint
+     * @return service health status
+     */
+    @GetMapping("/health")
+    public ResponseEntity<?> healthCheck() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "UP");
+        response.put("service", "user-service");
+        
+        return ResponseEntity.ok(response);
+    }
+
 }
