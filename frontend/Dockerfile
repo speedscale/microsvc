@@ -3,12 +3,18 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files  
-COPY package.json package-lock.json* ./
+# Install curl for debugging and update npm to latest version
+RUN apk add --no-cache curl && \
+    npm install -g npm@latest
 
-# Install dependencies with clean registry and skip optional deps that might cause issues
+# Copy package files  
+COPY package.json package-lock.json ./
+
+# Install dependencies with npm ci for faster, reliable installs
 RUN npm config set registry https://registry.npmjs.org/ && \
-    npm ci --omit=optional --loglevel error || npm install --omit=optional --loglevel error
+    npm config set timeout 60000 && \
+    npm config set fetch-retries 3 && \
+    npm ci --no-audit --loglevel error
 
 # Copy source code
 COPY . .
@@ -21,9 +27,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Create non-root user
-RUN addgroup --gid 1001 nodejs && \
-    adduser --uid 1001 --gid 1001 nextjs
+# Create non-root user (Alpine syntax)
+RUN addgroup -g 1001 nodejs && \
+    adduser -u 1001 -G nodejs -s /bin/sh -D nextjs
 
 # Copy built application
 COPY --from=builder /app/public ./public
