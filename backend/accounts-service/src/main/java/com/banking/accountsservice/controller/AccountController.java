@@ -170,6 +170,15 @@ public class AccountController {
         }
     }
     
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, Object>> healthCheck() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "UP");
+        response.put("service", "accounts-service");
+        
+        return ResponseEntity.ok(response);
+    }
+    
     private Long getUserIdFromAuthentication(Authentication authentication) {
         UserAuthenticationDetails details = (UserAuthenticationDetails) authentication.getDetails();
         return details.getUserId();

@@ -100,7 +100,7 @@ class AccountControllerTest {
         List<AccountResponse> accounts = Arrays.asList(testAccountResponse);
         when(accountService.getUserAccounts(testUserId)).thenReturn(accounts);
 
-        mockMvc.perform(get("/account"))
+        mockMvc.perform(get("/accounts"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].accountNumber").value("123456789012"));
 
@@ -111,7 +111,7 @@ class AccountControllerTest {
     void getAccountById_Success() throws Exception {
         when(accountService.getAccountById(testAccountId, testUserId)).thenReturn(testAccountResponse);
 
-        mockMvc.perform(get("/account/{accountId}", testAccountId))
+        mockMvc.perform(get("/accounts/{accountId}", testAccountId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accountNumber").value("123456789012"));
 
@@ -122,7 +122,7 @@ class AccountControllerTest {
     void getAccountById_NotFound() throws Exception {
         when(accountService.getAccountById(anyLong(), anyLong())).thenThrow(new RuntimeException("Account not found"));
 
-        mockMvc.perform(get("/account/{accountId}", testAccountId))
+        mockMvc.perform(get("/accounts/{accountId}", testAccountId))
                 .andExpect(status().isNotFound());
     }
 
@@ -130,7 +130,7 @@ class AccountControllerTest {
     void getAccountBalance_Success() throws Exception {
         when(accountService.getAccountBalance(testAccountId, testUserId)).thenReturn(testBalanceResponse);
 
-        mockMvc.perform(get("/account/{accountId}/balance", testAccountId))
+        mockMvc.perform(get("/accounts/{accountId}/balance", testAccountId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.balance").value(1000.00));
     }
@@ -139,7 +139,7 @@ class AccountControllerTest {
     void createAccount_Success() throws Exception {
         when(accountService.createAccount(any(AccountCreateRequest.class), eq(testUserId))).thenReturn(testAccountResponse);
 
-        mockMvc.perform(post("/account")
+        mockMvc.perform(post("/accounts")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
@@ -150,7 +150,7 @@ class AccountControllerTest {
     void createAccount_InvalidInput() throws Exception {
         AccountCreateRequest invalidRequest = new AccountCreateRequest("");
 
-        mockMvc.perform(post("/account")
+        mockMvc.perform(post("/accounts")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
@@ -162,7 +162,7 @@ class AccountControllerTest {
     void updateBalance_Success() throws Exception {
         when(accountService.updateBalance(eq(testAccountId), any(BigDecimal.class), eq(testUserId))).thenReturn(true);
 
-        mockMvc.perform(put("/account/{accountId}/balance", testAccountId)
+        mockMvc.perform(put("/accounts/{accountId}/balance", testAccountId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"balance\": 1500.00}"))
                 .andExpect(status().isOk());
@@ -173,7 +173,7 @@ class AccountControllerTest {
         when(accountService.updateBalance(eq(testAccountId), any(BigDecimal.class), eq(testUserId)))
                 .thenThrow(new RuntimeException("Account not found or access denied"));
 
-        mockMvc.perform(put("/account/{accountId}/balance", testAccountId)
+        mockMvc.perform(put("/accounts/{accountId}/balance", testAccountId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"balance\": 1500.00}"))
                 .andExpect(status().isNotFound());
@@ -181,7 +181,7 @@ class AccountControllerTest {
 
     @Test
     void healthCheck_Success() throws Exception {
-        mockMvc.perform(get("/account/health"))
+        mockMvc.perform(get("/accounts/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("UP"));
     }
