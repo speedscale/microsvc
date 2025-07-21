@@ -50,6 +50,6 @@
     "typescript": "^5"
   },
   "overrides": {
-    "napi-postinstall": "^0.3.0"
+    "napi-postinstall": "0.3.2"
   }
 }
