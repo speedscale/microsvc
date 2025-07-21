@@ -18,18 +18,23 @@ This directory contains Kubernetes manifests for deploying the banking applicati
 
 ## Quick Start
 
-The easiest way to deploy is using the automated script:
+The easiest way to deploy is using the Makefile from the root directory:
 
 ```bash
-./deploy-to-minikube.sh
+cd ..
+make k8s-deploy
 ```
 
-This script will:
+This will:
 1. Set up Docker environment for minikube
-2. Build all Docker images
+2. Build all Docker images using local image references
 3. Deploy all Kubernetes manifests
 4. Wait for services to be ready
-5. Provide the API Gateway URL
+
+To check deployment status:
+```bash
+make status
+```
 
 ## Manual Deployment
 
@@ -122,7 +127,13 @@ curl -X POST $API_GATEWAY_URL/api/user-service/register \
 
 ## Cleanup
 
-To remove the deployment:
+To remove the deployment, use the Makefile:
+```bash
+cd ..
+make undeploy
+```
+
+Or remove manually:
 ```bash
 kubectl delete namespace banking-app
 ```
@@ -172,6 +183,5 @@ kubernetes/
 │   └── kustomization.yaml          # Kustomize configuration
 ├── overlays/
 │   └── local/                      # Local/development overrides
-├── deploy-to-minikube.sh          # Automated deployment script
 └── README.md                      # This file
 ```
