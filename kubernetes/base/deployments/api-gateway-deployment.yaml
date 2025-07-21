@@ -1,41 +1,36 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: transactions-service
+  name: api-gateway
   namespace: banking-app
   labels:
     app.kubernetes.io/name: banking-app
-    app.kubernetes.io/component: microservice
-    app.kubernetes.io/service: transactions-service
+    app.kubernetes.io/component: gateway
+    app.kubernetes.io/service: api-gateway
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: transactions-service
+      app: api-gateway
       app.kubernetes.io/name: banking-app
-      app.kubernetes.io/component: microservice
+      app.kubernetes.io/component: gateway
   template:
     metadata:
       labels:
-        app: transactions-service
+        app: api-gateway
         app.kubernetes.io/name: banking-app
-        app.kubernetes.io/component: microservice
-        app.kubernetes.io/service: transactions-service
+        app.kubernetes.io/component: gateway
+        app.kubernetes.io/service: api-gateway
     spec:
       serviceAccountName: banking-app-sa
       containers:
-      - name: transactions-service
-        image: banking-transactions-service:latest
-        imagePullPolicy: Never  # For local minikube testing
+      - name: api-gateway
+        image: ghcr.io/speedscale/microsvc/api-gateway:latest
+        imagePullPolicy: Always  # For local minikube testing
         ports:
         - containerPort: 8080
           name: http
         env:
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: db-credentials
-              key: transactions-service-password
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
@@ -45,7 +40,7 @@ spec:
         - configMapRef:
             name: app-config
         - configMapRef:
-            name: transactions-service-config
+            name: api-gateway-config
         resources:
           requests:
             memory: "512Mi"
@@ -71,6 +66,6 @@ spec:
           successThreshold: 1
           failureThreshold: 3
       initContainers:
-      - name: wait-for-postgres
-        image: postgres:15-alpine
-        command: ['sh', '-c', 'until pg_isready -h postgres -p 5432; do echo waiting for postgres; sleep 2; done;']
+      - name: wait-for-services
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z user-service 8080 && nc -z accounts-service 8080 && nc -z transactions-service 8080; do echo waiting for services; sleep 2; done;']

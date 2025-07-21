@@ -1,32 +1,32 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: accounts-service
+  name: user-service
   namespace: banking-app
   labels:
     app.kubernetes.io/name: banking-app
     app.kubernetes.io/component: microservice
-    app.kubernetes.io/service: accounts-service
+    app.kubernetes.io/service: user-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: accounts-service
+      app: user-service
       app.kubernetes.io/name: banking-app
       app.kubernetes.io/component: microservice
   template:
     metadata:
       labels:
-        app: accounts-service
+        app: user-service
         app.kubernetes.io/name: banking-app
         app.kubernetes.io/component: microservice
-        app.kubernetes.io/service: accounts-service
+        app.kubernetes.io/service: user-service
     spec:
       serviceAccountName: banking-app-sa
       containers:
-      - name: accounts-service
-        image: banking-accounts-service:latest
-        imagePullPolicy: Never  # For local minikube testing
+      - name: user-service
+        image: ghcr.io/speedscale/microsvc/user-service:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
           name: http
@@ -35,7 +35,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: db-credentials
-              key: accounts-service-password
+              key: user-service-password
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
@@ -45,7 +45,7 @@ spec:
         - configMapRef:
             name: app-config
         - configMapRef:
-            name: accounts-service-config
+            name: user-service-config
         resources:
           requests:
             memory: "512Mi"
