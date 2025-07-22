@@ -27,7 +27,39 @@ spring:
           filters:
             - RewritePath=/api/transactions-service/health, /actuator/health
             
-        # Main service routes
+        # Simplified API routes (for frontend compatibility)
+        - id: users-simplified
+          uri: ${services.user-service.url}
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - RewritePath=/api/users/(?<path>.*), /user/$\{path}
+        - id: accounts-transactions-simplified
+          uri: ${services.accounts-service.url}
+          predicates:
+            - Path=/api/accounts/*/transactions/**
+          filters:
+            - RewritePath=/api/accounts/(?<accountId>[^/]+)/transactions/(?<path>.*), /accounts/account/$\{accountId}/transactions/$\{path}
+        - id: accounts-transactions-root-simplified
+          uri: ${services.accounts-service.url}
+          predicates:
+            - Path=/api/accounts/*/transactions
+          filters:
+            - RewritePath=/api/accounts/(?<accountId>[^/]+)/transactions, /accounts/account/$\{accountId}/transactions
+        - id: accounts-simplified
+          uri: ${services.accounts-service.url}
+          predicates:
+            - Path=/api/accounts/**
+          filters:
+            - RewritePath=/api/accounts/(?<path>.*), /accounts/$\{path}
+        - id: transactions-simplified
+          uri: ${services.transactions-service.url}
+          predicates:
+            - Path=/api/transactions/**
+          filters:
+            - RewritePath=/api/transactions/(?<path>.*), /transactions/$\{path}
+            
+        # Main service routes (legacy - kept for backward compatibility)
         - id: user-service
           uri: ${services.user-service.url}
           predicates:
