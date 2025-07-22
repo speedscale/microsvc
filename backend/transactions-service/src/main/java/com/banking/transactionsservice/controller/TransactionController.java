@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -33,10 +34,10 @@ public class TransactionController {
     
     
     @GetMapping
-    public ResponseEntity<List<TransactionResponse>> getUserTransactions(Authentication authentication) {
+    public ResponseEntity<List<TransactionResponse>> getUserTransactions() {
         Span span = tracer.spanBuilder("get-user-transactions").startSpan();
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = getUserIdFromAuthentication();
             logger.info("Fetching transactions for user: {}", userId);
             
             List<TransactionResponse> transactions = transactionService.getUserTransactions(userId);
@@ -56,11 +57,10 @@ public class TransactionController {
     @PostMapping("/deposit")
     public ResponseEntity<TransactionResponse> deposit(
             @Valid @RequestBody DepositRequest request,
-            Authentication authentication,
             HttpServletRequest httpRequest) {
         Span span = tracer.spanBuilder("process-deposit").startSpan();
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = getUserIdFromAuthentication();
             String jwtToken = httpRequest.getHeader("Authorization");
             
             logger.info("Processing deposit for user: {}, account: {}, amount: {}", 
@@ -89,11 +89,10 @@ public class TransactionController {
     @PostMapping("/withdraw")
     public ResponseEntity<TransactionResponse> withdraw(
             @Valid @RequestBody WithdrawRequest request,
-            Authentication authentication,
             HttpServletRequest httpRequest) {
         Span span = tracer.spanBuilder("process-withdrawal").startSpan();
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = getUserIdFromAuthentication();
             String jwtToken = httpRequest.getHeader("Authorization");
             
             logger.info("Processing withdrawal for user: {}, account: {}, amount: {}", 
@@ -122,11 +121,10 @@ public class TransactionController {
     @PostMapping("/transfer")
     public ResponseEntity<TransactionResponse> transfer(
             @Valid @RequestBody TransferRequest request,
-            Authentication authentication,
             HttpServletRequest httpRequest) {
         Span span = tracer.spanBuilder("process-transfer").startSpan();
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = getUserIdFromAuthentication();
             String jwtToken = httpRequest.getHeader("Authorization");
             
             logger.info("Processing transfer for user: {}, from: {}, to: {}, amount: {}", 
@@ -153,7 +151,11 @@ public class TransactionController {
         }
     }
     
-    private Long getUserIdFromAuthentication(Authentication authentication) {
+    private Long getUserIdFromAuthentication() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getDetails() == null) {
+            throw new RuntimeException("User not authenticated");
+        }
         UserAuthenticationDetails details = (UserAuthenticationDetails) authentication.getDetails();
         return details.getUserId();
     }
