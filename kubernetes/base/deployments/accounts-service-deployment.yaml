@@ -41,6 +41,8 @@ spec:
             secretKeyRef:
               name: jwt-secret
               key: secret
+        - name: JAVA_OPTS
+          value: "-Xms256m -Xmx512m -XX:+UseG1GC -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom"
         envFrom:
         - configMapRef:
             name: app-config
@@ -53,9 +55,6 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "250m"
-        env:
-        - name: JAVA_OPTS
-          value: "-Xms256m -Xmx512m -XX:+UseG1GC -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom"
         livenessProbe:
           httpGet:
             path: /actuator/health
