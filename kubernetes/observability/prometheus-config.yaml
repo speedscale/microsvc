@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: banking-app
+  labels:
+    app: prometheus
+    app.kubernetes.io/name: banking-app
+    app.kubernetes.io/component: observability
+    app.kubernetes.io/version: v1.0.0
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    scrape_configs:
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+      - job_name: 'user-service'
+        static_configs:
+          - targets: ['user-service:8080']
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 30s
+
+      - job_name: 'accounts-service'
+        static_configs:
+          - targets: ['accounts-service:8080']
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 30s
+
+      - job_name: 'transactions-service'
+        static_configs:
+          - targets: ['transactions-service:8080']
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 30s
+
+      - job_name: 'api-gateway'
+        static_configs:
+          - targets: ['api-gateway:80']
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 30s
+
+      - job_name: 'frontend'
+        static_configs:
+          - targets: ['frontend:3000']
+        metrics_path: '/metrics'
+        scrape_interval: 30s
