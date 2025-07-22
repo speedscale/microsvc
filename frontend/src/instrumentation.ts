@@ -1,58 +1,59 @@
 /*
  * OpenTelemetry instrumentation for Next.js frontend
  * This file is automatically loaded by Next.js when the experimental.instrumentationHook is enabled
+ * Note: This only runs on the server side during SSR/API routes, not in the browser
  */
 
-import { NodeSDK } from '@opentelemetry/sdk-node';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-otlp-http';
-import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-
-let sdk: NodeSDK | undefined;
-
-// Register the SDK
+// Register the SDK - only runs on the server side
 export async function register() {
-  console.log('🔍 Registering OpenTelemetry instrumentation for frontend...');
-  console.log('OTEL_EXPORTER_OTLP_ENDPOINT:', process.env.OTEL_EXPORTER_OTLP_ENDPOINT);
-  console.log('OTEL_SERVICE_NAME:', process.env.OTEL_SERVICE_NAME);
+  // Only initialize on server side to avoid bundling issues with browser
+  if (typeof window !== 'undefined') {
+    return;
+  }
+  
+  console.log('🔍 Registering OpenTelemetry instrumentation for frontend server...');
   
   try {
-    // Initialize the OpenTelemetry SDK
-    sdk = new NodeSDK({
+    // Use a minimal approach that avoids NodeSDK to prevent bundling issues
+    const { NodeTracerProvider } = await import('@opentelemetry/sdk-trace-node');
+    const { SimpleSpanProcessor, BatchSpanProcessor } = await import('@opentelemetry/sdk-trace-base');
+    const { OTLPTraceExporter } = await import('@opentelemetry/exporter-otlp-http');
+    const { Resource } = await import('@opentelemetry/resources');
+    const { SemanticResourceAttributes } = await import('@opentelemetry/semantic-conventions');
+    const { trace } = await import('@opentelemetry/api');
+    
+    // Create a custom tracer provider for Next.js
+    const tracerProvider = new NodeTracerProvider({
       resource: new Resource({
         [SemanticResourceAttributes.SERVICE_NAME]: process.env.OTEL_SERVICE_NAME || 'frontend',
         [SemanticResourceAttributes.SERVICE_VERSION]: '1.0.0',
         [SemanticResourceAttributes.SERVICE_NAMESPACE]: process.env.OTEL_RESOURCE_ATTRIBUTES?.split('=')[1] || 'banking-app',
       }),
-      traceExporter: new OTLPTraceExporter({
-        url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://jaeger:4318/v1/traces',
-      }),
-      instrumentations: [
-        getNodeAutoInstrumentations({
-          // Disable some instrumentations that might not be needed for frontend
-          '@opentelemetry/instrumentation-fs': {
-            enabled: false,
-          },
-          '@opentelemetry/instrumentation-dns': {
-            enabled: false,
-          },
-        }),
-      ],
     });
 
-    sdk.start();
-    console.log('✅ OpenTelemetry instrumentation registered successfully');
+    // Configure OTLP exporter
+    const otlpExporter = new OTLPTraceExporter({
+      url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318/v1/traces',
+    });
+
+    // Add span processor
+    tracerProvider.addSpanProcessor(new BatchSpanProcessor(otlpExporter));
+    
+    // Register the tracer provider
+    tracerProvider.register();
+    trace.setGlobalTracerProvider(tracerProvider);
+
+    console.log('✅ OpenTelemetry instrumentation registered successfully for frontend server');
+
+    // Gracefully shutdown the tracer provider on process exit
+    process.on('SIGTERM', () => {
+      console.log('🔄 Shutting down OpenTelemetry tracer provider...');
+      tracerProvider.shutdown()
+        .then(() => console.log('✅ OpenTelemetry tracer provider shutdown successfully'))
+        .catch((error) => console.error('❌ Error shutting down OpenTelemetry tracer provider:', error))
+        .finally(() => process.exit(0));
+    });
   } catch (error) {
     console.error('❌ Error registering OpenTelemetry instrumentation:', error);
   }
 }
-
-// Gracefully shutdown the SDK on process exit
-process.on('SIGTERM', () => {
-  console.log('🔄 Shutting down OpenTelemetry SDK...');
-  sdk?.shutdown()
-    .then(() => console.log('✅ OpenTelemetry SDK shutdown successfully'))
-    .catch((error) => console.error('❌ Error shutting down OpenTelemetry SDK:', error))
-    .finally(() => process.exit(0));
-});
