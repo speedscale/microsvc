@@ -138,9 +138,9 @@ jobs:
         npm ci
         npx playwright install --with-deps
     
-    - name: Start services with docker-compose
+    - name: Start services with docker compose
       run: |
-        docker-compose up -d
+        docker compose up -d
         sleep 30
     
     - name: Run E2E tests
