@@ -14,9 +14,15 @@ export async function register() {
   console.log('🔍 Registering OpenTelemetry instrumentation for frontend server...');
   
   try {
+    // Skip OTEL instrumentation during build to avoid type compatibility issues
+    if (process.env.NODE_ENV === 'production' && !process.env.OTEL_SERVICE_NAME) {
+      console.log('🔍 Skipping OpenTelemetry instrumentation during build');
+      return;
+    }
+
     // Use a minimal approach that avoids NodeSDK to prevent bundling issues
     const { NodeTracerProvider } = await import('@opentelemetry/sdk-trace-node');
-    const { SimpleSpanProcessor, BatchSpanProcessor } = await import('@opentelemetry/sdk-trace-base');
+    const { BatchSpanProcessor } = await import('@opentelemetry/sdk-trace-base');
     const { OTLPTraceExporter } = await import('@opentelemetry/exporter-otlp-http');
     const { Resource } = await import('@opentelemetry/resources');
     const { SemanticResourceAttributes } = await import('@opentelemetry/semantic-conventions');
@@ -36,8 +42,9 @@ export async function register() {
       url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318/v1/traces',
     });
 
-    // Add span processor
-    tracerProvider.addSpanProcessor(new BatchSpanProcessor(otlpExporter));
+    // Add span processor with type assertion to bypass version conflicts
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tracerProvider.addSpanProcessor(new BatchSpanProcessor(otlpExporter as any));
     
     // Register the tracer provider
     tracerProvider.register();
