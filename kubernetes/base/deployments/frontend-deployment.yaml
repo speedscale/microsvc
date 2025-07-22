@@ -31,9 +31,9 @@ spec:
         ports:
         - containerPort: 3000
           name: http
-        envFrom:
-        - configMapRef:
-            name: frontend-config
+        env:
+        - name: BACKEND_API_URL
+          value: "http://api-gateway:80"
         resources:
           requests:
             memory: "256Mi"

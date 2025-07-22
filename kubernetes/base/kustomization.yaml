@@ -17,7 +17,6 @@ resources:
   # ConfigMaps and Secrets
   - configmaps/app-config.yaml
   - configmaps/app-secrets.yaml
-  - configmaps/frontend-config.yaml
   
   # Microservice Deployments
   - deployments/user-service-deployment.yaml
