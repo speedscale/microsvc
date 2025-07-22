@@ -62,6 +62,10 @@ coverage/
 .cache
 .pytest_cache/
 
+# Test results and reports
+playwright-report/
+test-results/
+
 # Temporary files
 *.tmp
 *.temp

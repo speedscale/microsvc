@@ -35,7 +35,15 @@ spec:
         - name: BACKEND_API_URL
           value: "http://api-gateway:80"
         - name: NEXT_PUBLIC_API_URL
-          value: ""
+          value: "http://138.197.228.77"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://jaeger:4318/v1/traces"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "http/protobuf"
+        - name: OTEL_SERVICE_NAME
+          value: "frontend"
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.namespace=banking-app"
         resources:
           requests:
             memory: "256Mi"
