@@ -4,6 +4,7 @@ import com.banking.transactionsservice.client.AccountsServiceClient;
 import com.banking.transactionsservice.dto.*;
 import com.banking.transactionsservice.entity.Transaction;
 import com.banking.transactionsservice.repository.TransactionRepository;
+import io.opentelemetry.api.metrics.DoubleHistogram;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +31,15 @@ class TransactionServiceTest {
 
     @Mock
     private AccountsServiceClient accountsServiceClient;
+
+    @Mock
+    private DoubleHistogram depositAmountHistogram;
+
+    @Mock
+    private DoubleHistogram withdrawAmountHistogram;
+
+    @Mock
+    private DoubleHistogram transferAmountHistogram;
 
     @InjectMocks
     private TransactionService transactionService;
