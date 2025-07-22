@@ -73,7 +73,7 @@ describe('LoginForm Component', () => {
     await user.click(submitButton)
     
     await waitFor(() => {
-      expect(screen.getByText('Password must be at least 6 characters')).toBeInTheDocument()
+      expect(screen.getByText('Password must be at least 8 characters')).toBeInTheDocument()
     })
   })
 

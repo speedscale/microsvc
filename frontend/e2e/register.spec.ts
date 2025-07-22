@@ -41,7 +41,7 @@ test.describe('Register Page', () => {
     await page.getByPlaceholder('Enter your password').fill('123');
     await page.getByRole('button', { name: 'Create account' }).click();
     
-    await expect(page.getByText('Password must be at least 6 characters')).toBeVisible();
+    await expect(page.getByText('Password must be at least 8 characters')).toBeVisible();
   });
 
   test('should show validation error for password mismatch', async ({ page }) => {

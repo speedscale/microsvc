@@ -24,7 +24,7 @@ test.describe('Login Page', () => {
     await page.getByPlaceholder('Enter your password').fill('123');
     await page.getByRole('button', { name: 'Sign in' }).click();
     
-    await expect(page.getByText('Password must be at least 6 characters')).toBeVisible();
+    await expect(page.getByText('Password must be at least 8 characters')).toBeVisible();
   });
 
   test('should navigate to register page', async ({ page }) => {

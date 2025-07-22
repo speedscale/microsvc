@@ -125,7 +125,7 @@ const RegisterForm: React.FC = () => {
               {...register('password')}
               error={errors.password?.message}
               placeholder="Create a password"
-              helperText="At least 6 characters"
+              helperText="At least 8 characters"
             />
 
             <Input
