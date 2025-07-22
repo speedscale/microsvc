@@ -124,6 +124,12 @@ public class TransactionController {
             HttpServletRequest httpRequest) {
         Span span = tracer.spanBuilder("process-transfer").startSpan();
         try {
+            // Validate same account transfer
+            if (request.getFromAccountId().equals(request.getToAccountId())) {
+                logger.warn("Transfer rejected: from and to accounts are the same");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+            
             Long userId = getUserIdFromAuthentication();
             String jwtToken = httpRequest.getHeader("Authorization");
             
