@@ -25,8 +25,8 @@ spec:
       serviceAccountName: banking-app-sa
       containers:
       - name: transactions-service
-        image: banking-transactions-service:latest
-        imagePullPolicy: Never  # For local minikube testing
+        image: ghcr.io/speedscale/microsvc/transactions-service:feature-phase-8-cicd-pipeline
+        imagePullPolicy: Always  # For local minikube testing
         ports:
         - containerPort: 8080
           name: http

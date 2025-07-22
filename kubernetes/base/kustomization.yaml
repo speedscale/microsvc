@@ -23,12 +23,14 @@ resources:
   - deployments/accounts-service-deployment.yaml
   - deployments/transactions-service-deployment.yaml
   - deployments/api-gateway-deployment.yaml
+  - deployments/frontend-deployment.yaml
   
   # Microservice Services
   - services/user-service-service.yaml
   - services/accounts-service-service.yaml
   - services/transactions-service-service.yaml
   - services/api-gateway-service.yaml
+  - services/frontend-service.yaml
 
 namespace: banking-app
 
