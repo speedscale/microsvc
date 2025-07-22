@@ -62,9 +62,9 @@ test-frontend:
 test-all: test-backend test-frontend
 
 # Kubernetes targets
-.PHONY: k8s-deploy k8s-deploy-local k8s-undeploy k8s-redeploy k8s-status k8s-cleanup update-images restore-local-images deploy undeploy redeploy status deploy-k8s cleanup-k8s
-k8s-deploy: update-images
-	@echo "Deploying to Kubernetes with registry images..."
+.PHONY: k8s-deploy k8s-deploy-local k8s-undeploy k8s-redeploy k8s-status k8s-cleanup deploy undeploy redeploy status deploy-k8s cleanup-k8s
+k8s-deploy:
+	@echo "Deploying to Kubernetes..."
 	kubectl apply -k $(KUSTOMIZE_DIR)/
 
 k8s-undeploy:
@@ -83,13 +83,13 @@ k8s-status:
 
 k8s-cleanup: k8s-undeploy
 
-k8s-deploy-local: restore-local-images
-	@echo "Deploying to Kubernetes with local images..."
+k8s-deploy-local:
+	@echo "Deploying to Kubernetes..."
 	kubectl apply -k $(KUSTOMIZE_DIR)/
 
-# Production deployment (uses registry images)
-deploy: update-images
-	@echo "Deploying banking application to Kubernetes with registry images..."
+# Production deployment
+deploy:
+	@echo "Deploying banking application to Kubernetes..."
 	kubectl apply -k $(KUSTOMIZE_DIR)/
 
 # Legacy aliases
@@ -99,28 +99,6 @@ status: k8s-status
 deploy-k8s: deploy
 cleanup-k8s: k8s-undeploy
 
-# Image management
-update-images:
-	@echo "Updating Kubernetes manifests with registry: $(REGISTRY) and tag: $(IMAGE_TAG)"
-	@sed -i.bak "s|image: .*user-service:.*|image: $(REGISTRY)/user-service:$(IMAGE_TAG)|g" $(KUSTOMIZE_DIR)/deployments/user-service-deployment.yaml
-	@sed -i.bak "s|image: .*accounts-service:.*|image: $(REGISTRY)/accounts-service:$(IMAGE_TAG)|g" $(KUSTOMIZE_DIR)/deployments/accounts-service-deployment.yaml
-	@sed -i.bak "s|image: .*transactions-service:.*|image: $(REGISTRY)/transactions-service:$(IMAGE_TAG)|g" $(KUSTOMIZE_DIR)/deployments/transactions-service-deployment.yaml
-	@sed -i.bak "s|image: .*api-gateway:.*|image: $(REGISTRY)/api-gateway:$(IMAGE_TAG)|g" $(KUSTOMIZE_DIR)/deployments/api-gateway-deployment.yaml
-	@sed -i.bak "s|image: .*frontend:.*|image: $(REGISTRY)/frontend:$(IMAGE_TAG)|g" $(KUSTOMIZE_DIR)/deployments/frontend-deployment.yaml
-	@sed -i.bak "s|imagePullPolicy: Never|imagePullPolicy: Always|g" $(KUSTOMIZE_DIR)/deployments/*-deployment.yaml
-	@rm -f $(KUSTOMIZE_DIR)/deployments/*.bak
-	@echo "Successfully updated all Kubernetes manifests"
-
-restore-local-images:
-	@echo "Restoring local image references for minikube testing..."
-	@sed -i.bak "s|image: $(REGISTRY)/user-service:.*|image: banking-user-service:latest|g" $(KUSTOMIZE_DIR)/deployments/user-service-deployment.yaml
-	@sed -i.bak "s|image: $(REGISTRY)/accounts-service:.*|image: banking-accounts-service:latest|g" $(KUSTOMIZE_DIR)/deployments/accounts-service-deployment.yaml
-	@sed -i.bak "s|image: $(REGISTRY)/transactions-service:.*|image: banking-transactions-service:latest|g" $(KUSTOMIZE_DIR)/deployments/transactions-service-deployment.yaml
-	@sed -i.bak "s|image: $(REGISTRY)/api-gateway:.*|image: banking-api-gateway:latest|g" $(KUSTOMIZE_DIR)/deployments/api-gateway-deployment.yaml
-	@sed -i.bak "s|image: $(REGISTRY)/frontend:.*|image: banking-frontend:latest|g" $(KUSTOMIZE_DIR)/deployments/frontend-deployment.yaml
-	@sed -i.bak "s|imagePullPolicy: Always|imagePullPolicy: Never|g" $(KUSTOMIZE_DIR)/deployments/*-deployment.yaml
-	@rm -f $(KUSTOMIZE_DIR)/deployments/*.bak
-	@echo "Successfully restored local image references"
 
 # Development targets
 .PHONY: dev-up dev-down dev-logs dev-reset

@@ -25,7 +25,7 @@ spec:
       serviceAccountName: banking-app-sa
       containers:
       - name: accounts-service
-        image: ghcr.io/speedscale/microsvc/accounts-service:feature-phase-8-cicd-pipeline
+        image: ghcr.io/speedscale/microsvc/accounts-service:latest
         imagePullPolicy: Always  # For local minikube testing
         ports:
         - containerPort: 8080
@@ -73,4 +73,4 @@ spec:
       initContainers:
       - name: wait-for-postgres
         image: postgres:15-alpine
-        command: ['sh', '-c', 'until pg_isready -h postgres -p 5432; do echo waiting for postgres; sleep 2; done;']
+        command: ['sh', '-c', 'echo "[accounts-service] Waiting for PostgreSQL to be ready..."; until pg_isready -h postgres -p 5432; do echo "[accounts-service] PostgreSQL not ready, retrying in 2 seconds..."; sleep 2; done; echo "[accounts-service] PostgreSQL is ready!"']

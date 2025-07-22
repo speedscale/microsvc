@@ -51,7 +51,20 @@ export class AuthAPI {
   static async register(userData: RegisterRequest): Promise<AuthResponse> {
     try {
       const response = await authAPI.post('/api/users/register', userData);
-      return response.data;
+      // Handle direct token response from server
+      const tokenData = response.data;
+      return {
+        success: true,
+        message: 'Registration successful',
+        data: {
+          token: tokenData.token,
+          type: tokenData.type,
+          id: tokenData.id,
+          username: tokenData.username,
+          email: tokenData.email,
+          roles: tokenData.roles,
+        }
+      };
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { message?: string; errors?: string[] } } };
       return {
@@ -66,7 +79,20 @@ export class AuthAPI {
   static async login(credentials: LoginRequest): Promise<AuthResponse> {
     try {
       const response = await authAPI.post('/api/users/login', credentials);
-      return response.data;
+      // Handle direct token response from server
+      const tokenData = response.data;
+      return {
+        success: true,
+        message: 'Login successful',
+        data: {
+          token: tokenData.token,
+          type: tokenData.type,
+          id: tokenData.id,
+          username: tokenData.username,
+          email: tokenData.email,
+          roles: tokenData.roles,
+        }
+      };
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { message?: string; errors?: string[] } } };
       return {

@@ -25,7 +25,7 @@ spec:
       serviceAccountName: banking-app-sa
       containers:
       - name: api-gateway
-        image: ghcr.io/speedscale/microsvc/api-gateway:feature-phase-8-cicd-pipeline
+        image: ghcr.io/speedscale/microsvc/api-gateway:latest
         imagePullPolicy: Always  # For local minikube testing
         ports:
         - containerPort: 8080
@@ -68,4 +68,4 @@ spec:
       initContainers:
       - name: wait-for-services
         image: busybox:1.35
-        command: ['sh', '-c', 'until nc -z user-service 8080 && nc -z accounts-service 8080 && nc -z transactions-service 8080; do echo waiting for services; sleep 2; done;']
+        command: ['sh', '-c', 'echo "[api-gateway] Waiting for microservices to be ready..."; while true; do echo "[api-gateway] Checking user-service:8080..."; if nc -z user-service 8080; then echo "[api-gateway] ✓ user-service is ready"; else echo "[api-gateway] ✗ user-service not ready"; sleep 2; continue; fi; echo "[api-gateway] Checking accounts-service:8080..."; if nc -z accounts-service 8080; then echo "[api-gateway] ✓ accounts-service is ready"; else echo "[api-gateway] ✗ accounts-service not ready"; sleep 2; continue; fi; echo "[api-gateway] Checking transactions-service:8080..."; if nc -z transactions-service 8080; then echo "[api-gateway] ✓ transactions-service is ready"; break; else echo "[api-gateway] ✗ transactions-service not ready"; sleep 2; fi; done; echo "[api-gateway] All services are ready!"']
