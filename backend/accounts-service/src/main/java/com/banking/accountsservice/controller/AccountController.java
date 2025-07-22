@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -35,10 +36,10 @@ public class AccountController {
     
     
     @GetMapping
-    public ResponseEntity<List<AccountResponse>> getUserAccounts(Authentication authentication) {
+    public ResponseEntity<List<AccountResponse>> getUserAccounts() {
         Span span = tracer.spanBuilder("get-user-accounts").startSpan();
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = getUserIdFromAuthentication();
             logger.info("Fetching accounts for user: {}", userId);
             
             List<AccountResponse> accounts = accountService.getUserAccounts(userId);
@@ -57,11 +58,10 @@ public class AccountController {
     
     @PostMapping
     public ResponseEntity<AccountResponse> createAccount(
-            @Valid @RequestBody AccountCreateRequest request,
-            Authentication authentication) {
+            @Valid @RequestBody AccountCreateRequest request) {
         Span span = tracer.spanBuilder("create-account").startSpan();
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = getUserIdFromAuthentication();
             logger.info("Creating account for user: {}", userId);
             
             AccountResponse account = accountService.createAccount(request, userId);
@@ -81,11 +81,10 @@ public class AccountController {
     
     @GetMapping("/{accountId}")
     public ResponseEntity<AccountResponse> getAccountById(
-            @PathVariable Long accountId,
-            Authentication authentication) {
+            @PathVariable Long accountId) {
         Span span = tracer.spanBuilder("get-account-by-id").startSpan();
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = getUserIdFromAuthentication();
             logger.info("Fetching account {} for user: {}", accountId, userId);
             
             AccountResponse account = accountService.getAccountById(accountId, userId);
@@ -109,11 +108,10 @@ public class AccountController {
     
     @GetMapping("/{accountId}/balance")
     public ResponseEntity<BalanceResponse> getAccountBalance(
-            @PathVariable Long accountId,
-            Authentication authentication) {
+            @PathVariable Long accountId) {
         Span span = tracer.spanBuilder("get-account-balance").startSpan();
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = getUserIdFromAuthentication();
             logger.info("Fetching balance for account {} for user: {}", accountId, userId);
             
             BalanceResponse balance = accountService.getAccountBalance(accountId, userId);
@@ -138,11 +136,10 @@ public class AccountController {
     @PutMapping("/{accountId}/balance")
     public ResponseEntity<Void> updateAccountBalance(
             @PathVariable Long accountId,
-            @RequestBody Map<String, Object> requestBody,
-            Authentication authentication) {
+            @RequestBody Map<String, Object> requestBody) {
         Span span = tracer.spanBuilder("update-account-balance").startSpan();
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = getUserIdFromAuthentication();
             logger.info("Updating balance for account {} for user: {}", accountId, userId);
             
             Object balanceObj = requestBody.get("balance");
@@ -170,7 +167,11 @@ public class AccountController {
         }
     }
     
-    private Long getUserIdFromAuthentication(Authentication authentication) {
+    private Long getUserIdFromAuthentication() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getDetails() == null) {
+            throw new RuntimeException("User not authenticated");
+        }
         UserAuthenticationDetails details = (UserAuthenticationDetails) authentication.getDetails();
         return details.getUserId();
     }
