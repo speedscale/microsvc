@@ -94,7 +94,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                path.equals("/user/login") ||
                path.equals("/user/check-username") ||
                path.equals("/user/check-email") ||
-               path.equals("/user/health") ||
                path.startsWith("/actuator");
     }
 }
