@@ -24,10 +24,15 @@ WORKDIR /app
 RUN addgroup --gid 1001 nodejs && \
     adduser --uid 1001 --gid 1001 nextjs
 
+# Copy package files for production install
+COPY --from=builder /app/package*.json ./
+
+# Install dependencies including Next.js for runtime
+RUN npm ci --omit=dev && npm install next && npm cache clean --force
+
 # Copy built application
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/.next ./.next
 
 # Change ownership
 RUN chown -R nextjs:nodejs /app
@@ -43,4 +48,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
 
 # Run the application
-CMD ["node", "server.js"]
+CMD ["npx", "next", "start"]
