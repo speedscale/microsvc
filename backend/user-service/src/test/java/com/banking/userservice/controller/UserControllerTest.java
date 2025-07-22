@@ -256,4 +256,12 @@ class UserControllerTest {
         verify(userService, times(1)).emailExists("existing@example.com");
     }
 
+    @Test
+    void healthCheck_Success() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get("/user/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"))
+                .andExpect(jsonPath("$.service").value("user-service"));
+    }
 }

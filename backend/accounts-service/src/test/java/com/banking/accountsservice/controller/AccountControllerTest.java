@@ -179,6 +179,12 @@ class AccountControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void healthCheck_Success() throws Exception {
+        mockMvc.perform(get("/account/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"));
+    }
 
     @TestConfiguration
     static class TestConfig {
