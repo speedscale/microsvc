@@ -106,6 +106,7 @@ update-images:
 	@sed -i.bak "s|image: .*accounts-service:.*|image: $(REGISTRY)/accounts-service:$(IMAGE_TAG)|g" $(KUSTOMIZE_DIR)/deployments/accounts-service-deployment.yaml
 	@sed -i.bak "s|image: .*transactions-service:.*|image: $(REGISTRY)/transactions-service:$(IMAGE_TAG)|g" $(KUSTOMIZE_DIR)/deployments/transactions-service-deployment.yaml
 	@sed -i.bak "s|image: .*api-gateway:.*|image: $(REGISTRY)/api-gateway:$(IMAGE_TAG)|g" $(KUSTOMIZE_DIR)/deployments/api-gateway-deployment.yaml
+	@sed -i.bak "s|image: .*frontend:.*|image: $(REGISTRY)/frontend:$(IMAGE_TAG)|g" $(KUSTOMIZE_DIR)/deployments/frontend-deployment.yaml
 	@sed -i.bak "s|imagePullPolicy: Never|imagePullPolicy: Always|g" $(KUSTOMIZE_DIR)/deployments/*-deployment.yaml
 	@rm -f $(KUSTOMIZE_DIR)/deployments/*.bak
 	@echo "Successfully updated all Kubernetes manifests"
@@ -116,6 +117,7 @@ restore-local-images:
 	@sed -i.bak "s|image: $(REGISTRY)/accounts-service:.*|image: banking-accounts-service:latest|g" $(KUSTOMIZE_DIR)/deployments/accounts-service-deployment.yaml
 	@sed -i.bak "s|image: $(REGISTRY)/transactions-service:.*|image: banking-transactions-service:latest|g" $(KUSTOMIZE_DIR)/deployments/transactions-service-deployment.yaml
 	@sed -i.bak "s|image: $(REGISTRY)/api-gateway:.*|image: banking-api-gateway:latest|g" $(KUSTOMIZE_DIR)/deployments/api-gateway-deployment.yaml
+	@sed -i.bak "s|image: $(REGISTRY)/frontend:.*|image: banking-frontend:latest|g" $(KUSTOMIZE_DIR)/deployments/frontend-deployment.yaml
 	@sed -i.bak "s|imagePullPolicy: Always|imagePullPolicy: Never|g" $(KUSTOMIZE_DIR)/deployments/*-deployment.yaml
 	@rm -f $(KUSTOMIZE_DIR)/deployments/*.bak
 	@echo "Successfully restored local image references"

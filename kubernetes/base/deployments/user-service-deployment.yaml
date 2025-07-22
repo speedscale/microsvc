@@ -25,8 +25,8 @@ spec:
       serviceAccountName: banking-app-sa
       containers:
       - name: user-service
-        image: banking-user-service:latest
-        imagePullPolicy: Never
+        image: ghcr.io/speedscale/microsvc/user-service:feature-phase-8-cicd-pipeline
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
           name: http

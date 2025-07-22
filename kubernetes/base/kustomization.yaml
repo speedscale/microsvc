@@ -17,18 +17,21 @@ resources:
   # ConfigMaps and Secrets
   - configmaps/app-config.yaml
   - configmaps/app-secrets.yaml
+  - configmaps/frontend-config.yaml
   
   # Microservice Deployments
   - deployments/user-service-deployment.yaml
   - deployments/accounts-service-deployment.yaml
   - deployments/transactions-service-deployment.yaml
   - deployments/api-gateway-deployment.yaml
+  - deployments/frontend-deployment.yaml
   
   # Microservice Services
   - services/user-service-service.yaml
   - services/accounts-service-service.yaml
   - services/transactions-service-service.yaml
   - services/api-gateway-service.yaml
+  - services/frontend-service.yaml
 
 namespace: banking-app
 
