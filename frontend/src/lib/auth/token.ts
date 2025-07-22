@@ -9,8 +9,8 @@ export class TokenManager {
   static setToken(token: string): void {
     Cookies.set(this.tokenKey, token, {
       httpOnly: false, // Note: js-cookie can't set httpOnly cookies, but we'll handle this server-side
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: false, // Allow over HTTP for development and testing
+      sameSite: 'lax',
       expires: 1, // 1 day
     });
   }
