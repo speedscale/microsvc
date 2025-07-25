@@ -8,7 +8,7 @@ spring:
     name: transactions-service
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/banking_app
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:banking_app}
     username: transactions_service_user
     password: transactions_service_pass
     driver-class-name: org.postgresql.Driver
@@ -35,7 +35,7 @@ spring:
     schemas: transactions_service
     user: transactions_service_user
     password: transactions_service_pass
-    url: jdbc:postgresql://localhost:5432/banking_app
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:banking_app}
   main:
     web-application-type: servlet
 

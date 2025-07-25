@@ -1,5 +1,5 @@
 # Multi-stage build for Next.js frontend
-FROM node:20-slim AS builder
+FROM --platform=$BUILDPLATFORM node:20-slim AS builder
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ COPY . .
 RUN npm run build
 
 # Runtime image
-FROM node:20-slim
+FROM --platform=$TARGETPLATFORM node:20-slim
 
 WORKDIR /app
 

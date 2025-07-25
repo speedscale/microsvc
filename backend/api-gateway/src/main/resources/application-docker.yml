@@ -1,155 +1,67 @@
+# Shared Spring Boot configuration for Docker environment
+# This file should be copied to each service's resources directory
+
 spring:
-  application:
-    name: api-gateway
+  main:
+    lazy-initialization: true
+    banner-mode: off
+  
   cloud:
     gateway:
+      discovery:
+        locator:
+          enabled: false
       routes:
-        # Health check routes for direct access (higher priority with lower order)
-        - id: user-service-health
-          uri: ${services.user-service.url}
-          order: -1
-          predicates:
-            - Path=/api/user-service/health
-          filters:
-            - RewritePath=/api/user-service/health, /actuator/health
-        - id: accounts-service-health
-          uri: ${services.accounts-service.url}
-          order: -1
-          predicates:
-            - Path=/api/accounts-service/health
-          filters:
-            - RewritePath=/api/accounts-service/health, /actuator/health
-        - id: transactions-service-health
-          uri: ${services.transactions-service.url}
-          order: -1
-          predicates:
-            - Path=/api/transactions-service/health
-          filters:
-            - RewritePath=/api/transactions-service/health, /actuator/health
-            
-        # Simplified API routes (for frontend compatibility)
-        - id: users-simplified
-          uri: ${services.user-service.url}
+        - id: user-service
+          uri: http://user-service:8080
           predicates:
             - Path=/api/users/**
           filters:
-            - RewritePath=/api/users/(?<path>.*), /user/$\{path}
-        - id: accounts-transactions-simplified
-          uri: ${services.accounts-service.url}
-          predicates:
-            - Path=/api/accounts/*/transactions/**
-          filters:
-            - RewritePath=/api/accounts/(?<accountId>[^/]+)/transactions/(?<path>.*), /accounts/account/$\{accountId}/transactions/$\{path}
-        - id: accounts-transactions-root-simplified
-          uri: ${services.accounts-service.url}
-          predicates:
-            - Path=/api/accounts/*/transactions
-          filters:
-            - RewritePath=/api/accounts/(?<accountId>[^/]+)/transactions, /accounts/account/$\{accountId}/transactions
-        - id: accounts-simplified
-          uri: ${services.accounts-service.url}
+            - StripPrefix=1
+        - id: accounts-service
+          uri: http://accounts-service:8080
           predicates:
             - Path=/api/accounts/**
           filters:
-            - RewritePath=/api/accounts/(?<path>.*), /accounts/$\{path}
-        - id: transactions-simplified
-          uri: ${services.transactions-service.url}
+            - StripPrefix=1
+        - id: transactions-service
+          uri: http://transactions-service:8080
           predicates:
             - Path=/api/transactions/**
           filters:
-            - RewritePath=/api/transactions/(?<path>.*), /transactions/$\{path}
-            
-        # Main service routes (legacy - kept for backward compatibility)
-        - id: user-service
-          uri: ${services.user-service.url}
-          predicates:
-            - Path=/api/user-service/**
-          filters:
-            - RewritePath=/api/user-service/(?<path>.*), /user/$\{path}
-        - id: accounts-service
-          uri: ${services.accounts-service.url}
-          predicates:
-            - Path=/api/accounts-service/**
-          filters:
-            - RewritePath=/api/accounts-service/(?<path>.*), /accounts/$\{path}
-        - id: transactions-service
-          uri: ${services.transactions-service.url}
-          predicates:
-            - Path=/api/transactions-service/**
-          filters:
-            - RewritePath=/api/transactions-service/(?<path>.*), /transactions/$\{path}
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowedOrigins: "http://localhost:3000"
-            allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - OPTIONS
-            allowedHeaders: "*"
-            allowCredentials: true
-            maxAge: 3600
-      httpclient:
-        connect-timeout: 30000
-        response-timeout: 60s
-  # Redis rate limiter configuration removed - not using rate limiting currently
+            - StripPrefix=1
 
-server:
-  port: 8080
-
-# Service Discovery Configuration
-services:
-  user-service:
-    url: ${USER_SERVICE_URL:http://user-service:8080}
-  accounts-service:
-    url: ${ACCOUNTS_SERVICE_URL:http://accounts-service:8080}
-  transactions-service:
-    url: ${TRANSACTIONS_SERVICE_URL:http://transactions-service:8080}
-
-# JWT Configuration
-jwt:
-  secret: ${JWT_SECRET:banking-app-super-secret-key-change-this-in-production-256-bit}
-  expiration: ${JWT_EXPIRATION:86400000}
-
-# Logging Configuration
-logging:
-  level:
-    com.banking.apigateway: DEBUG
-    org.springframework.cloud.gateway: DEBUG
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-
-# Management and Monitoring
+# Actuator configuration for monitoring
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus,metrics
+        include: health,info
   endpoint:
     health:
-      show-details: always
-  tracing:
-    enabled: ${TRACING_ENABLED:true}
-    sampling:
-      probability: 1.0
-  otlp:
-    tracing:
-      endpoint: ${OTLP_ENDPOINT:http://jaeger:4317}
+      show-details: when-authorized
+    prometheus:
+      enabled: false
+  metrics:
+    export:
+      prometheus:
+        enabled: false
 
-# Info endpoint
-info:
-  app:
-    name: ${spring.application.name}
-    description: Banking API Gateway
-    version: 1.0.0
-    encoding: UTF-8
-    java:
-      version: ${java.version}
+# Logging configuration - reduced for faster startup
+logging:
+  level:
+    com.banking: INFO
+    org.springframework.web: WARN
+    org.springframework.cloud.gateway: WARN
+    org.springframework.boot.autoconfigure: WARN
+    io.opentelemetry: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /var/log/banking-app.log
 
-# OpenTelemetry Configuration
+# OpenTelemetry configuration - conditional
 otel:
   service:
     name: ${spring.application.name}
@@ -158,10 +70,12 @@ otel:
       protocol: http/protobuf
       endpoint: http://jaeger:4318
   traces:
-    exporter: otlp
+    exporter: ${OTEL_TRACES_EXPORTER:otlp}
+    sampler:
+      type: always_on
   metrics:
-    exporter: otlp
+    exporter: ${OTEL_METRICS_EXPORTER:otlp}
   logs:
-    exporter: otlp
+    exporter: ${OTEL_LOGS_EXPORTER:otlp}
   propagation:
     type: w3c
