@@ -41,11 +41,8 @@ The application is designed to run on multiple CPU architectures:
 
 ### 1. Local Development (minikube)
 ```bash
-# Build and deploy locally
+# Complete local deployment
 ./scripts/deploy-minikube.sh
-
-# Or build optimized images only
-./scripts/rebuild-optimized.sh
 ```
 
 ### 2. Production (Registry Images)
@@ -115,14 +112,8 @@ Images are published to: `ghcr.io/speedscale/microsvc/`
 
 1. **Local Development**
    ```bash
-   # Start minikube
-   minikube start
-   
-   # Build local images
-   ./scripts/build-local.sh
-   
-   # Deploy
-   kubectl apply -k kubernetes/overlays/local/
+   # Complete local deployment (builds images and deploys)
+   ./scripts/deploy-minikube.sh
    ```
 
 2. **Testing**

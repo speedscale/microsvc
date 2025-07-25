@@ -36,10 +36,7 @@ This feature branch implements comprehensive multi-architecture deployment suppo
 
 ### New Files
 - `MULTIARCH_DEPLOYMENT.md` - Comprehensive deployment guide
-- `scripts/build-local.sh` - Local image building
-- `scripts/build-multiarch.sh` - Multi-arch registry builds
-- `scripts/deploy-minikube.sh` - Complete local deployment
-- `scripts/rebuild-optimized.sh` - Optimized service rebuilding
+- `scripts/deploy-minikube.sh` - Complete local deployment (builds images and deploys)
 - `scripts/check-startup-times.sh` - Performance monitoring
 - `kubernetes/overlays/local/kustomization.yaml` - Local deployment overlay
 
