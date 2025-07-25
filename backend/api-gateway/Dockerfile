@@ -1,5 +1,5 @@
 # Multi-stage build for API Gateway
-FROM maven:3-amazoncorretto-20 AS builder
+FROM --platform=$BUILDPLATFORM maven:3-amazoncorretto-20 AS builder
 
 WORKDIR /app
 
@@ -14,14 +14,14 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Runtime image
-FROM amazoncorretto:20-alpine
+FROM --platform=$TARGETPLATFORM amazoncorretto:20-alpine
 
 WORKDIR /app
 
 # Install curl for health checks and create non-root user
 RUN apk add --no-cache curl && \
     addgroup -g 1001 -S appuser && \
-    adduser -S appuser -u 1001 -G appuser
+    adduser -S appuser -u 1001
 
 # Copy the built JAR file
 COPY --from=builder /app/target/api-gateway-*.jar app.jar
@@ -34,11 +34,26 @@ RUN mkdir -p /var/log && \
 USER appuser
 
 # Expose port
-EXPOSE 8080
+EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8080/actuator/health || exit 1
+    CMD curl -f http://localhost:80/actuator/health || exit 1
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+# Run the application with optimized JVM flags for faster startup
+ENTRYPOINT ["java", \
+    "-XX:+UseContainerSupport", \
+    "-XX:MaxRAMPercentage=75.0", \
+    "-XX:+UseG1GC", \
+    "-XX:+UseStringDeduplication", \
+    "-XX:+OptimizeStringConcat", \
+    "-XX:+UseCompressedOops", \
+    "-XX:+UseCompressedClassPointers", \
+    "-XX:+TieredCompilation", \
+    "-XX:TieredStopAtLevel=1", \
+    "-Djava.security.egd=file:/dev/./urandom", \
+    "-Dspring.main.lazy-initialization=true", \
+    "-Dspring.main.banner-mode=off", \
+    "-Dlogging.level.org.springframework.boot.autoconfigure=WARN", \
+    "-Dlogging.level.io.opentelemetry=WARN", \
+    "-jar", "/app/app.jar"]

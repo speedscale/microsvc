@@ -39,6 +39,8 @@
 - [x] Set up GitHub Actions for automated building and testing
 - [x] Configure Docker image registry with proper tagging and versioning
 - [x] Update Kubernetes manifests to use registry images instead of local builds
+- [x] The images need to be for multiple architectures arm and amd
+- [x] The spring boot apps are taking a very long time like 5+ minutes to start, improve startup time
 
 ## Phase 9: Production Kubernetes Deployment
 - [ ] Deploy application to production Kubernetes cluster with registry images
