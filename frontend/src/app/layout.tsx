@@ -23,6 +23,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Server-side logging for debugging
+  if (typeof window === 'undefined') {
+    console.log('🚀 Frontend layout component rendered on server');
+  }
+
   return (
     <html lang='en'>
       <body

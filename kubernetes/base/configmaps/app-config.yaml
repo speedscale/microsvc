@@ -99,6 +99,16 @@ metadata:
     app.kubernetes.io/component: config
     app.kubernetes.io/service: frontend
 data:
+  # Backend API configuration
+  BACKEND_API_URL: "http://api-gateway:80"
+  NEXT_PUBLIC_API_URL: "http://localhost:8080"
+  
+  # OpenTelemetry configuration
   OTEL_SERVICE_NAME: "frontend"
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318/v1/traces"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
   OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app"
+  
+  # Next.js configuration
+  NODE_ENV: "production"
+  NEXT_TELEMETRY_DISABLED: "1"

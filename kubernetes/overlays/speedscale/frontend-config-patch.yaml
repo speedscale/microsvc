@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: banking-app
+data:
+  # Backend API configuration for speedscale deployment
+  BACKEND_API_URL: "http://api-gateway:80"
+  NEXT_PUBLIC_API_URL: "https://your-api-domain.com"
+  
+  # OpenTelemetry configuration
+  OTEL_SERVICE_NAME: "frontend"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318/v1/traces"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+  OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app"
+  
+  # Next.js configuration
+  NODE_ENV: "production"
+  NEXT_TELEMETRY_DISABLED: "1" 
