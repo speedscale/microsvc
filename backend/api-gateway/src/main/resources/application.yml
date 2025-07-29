@@ -33,7 +33,7 @@ spring:
           predicates:
             - Path=/api/users/**
           filters:
-            - RewritePath=/api/users/(?<path>.*), /user/$\{path}
+            - RewritePath=/api/users/(?<path>.*), /user/${path}
         - id: accounts-transactions-simplified
           uri: ${services.accounts-service.url}
           predicates:
