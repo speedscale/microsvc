@@ -3,7 +3,6 @@ kind: Kustomization
 
 resources:
 - ../../base
-- frontend-config-patch.yaml
 
 patchesStrategicMerge:
 - user-service-annotations.yaml
