@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { TokenManager } from '../auth/token';
 
+// Use relative URL if NEXT_PUBLIC_API_URL is not set (works with Next.js API proxying)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 const API_TIMEOUT = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000');
 

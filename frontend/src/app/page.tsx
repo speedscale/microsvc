@@ -9,10 +9,14 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
+    console.log('🏠 Home page component mounted, auth status:', { isAuthenticated, isLoading });
+    
     if (!isLoading) {
       if (isAuthenticated) {
+        console.log('🔐 User authenticated, redirecting to dashboard');
         router.push('/dashboard');
       } else {
+        console.log('🔓 User not authenticated, redirecting to login');
         router.push('/login');
       }
     }

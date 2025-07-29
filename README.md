@@ -48,6 +48,22 @@ docker-compose up -d
 ./mvnw spring-boot:run
 ```
 
+### Kubernetes Deployment
+
+**Local Development**:
+```bash
+# Deploy with localhost configuration
+kubectl apply -k kubernetes/base/
+```
+
+**Production Deployment**:
+```bash
+# Deploy with production configuration
+kubectl apply -k kubernetes/overlays/speedscale/
+```
+
+**Note**: For production, edit `kubernetes/overlays/speedscale/frontend-config-patch.yaml` to set your actual API domain instead of `https://your-api-domain.com`.
+
 ### Frontend Development
 ```bash
 # Start Next.js development server
