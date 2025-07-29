@@ -16,7 +16,9 @@
     "test:ci": "jest --coverage --watchAll=false",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:headed": "playwright test --headed"
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:with-backend": "../scripts/run-e2e-tests.sh",
+    "test:e2e:real-backend": "playwright test --config=playwright.config.real-backend.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",

@@ -6,9 +6,9 @@ test.describe('Authentication Flow', () => {
     await page.goto('/register');
     
     // Step 2: Fill registration form
-    await page.getByPlaceholder('Enter your username').fill('newtestuser');
-    await page.getByPlaceholder('Enter your email').fill('newtest@example.com');
-    await page.getByPlaceholder('Enter your password').fill('password123');
+    await page.getByPlaceholder('Choose a username').fill('newtestuser');
+    await page.getByPlaceholder('Enter your email address').fill('newtest@example.com');
+    await page.getByPlaceholder('Create a password').fill('password123');
     await page.getByPlaceholder('Confirm your password').fill('password123');
     
     // Mock successful registration
@@ -25,10 +25,10 @@ test.describe('Authentication Flow', () => {
     
     // Step 3: Submit registration
     await page.getByRole('button', { name: 'Create account' }).click();
-    await expect(page.getByText('Registration successful. Please check your email to verify your account.')).toBeVisible();
+    await expect(page.getByText('Account created successfully! Please sign in.')).toBeVisible();
     
     // Step 4: Navigate to login page
-    await page.getByRole('link', { name: 'sign in to your account' }).click();
+    await page.getByRole('link', { name: 'sign in to your existing account' }).click();
     await expect(page).toHaveURL('/login');
     
     // Step 5: Login with the same credentials
@@ -75,7 +75,7 @@ test.describe('Authentication Flow', () => {
     await expect(page).toHaveURL('/dashboard');
     
     // Step 7: Verify user is logged in
-    await expect(page.getByText('Welcome back, newtestuser!')).toBeVisible();
+    await expect(page.getByText(new RegExp(`Welcome back, newtestuser!`))).toBeVisible();
   });
 
   test('should protect routes when not authenticated', async ({ page }) => {

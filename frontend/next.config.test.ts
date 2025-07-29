@@ -11,10 +11,10 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.BACKEND_API_URL || 'http://api-gateway:80'}/api/:path*`,
+        destination: `${process.env.BACKEND_API_URL || 'http://localhost:8080'}/api/:path*`,
       },
     ]
   },
 };
 
-export default nextConfig;
+export default nextConfig; 
