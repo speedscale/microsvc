@@ -1,5 +1,5 @@
 # Multi-stage build for API Gateway
-FROM --platform=$BUILDPLATFORM maven:3-amazoncorretto-20 AS builder
+FROM --platform=$BUILDPLATFORM maven:3-amazoncorretto-21 AS builder
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Runtime image
-FROM --platform=$TARGETPLATFORM gcr.io/distroless/java20-debian12
+FROM --platform=$TARGETPLATFORM gcr.io/distroless/java21-debian12
 
 WORKDIR /app
 
