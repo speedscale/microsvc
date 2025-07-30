@@ -1,5 +1,5 @@
 # Multi-stage build for API Gateway
-FROM --platform=$BUILDPLATFORM maven:3-amazoncorretto-21 AS builder
+FROM --platform=$BUILDPLATFORM maven:3-amazoncorretto-17 AS builder
 
 WORKDIR /app
 
@@ -13,13 +13,19 @@ COPY src ./src
 # Build the application
 RUN mvn clean package -DskipTests
 
+# Extract layers from the JAR
+RUN java -Djarmode=layertools -jar target/api-gateway-*.jar extract
+
 # Runtime image
-FROM --platform=$TARGETPLATFORM gcr.io/distroless/java21-debian12
+FROM --platform=$TARGETPLATFORM gcr.io/distroless/java17-debian12
 
 WORKDIR /app
 
-# Copy the built JAR file
-COPY --from=builder /app/target/api-gateway-*.jar app.jar
+# Copy layers in order of likelihood to change (dependencies first, then application)
+COPY --from=builder /app/dependencies/ ./
+COPY --from=builder /app/spring-boot-loader/ ./
+COPY --from=builder /app/snapshot-dependencies/ ./
+COPY --from=builder /app/application/ ./
 
 # Switch to non-root user (distroless default is nonroot:65534)
 USER 65534
@@ -42,4 +48,4 @@ ENTRYPOINT ["java", \
     "-Dspring.main.banner-mode=off", \
     "-Dlogging.level.org.springframework.boot.autoconfigure=WARN", \
     "-Dlogging.level.io.opentelemetry=WARN", \
-    "-jar", "/app/app.jar"]
+    "org.springframework.boot.loader.JarLauncher"]

@@ -1,5 +1,5 @@
 # Multi-stage build for Accounts Service
-FROM --platform=$BUILDPLATFORM maven:3-amazoncorretto-21 AS builder
+FROM --platform=$BUILDPLATFORM maven:3-amazoncorretto-17 AS builder
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ RUN mvn clean package -DskipTests
 RUN java -Djarmode=layertools -jar target/accounts-service-*.jar extract
 
 # Runtime image
-FROM --platform=$TARGETPLATFORM gcr.io/distroless/java21-debian12
+FROM --platform=$TARGETPLATFORM gcr.io/distroless/java17-debian12
 
 WORKDIR /app
 
