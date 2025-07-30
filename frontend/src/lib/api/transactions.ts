@@ -133,6 +133,7 @@ export class TransactionsAPI {
     description: string,
     currency: string = 'USD'
   ): Promise<ApiResponse<Transaction>> {
+    console.log(`[TRANSACTION] Creating deposit: Account ${accountId}, Amount ${amount} ${currency}`);
     const transactionData: CreateTransactionRequest = {
       accountId,
       type: 'DEPOSIT',
@@ -141,7 +142,13 @@ export class TransactionsAPI {
       description,
     };
 
-    return await this.createTransaction(transactionData);
+    const result = await this.createTransaction(transactionData);
+    if (result.success) {
+      console.log(`[TRANSACTION] Deposit created successfully: ${result.data?.id}`);
+    } else {
+      console.error(`[TRANSACTION] Deposit failed:`, result.message);
+    }
+    return result;
   }
 
   // Create withdrawal transaction
@@ -151,6 +158,7 @@ export class TransactionsAPI {
     description: string,
     currency: string = 'USD'
   ): Promise<ApiResponse<Transaction>> {
+    console.log(`[TRANSACTION] Creating withdrawal: Account ${accountId}, Amount ${amount} ${currency}`);
     const transactionData: CreateTransactionRequest = {
       accountId,
       type: 'WITHDRAWAL',
@@ -159,7 +167,13 @@ export class TransactionsAPI {
       description,
     };
 
-    return await this.createTransaction(transactionData);
+    const result = await this.createTransaction(transactionData);
+    if (result.success) {
+      console.log(`[TRANSACTION] Withdrawal created successfully: ${result.data?.id}`);
+    } else {
+      console.error(`[TRANSACTION] Withdrawal failed:`, result.message);
+    }
+    return result;
   }
 
   // Create transfer transaction
@@ -170,6 +184,7 @@ export class TransactionsAPI {
     description: string,
     currency: string = 'USD'
   ): Promise<ApiResponse<Transaction>> {
+    console.log(`[TRANSACTION] Creating transfer: From Account ${fromAccountId} to Account ${toAccountId}, Amount ${amount} ${currency}`);
     const transactionData: CreateTransactionRequest = {
       accountId: fromAccountId,
       toAccountId,
@@ -179,7 +194,13 @@ export class TransactionsAPI {
       description,
     };
 
-    return await this.createTransaction(transactionData);
+    const result = await this.createTransaction(transactionData);
+    if (result.success) {
+      console.log(`[TRANSACTION] Transfer created successfully: ${result.data?.id}`);
+    } else {
+      console.error(`[TRANSACTION] Transfer failed:`, result.message);
+    }
+    return result;
   }
 
   // Cancel transaction (if pending)
