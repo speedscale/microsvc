@@ -26,7 +26,7 @@ spec:
       containers:
       - name: user-service
         image: ghcr.io/speedscale/microsvc/user-service:latest
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
           name: http
@@ -51,7 +51,7 @@ spec:
         resources:
           requests:
             memory: "256Mi"
-            cpu: "100m"
+            cpu: "200m"
           limits:
             memory: "512Mi"
             cpu: "250m"
@@ -59,7 +59,7 @@ spec:
           httpGet:
             path: /actuator/health
             port: 8080
-          initialDelaySeconds: 120
+          initialDelaySeconds: 30
           periodSeconds: 30
           timeoutSeconds: 5
           failureThreshold: 5
@@ -67,7 +67,7 @@ spec:
           httpGet:
             path: /actuator/health
             port: 8080
-          initialDelaySeconds: 60
+          initialDelaySeconds: 15
           periodSeconds: 10
           timeoutSeconds: 5
           successThreshold: 1
@@ -75,4 +75,4 @@ spec:
       initContainers:
       - name: wait-for-postgres
         image: postgres:15-alpine
-        command: ['sh', '-c', 'echo "[user-service] Waiting for PostgreSQL to be ready..."; until pg_isready -h postgres -p 5432; do echo "[user-service] PostgreSQL not ready, retrying in 2 seconds..."; sleep 2; done; echo "[user-service] PostgreSQL is ready!"']
+        command: ['sh', '-c', 'echo "[user-service] Waiting for PostgreSQL..."; until pg_isready -h postgres -p 5432 -q; do sleep 1; done; echo "[user-service] PostgreSQL ready!"']

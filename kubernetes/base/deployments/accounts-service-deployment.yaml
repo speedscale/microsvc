@@ -26,7 +26,7 @@ spec:
       containers:
       - name: accounts-service
         image: ghcr.io/speedscale/microsvc/accounts-service:latest
-        imagePullPolicy: Always  # For local minikube testing
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
           name: http
@@ -51,23 +51,29 @@ spec:
         resources:
           requests:
             memory: "256Mi"
-            cpu: "100m"
+            cpu: "200m"
           limits:
             memory: "512Mi"
             cpu: "250m"
+        startupProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 20
         livenessProbe:
           httpGet:
             path: /actuator/health
             port: 8080
-          initialDelaySeconds: 120
           periodSeconds: 30
           timeoutSeconds: 5
-          failureThreshold: 5
+          failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /actuator/health
             port: 8080
-          initialDelaySeconds: 60
           periodSeconds: 10
           timeoutSeconds: 5
           successThreshold: 1
@@ -75,4 +81,4 @@ spec:
       initContainers:
       - name: wait-for-postgres
         image: postgres:15-alpine
-        command: ['sh', '-c', 'echo "[accounts-service] Waiting for PostgreSQL to be ready..."; until pg_isready -h postgres -p 5432; do echo "[accounts-service] PostgreSQL not ready, retrying in 2 seconds..."; sleep 2; done; echo "[accounts-service] PostgreSQL is ready!"']
+        command: ['sh', '-c', 'echo "[accounts-service] Waiting for PostgreSQL..."; until pg_isready -h postgres -p 5432 -q; do sleep 1; done; echo "[accounts-service] PostgreSQL ready!"']
