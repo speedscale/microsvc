@@ -99,9 +99,8 @@ metadata:
     app.kubernetes.io/component: config
     app.kubernetes.io/service: frontend
 data:
-  # Backend API configuration
-  BACKEND_API_URL: "http://api-gateway:80"
-  NEXT_PUBLIC_API_URL: "http://api-gateway.banking-app.svc.cluster.local"
+  # Backend API configuration  
+  API_GATEWAY_URL: "http://api-gateway:8080"
   
   # OpenTelemetry configuration
   OTEL_SERVICE_NAME: "frontend"

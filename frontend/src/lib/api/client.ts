@@ -2,9 +2,9 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { TokenManager } from '../auth/token';
 import { logApiRequest, logApiResponse, logError } from '../logger';
 
-// Use relative URL if NEXT_PUBLIC_API_URL is not set (works with Next.js API proxying)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
-const API_TIMEOUT = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000');
+// Always use relative URLs - Next.js will handle API routing
+const API_BASE_URL = '';
+const API_TIMEOUT = 30000;
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
