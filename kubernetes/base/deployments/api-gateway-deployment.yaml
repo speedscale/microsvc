@@ -70,4 +70,4 @@ spec:
       initContainers:
       - name: wait-for-services
         image: busybox:1.35
-        command: ['sh', '-c', 'echo "[api-gateway] Waiting for microservices..."; services="user-service:8080 accounts-service:8080 transactions-service:8080"; for service in $services; do while ! nc -z ${service%:*} ${service#*:}; do echo "[api-gateway] Waiting for $service..."; sleep 1; done; echo "[api-gateway] ✓ $service ready"; done; echo "[api-gateway] All services ready!"']
+        command: ['sh', '-c', 'echo "[api-gateway] Waiting for microservices..."; services="user-service:80 accounts-service:80 transactions-service:80"; for service in $services; do while ! nc -z ${service%:*} ${service#*:}; do echo "[api-gateway] Waiting for $service..."; sleep 1; done; echo "[api-gateway] ✓ $service ready"; done; echo "[api-gateway] All services ready!"']
