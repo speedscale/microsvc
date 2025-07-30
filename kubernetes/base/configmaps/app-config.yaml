@@ -13,9 +13,9 @@ data:
   DB_NAME: "banking_app"
   
   # Service URLs (for inter-service communication)
-  USER_SERVICE_URL: "http://user-service:8080"
-  ACCOUNTS_SERVICE_URL: "http://accounts-service:8080"
-  TRANSACTIONS_SERVICE_URL: "http://transactions-service:8080"
+  USER_SERVICE_URL: "http://user-service:80"
+  ACCOUNTS_SERVICE_URL: "http://accounts-service:80"
+  TRANSACTIONS_SERVICE_URL: "http://transactions-service:80"
   
   # Spring profiles
   SPRING_PROFILES_ACTIVE: "docker"
@@ -100,7 +100,7 @@ metadata:
     app.kubernetes.io/service: frontend
 data:
   # Backend API configuration  
-  API_GATEWAY_URL: "http://api-gateway:8080"
+  API_GATEWAY_URL: "http://api-gateway:80"
   
   # OpenTelemetry configuration
   OTEL_SERVICE_NAME: "frontend"
