@@ -16,10 +16,14 @@ RUN mvn clean package -DskipTests
 # Extract layers from the JAR
 RUN java -Djarmode=layertools -jar target/accounts-service-*.jar extract
 
-# Runtime image
-FROM --platform=$TARGETPLATFORM gcr.io/distroless/java17-debian12
+# Runtime image - use Amazon Corretto Alpine for Colima compatibility
+FROM --platform=$TARGETPLATFORM amazoncorretto:17-alpine
 
 WORKDIR /app
+
+# Create non-root user
+RUN addgroup -g 1001 spring && \
+    adduser -D -s /bin/sh -u 1001 -G spring spring
 
 # Copy layers in order of likelihood to change (dependencies first, then application)
 COPY --from=builder /app/dependencies/ ./
@@ -27,8 +31,11 @@ COPY --from=builder /app/spring-boot-loader/ ./
 COPY --from=builder /app/snapshot-dependencies/ ./
 COPY --from=builder /app/application/ ./
 
-# Switch to non-root user (distroless default is nonroot:65534)
-USER 65534
+# Change ownership to non-root user
+RUN chown -R spring:spring /app
+
+# Switch to non-root user
+USER spring
 
 # Expose port
 EXPOSE 8080

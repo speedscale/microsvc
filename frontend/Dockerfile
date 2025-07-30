@@ -18,18 +18,25 @@ ENV NODE_ENV=production
 # Build the application with standalone output
 RUN npm run build
 
-# Runtime image - use distroless for minimal size
-FROM --platform=$TARGETPLATFORM gcr.io/distroless/nodejs20-debian12
+# Runtime image - use Alpine for Colima compatibility
+FROM --platform=$TARGETPLATFORM node:20-alpine
 
 WORKDIR /app
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nextjs -u 1001
 
 # Copy only the standalone Next.js build
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-# Switch to non-root user (distroless default is nonroot:65534)
-USER 65534
+# Change ownership to non-root user
+RUN chown -R nextjs:nodejs /app
+
+# Switch to non-root user
+USER nextjs
 
 # Expose port
 EXPOSE 3000
