@@ -27,7 +27,7 @@ spec:
       containers:
       - name: frontend
         image: ghcr.io/speedscale/microsvc/frontend:latest
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000
           name: http
@@ -37,7 +37,7 @@ spec:
         resources:
           requests:
             memory: "256Mi"
-            cpu: "100m"
+            cpu: "150m"
           limits:
             memory: "512Mi"
             cpu: "250m"

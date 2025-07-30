@@ -47,7 +47,7 @@ docker-push:
 docker-build-push: docker-build docker-push
 
 # Test targets
-.PHONY: test-backend test-frontend test-all
+.PHONY: test-backend test-frontend test-all test-e2e validate-e2e
 test-backend:
 	@echo "Running backend tests..."
 	@for service in $(SERVICES); do \
@@ -59,7 +59,13 @@ test-frontend:
 	@echo "Running frontend tests..."
 	cd frontend && npm ci && npm test -- --coverage --watchAll=false
 
-test-all: test-backend test-frontend
+test-e2e:
+	@echo "Running E2E tests..."
+	./scripts/validate-e2e.sh
+
+validate-e2e: test-e2e
+
+test-all: test-backend test-frontend test-e2e
 
 # Kubernetes targets
 .PHONY: k8s-deploy k8s-deploy-local k8s-undeploy k8s-redeploy k8s-status k8s-cleanup deploy undeploy redeploy status deploy-k8s cleanup-k8s
@@ -170,7 +176,9 @@ help:
 	@echo "  docker-build-push  - Build and push Docker images"
 	@echo "  test-backend       - Run backend tests"
 	@echo "  test-frontend      - Run frontend tests"
-	@echo "  test-all           - Run all tests"
+	@echo "  test-e2e           - Run E2E tests with CI configuration"
+	@echo "  validate-e2e       - Validate E2E tests (alias for test-e2e)"
+	@echo "  test-all           - Run all tests (backend, frontend, e2e)"
 	@echo ""
 	@echo "Kubernetes:"
 	@echo "  k8s-deploy         - Deploy to Kubernetes (registry images)"

@@ -4,20 +4,39 @@ This directory contains end-to-end tests for the banking application frontend us
 
 ## Test Types
 
-### 1. Mocked Tests (`auth-flow.spec.ts`)
+### 1. Simplified CI Tests (`simple.spec.ts`) - **RECOMMENDED FOR CI**
+These tests use API mocking and are optimized for CI/CD pipelines with:
+- Single browser (Chromium only)
+- Mocked APIs to avoid network dependencies
+- Shorter timeouts and faster execution
+- Circuit breaker for failures
+- Focused on core functionality
+
+**Pros:**
+- Fast execution (2-3 minutes)
+- No external dependencies
+- Predictable results
+- Reliable in CI/CD
+- No network timeouts
+
+**Cons:**
+- Doesn't test real API integration
+- May miss backend-specific issues
+
+### 2. Mocked Tests (`auth-flow.spec.ts`)
 These tests use API mocking to test the frontend in isolation without requiring backend services.
 
 **Pros:**
 - Fast execution
 - No external dependencies
 - Predictable results
-- Good for CI/CD
+- Good for development
 
 **Cons:**
 - Doesn't test real API integration
 - May miss backend-specific issues
 
-### 2. Real Backend Tests (`real-backend.spec.ts`)
+### 3. Real Backend Tests (`real-backend.spec.ts`)
 These tests work with the actual backend services to test the complete integration.
 
 **Pros:**
@@ -29,20 +48,36 @@ These tests work with the actual backend services to test the complete integrati
 - Slower execution
 - Requires backend services to be running
 - More complex setup
+- Network dependencies
 
 ## Running Tests
 
 ### Prerequisites
 
 1. **Node.js and npm** installed
-2. **Docker and Docker Compose** installed
-3. **Frontend dependencies** installed:
+2. **Frontend dependencies** installed:
    ```bash
    cd frontend
    npm install
    ```
 
-### Option 1: Mocked Tests (Recommended for Development)
+### Option 1: Simplified CI Tests (Recommended)
+
+```bash
+# From project root
+make test-e2e
+
+# Or directly
+./scripts/validate-e2e.sh
+
+# Or from frontend directory
+cd frontend
+npm run test:e2e:ci
+```
+
+This runs the simplified tests that are used in CI/CD pipelines.
+
+### Option 2: Mocked Tests (Development)
 
 ```bash
 cd frontend
@@ -51,7 +86,7 @@ npm run test:e2e
 
 This runs the mocked tests without requiring backend services.
 
-### Option 2: Real Backend Tests
+### Option 3: Real Backend Tests
 
 #### Step 1: Start Backend Services
 ```bash
@@ -70,7 +105,7 @@ cd frontend
 npm run test:e2e:real-backend
 ```
 
-### Option 3: All-in-One Script
+### Option 4: All-in-One Script
 
 ```bash
 # From the project root
@@ -83,7 +118,7 @@ This script automatically:
 - Waits for services to be ready
 - Runs the e2e tests
 
-### Option 4: UI Mode (Interactive)
+### Option 5: UI Mode (Interactive)
 
 ```bash
 cd frontend
@@ -91,6 +126,27 @@ npm run test:e2e:ui
 ```
 
 This opens the Playwright UI for interactive test debugging.
+
+## CI/CD Integration
+
+### GitHub Actions
+The CI pipeline uses the simplified configuration (`playwright.config.ci.ts`) which:
+- Runs only on Chromium browser
+- Uses mocked APIs
+- Has shorter timeouts (15 minutes total)
+- Generates multiple report formats
+- Installs only Chromium browser
+
+### Pre-commit Validation
+Before committing frontend changes, run:
+```bash
+./scripts/pre-commit-e2e.sh
+```
+
+This script:
+- Detects frontend changes
+- Runs the same tests as CI
+- Prevents commits with failing tests
 
 ## Configuration
 
@@ -103,7 +159,8 @@ The tests use these environment variables:
 
 ### Playwright Configuration
 
-- **`playwright.config.ts`**: Default configuration for mocked tests
+- **`playwright.config.ts`**: Default configuration for development
+- **`playwright.config.ci.ts`**: **CI-optimized configuration** (single browser, mocked APIs)
 - **`playwright.config.real-backend.ts`**: Configuration for real backend tests
 
 ## Troubleshooting
@@ -112,34 +169,27 @@ The tests use these environment variables:
 
 #### 1. "getaddrinfo EAI_AGAIN api-gateway" Error
 **Cause**: Tests trying to connect to Docker hostname from outside Docker network
-**Solution**: Use the real backend test configuration or ensure `BACKEND_API_URL` is set to `http://localhost:8080`
+**Solution**: Use the CI configuration or ensure `BACKEND_API_URL` is set to `http://localhost:8080`
 
-#### 2. Backend Services Not Starting
-**Cause**: Docker not running or port conflicts
+#### 2. Tests Timing Out in CI
+**Cause**: Complex test scenarios or network issues
+**Solution**: Use the simplified CI configuration with mocked APIs
+
+#### 3. Browser Installation Issues
+**Cause**: Missing browser dependencies
 **Solution**: 
 ```bash
-# Check Docker status
-docker info
-
-# Check for port conflicts
-lsof -i :8080
-lsof -i :5432
-
-# Restart Docker if needed
+cd frontend
+npx playwright install --with-deps chromium
 ```
 
-#### 3. Tests Timing Out
-**Cause**: Backend services taking too long to start
-**Solution**: Increase timeout in Playwright config or check service health:
+#### 4. Frontend Server Not Starting
+**Cause**: Port conflicts or missing dependencies
+**Solution**: 
 ```bash
-curl http://localhost:8080/actuator/health
-```
-
-#### 4. Database Connection Issues
-**Cause**: PostgreSQL not ready or wrong credentials
-**Solution**: Check database logs:
-```bash
-docker-compose logs postgres
+cd frontend
+npm install
+npm run dev
 ```
 
 ### Debug Mode
@@ -180,15 +230,21 @@ The tests don't automatically clean up test data. For production testing, consid
 
 ## Best Practices
 
-1. **Use mocked tests for quick feedback** during development
-2. **Use real backend tests** for integration testing and before releases
-3. **Run tests in CI/CD** with mocked tests for speed
-4. **Run real backend tests** in staging environments
+1. **Use simplified CI tests for pipelines** - Fast, reliable, no network dependencies
+2. **Use mocked tests for development** - Quick feedback during development
+3. **Use real backend tests for integration testing** - Before releases or staging
+4. **Run validation before commits** - Use `./scripts/pre-commit-e2e.sh`
 5. **Use unique test data** to avoid conflicts
 6. **Add proper error handling** and timeouts
 7. **Use descriptive test names** and comments
 
 ## Adding New Tests
+
+### For Simplified CI Tests
+1. Add to `simple.spec.ts` or create new files matching `simple*.spec.ts`
+2. Use `page.route()` to mock API responses
+3. Focus on core functionality and user workflows
+4. Keep tests short and focused
 
 ### For Mocked Tests
 1. Add to existing spec files or create new ones
@@ -201,22 +257,24 @@ The tests don't automatically clean up test data. For production testing, consid
 3. Generate unique test data
 4. Test complete user workflows
 
-## CI/CD Integration
+## Performance Optimization
 
-For CI/CD pipelines, use the mocked tests for speed:
+### CI Pipeline Optimizations
+- **Single browser**: Chromium only reduces execution time by ~80%
+- **Mocked APIs**: Eliminates network timeouts and backend dependencies
+- **Shorter timeouts**: Faster failure detection
+- **Single worker**: Avoids resource conflicts
+- **Browser caching**: Reuses installed browsers across runs
 
-```yaml
-# Example GitHub Actions step
-- name: Run E2E Tests
-  run: |
-    cd frontend
-    npm run test:e2e
-```
+### Expected Execution Times
+- **Simplified CI tests**: 2-3 minutes
+- **Mocked tests**: 3-5 minutes
+- **Real backend tests**: 5-10 minutes (depending on backend startup)
 
-For staging deployments, use real backend tests:
+## Migration Guide
 
-```yaml
-- name: Run Integration Tests
-  run: |
-    ./scripts/run-e2e-tests.sh
-``` 
+### From Old E2E Tests to Simplified Tests
+1. Move core functionality tests to `simple.spec.ts`
+2. Use API mocking instead of real backend calls
+3. Focus on user workflows rather than edge cases
+4. Reduce test complexity and duration 

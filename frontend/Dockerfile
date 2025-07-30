@@ -7,45 +7,32 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci --no-audit --no-fund
 
 # Copy source code
 COPY . .
 
-# Build the application
+# Set production environment for optimal build
+ENV NODE_ENV=production
+
+# Build the application with standalone output
 RUN npm run build
 
-# Runtime image
-FROM --platform=$TARGETPLATFORM node:20-slim
+# Runtime image - use distroless for minimal size
+FROM --platform=$TARGETPLATFORM gcr.io/distroless/nodejs20-debian12
 
 WORKDIR /app
 
-# Create non-root user
-RUN addgroup --gid 1001 nodejs && \
-    adduser --uid 1001 --gid 1001 nextjs
-
-# Copy package files for production install
-COPY --from=builder /app/package*.json ./
-
-# Install dependencies including Next.js for runtime
-RUN npm ci --omit=dev && npm install next && npm cache clean --force
-
-# Copy built application
+# Copy only the standalone Next.js build
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next ./.next
 
-# Change ownership
-RUN chown -R nextjs:nodejs /app
-
-# Switch to non-root user
-USER nextjs
+# Switch to non-root user (distroless default is nonroot:65534)
+USER 65534
 
 # Expose port
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
-
 # Run the application
-CMD ["npx", "next", "start"]
+CMD ["server.js"]

@@ -1,5 +1,5 @@
 # Multi-stage build for Accounts Service
-FROM --platform=$BUILDPLATFORM maven:3-amazoncorretto-20 AS builder
+FROM --platform=$BUILDPLATFORM maven:3-amazoncorretto-17 AS builder
 
 WORKDIR /app
 
@@ -13,32 +13,25 @@ COPY src ./src
 # Build the application
 RUN mvn clean package -DskipTests
 
+# Extract layers from the JAR
+RUN java -Djarmode=layertools -jar target/accounts-service-*.jar extract
+
 # Runtime image
-FROM --platform=$TARGETPLATFORM amazoncorretto:20-alpine
+FROM --platform=$TARGETPLATFORM gcr.io/distroless/java17-debian12
 
 WORKDIR /app
 
-# Install curl for health checks and create non-root user
-RUN apk add --no-cache curl && \
-    addgroup -g 1001 -S appuser && \
-    adduser -S appuser -u 1001
+# Copy layers in order of likelihood to change (dependencies first, then application)
+COPY --from=builder /app/dependencies/ ./
+COPY --from=builder /app/spring-boot-loader/ ./
+COPY --from=builder /app/snapshot-dependencies/ ./
+COPY --from=builder /app/application/ ./
 
-# Copy the built JAR file
-COPY --from=builder /app/target/accounts-service-*.jar app.jar
-
-# Create logs directory
-RUN mkdir -p /var/log && \
-    chown -R appuser:appuser /var/log /app
-
-# Switch to non-root user
-USER appuser
+# Switch to non-root user (distroless default is nonroot:65534)
+USER 65534
 
 # Expose port
 EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 # Run the application with optimized JVM flags for faster startup
 ENTRYPOINT ["java", \
@@ -50,10 +43,9 @@ ENTRYPOINT ["java", \
     "-XX:+UseCompressedOops", \
     "-XX:+UseCompressedClassPointers", \
     "-XX:+TieredCompilation", \
-    "-XX:TieredStopAtLevel=1", \
     "-Djava.security.egd=file:/dev/./urandom", \
     "-Dspring.main.lazy-initialization=true", \
     "-Dspring.main.banner-mode=off", \
     "-Dlogging.level.org.springframework.boot.autoconfigure=WARN", \
     "-Dlogging.level.io.opentelemetry=WARN", \
-    "-jar", "/app/app.jar"]
+    "org.springframework.boot.loader.JarLauncher"]
