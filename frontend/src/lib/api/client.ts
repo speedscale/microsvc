@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { TokenManager } from '../auth/token';
+import { logApiRequest, logApiResponse, logError } from '../logger';
 
 // Use relative URL if NEXT_PUBLIC_API_URL is not set (works with Next.js API proxying)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
@@ -110,32 +111,38 @@ class ApiClient {
 
   // Generic GET request
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    const startTime = Date.now();
     try {
-      console.log(`[API] GET ${url}`);
+      logApiRequest('GET', url);
       const response: AxiosResponse<T> = await this.axiosInstance.get(url, config);
-      console.log(`[API] GET ${url} - Success (${response.status})`);
+      const duration = Date.now() - startTime;
+      logApiResponse('GET', url, response.status, duration);
       return {
         success: true,
         data: response.data,
       };
     } catch (error: unknown) {
-      console.error(`[API] GET ${url} - Error:`, error);
+      const duration = Date.now() - startTime;
+      logError(error as Error, { method: 'GET', url, duration });
       return this.handleError(error);
     }
   }
 
   // Generic POST request
   async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    const startTime = Date.now();
     try {
-      console.log(`[API] POST ${url}`, data ? 'with data' : 'without data');
+      logApiRequest('POST', url);
       const response: AxiosResponse<T> = await this.axiosInstance.post(url, data, config);
-      console.log(`[API] POST ${url} - Success (${response.status})`);
+      const duration = Date.now() - startTime;
+      logApiResponse('POST', url, response.status, duration);
       return {
         success: true,
         data: response.data,
       };
     } catch (error: unknown) {
-      console.error(`[API] POST ${url} - Error:`, error);
+      const duration = Date.now() - startTime;
+      logError(error as Error, { method: 'POST', url, duration });
       return this.handleError(error);
     }
   }

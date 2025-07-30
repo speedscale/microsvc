@@ -1,4 +1,5 @@
 import { apiClient, ApiResponse, PaginatedResponse } from './client';
+import { logTransaction } from '../logger';
 
 export interface Transaction {
   id: number;
@@ -143,11 +144,7 @@ export class TransactionsAPI {
     };
 
     const result = await this.createTransaction(transactionData);
-    if (result.success) {
-      console.log(`[TRANSACTION] Deposit created successfully: ${result.data?.id}`);
-    } else {
-      console.error(`[TRANSACTION] Deposit failed:`, result.message);
-    }
+    logTransaction('deposit', accountId, amount, result.success);
     return result;
   }
 
@@ -168,11 +165,7 @@ export class TransactionsAPI {
     };
 
     const result = await this.createTransaction(transactionData);
-    if (result.success) {
-      console.log(`[TRANSACTION] Withdrawal created successfully: ${result.data?.id}`);
-    } else {
-      console.error(`[TRANSACTION] Withdrawal failed:`, result.message);
-    }
+    logTransaction('withdrawal', accountId, amount, result.success);
     return result;
   }
 
@@ -195,11 +188,7 @@ export class TransactionsAPI {
     };
 
     const result = await this.createTransaction(transactionData);
-    if (result.success) {
-      console.log(`[TRANSACTION] Transfer created successfully: ${result.data?.id}`);
-    } else {
-      console.error(`[TRANSACTION] Transfer failed:`, result.message);
-    }
+    logTransaction('transfer', fromAccountId, amount, result.success);
     return result;
   }
 
