@@ -42,6 +42,12 @@
 - [x] The images need to be for multiple architectures arm and amd
 - [x] The spring boot apps are taking a very long time like 5+ minutes to start, improve startup time
 
+### Known Issues & Future Improvements
+- **Frontend Pod Logging**: Implemented structured logging with custom logger but logs don't appear in `kubectl logs` output. The logging middleware and API client logging are implemented but may be getting filtered by Next.js internal routing or Edge Runtime limitations. Consider investigating:
+  - Server-side API route logging vs middleware logging
+  - OpenTelemetry integration for request tracing
+  - Alternative logging approaches for containerized Next.js applications
+
 ## Phase 9: Production Kubernetes Deployment
 - [ ] Deploy application to production Kubernetes cluster with registry images
 - [ ] Configure SSL/TLS, load balancing, and ingress controllers
