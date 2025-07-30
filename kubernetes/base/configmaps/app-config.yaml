@@ -101,7 +101,7 @@ metadata:
 data:
   # Backend API configuration
   BACKEND_API_URL: "http://api-gateway:80"
-  NEXT_PUBLIC_API_URL: "http://localhost:8080"
+  NEXT_PUBLIC_API_URL: "http://api-gateway.banking-app.svc.cluster.local"
   
   # OpenTelemetry configuration
   OTEL_SERVICE_NAME: "frontend"
