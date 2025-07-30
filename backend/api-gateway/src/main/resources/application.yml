@@ -33,7 +33,7 @@ spring:
           predicates:
             - Path=/api/users/**
           filters:
-            - RewritePath=/api/users/(?<path>.*), /user/${path}
+            - RewritePath=/api/users/(?<path>.*), /user/$\{path}
         - id: accounts-transactions-simplified
           uri: ${services.accounts-service.url}
           predicates:
@@ -143,6 +143,7 @@ logging:
   pattern:
     console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
     file: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
-  file:
-    name: logs/api-gateway.log
+# Disabled file logging for containerized deployment
+#  file:
+#    name: logs/api-gateway.log
     

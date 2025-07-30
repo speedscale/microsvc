@@ -30,18 +30,21 @@
     </appender>
     
     <!-- Logger configurations -->
-    <logger name="com.banking" level="DEBUG"/>
+    <logger name="com.banking" level="INFO"/>
     <logger name="org.springframework.web" level="INFO"/>
-    <logger name="org.hibernate.SQL" level="DEBUG"/>
-    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE"/>
+    <logger name="org.hibernate.SQL" level="WARN"/>
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="WARN"/>
     <logger name="io.opentelemetry" level="INFO"/>
+    <logger name="org.springframework.boot.actuator.health" level="WARN"/>
+    <logger name="com.zaxxer.hikari" level="WARN"/>
     
     <!-- Root logger -->
     <logger name="org.springframework.boot.actuate.endpoint.web" level="WARN"/>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="FILE"/>
+        <!-- Disabled FILE appender for containerized deployment -->
+        <!-- <appender-ref ref="FILE"/> -->
         <springProfile name="docker">
             <appender-ref ref="DOCKER"/>
         </springProfile>

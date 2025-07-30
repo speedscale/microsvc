@@ -111,12 +111,15 @@ class ApiClient {
   // Generic GET request
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
+      console.log(`[API] GET ${url}`);
       const response: AxiosResponse<T> = await this.axiosInstance.get(url, config);
+      console.log(`[API] GET ${url} - Success (${response.status})`);
       return {
         success: true,
         data: response.data,
       };
     } catch (error: unknown) {
+      console.error(`[API] GET ${url} - Error:`, error);
       return this.handleError(error);
     }
   }
@@ -124,12 +127,15 @@ class ApiClient {
   // Generic POST request
   async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
+      console.log(`[API] POST ${url}`, data ? 'with data' : 'without data');
       const response: AxiosResponse<T> = await this.axiosInstance.post(url, data, config);
+      console.log(`[API] POST ${url} - Success (${response.status})`);
       return {
         success: true,
         data: response.data,
       };
     } catch (error: unknown) {
+      console.error(`[API] POST ${url} - Error:`, error);
       return this.handleError(error);
     }
   }
@@ -137,12 +143,15 @@ class ApiClient {
   // Generic PUT request
   async put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
+      console.log(`[API] PUT ${url}`, data ? 'with data' : 'without data');
       const response: AxiosResponse<T> = await this.axiosInstance.put(url, data, config);
+      console.log(`[API] PUT ${url} - Success (${response.status})`);
       return {
         success: true,
         data: response.data,
       };
     } catch (error: unknown) {
+      console.error(`[API] PUT ${url} - Error:`, error);
       return this.handleError(error);
     }
   }
@@ -150,12 +159,15 @@ class ApiClient {
   // Generic DELETE request
   async delete<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
+      console.log(`[API] DELETE ${url}`);
       const response: AxiosResponse<T> = await this.axiosInstance.delete(url, config);
+      console.log(`[API] DELETE ${url} - Success (${response.status})`);
       return {
         success: true,
         data: response.data,
       };
     } catch (error: unknown) {
+      console.error(`[API] DELETE ${url} - Error:`, error);
       return this.handleError(error);
     }
   }
@@ -163,12 +175,15 @@ class ApiClient {
   // Generic PATCH request
   async patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
+      console.log(`[API] PATCH ${url}`, data ? 'with data' : 'without data');
       const response: AxiosResponse<T> = await this.axiosInstance.patch(url, data, config);
+      console.log(`[API] PATCH ${url} - Success (${response.status})`);
       return {
         success: true,
         data: response.data,
       };
     } catch (error: unknown) {
+      console.error(`[API] PATCH ${url} - Error:`, error);
       return this.handleError(error);
     }
   }
