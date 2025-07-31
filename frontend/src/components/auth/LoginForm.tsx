@@ -27,6 +27,13 @@ const LoginForm: React.FC = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
+    
+    // Clear any existing error toasts when starting a new submission
+    toasts.forEach(toast => {
+      if (toast.type === 'error') {
+        removeToast(toast.id);
+      }
+    });
 
     try {
       const response = await login(data);

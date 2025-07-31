@@ -92,7 +92,7 @@ class UserControllerTest {
         when(userService.registerUser(any(UserRegistrationRequest.class))).thenReturn(testUser);
 
         // Act & Assert
-        mockMvc.perform(post("/user/register")
+        mockMvc.perform(post("/api/users/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registrationRequest)))
                 .andExpect(status().isCreated())
@@ -109,7 +109,7 @@ class UserControllerTest {
         registrationRequest.setUsername(""); // Invalid username
 
         // Act & Assert
-        mockMvc.perform(post("/user/register")
+        mockMvc.perform(post("/api/users/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registrationRequest)))
                 .andExpect(status().isBadRequest());
@@ -124,7 +124,7 @@ class UserControllerTest {
                 .thenThrow(new RuntimeException("Username already exists"));
 
         // Act & Assert
-        mockMvc.perform(post("/user/register")
+        mockMvc.perform(post("/api/users/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registrationRequest)))
                 .andExpect(status().isConflict())
@@ -139,7 +139,7 @@ class UserControllerTest {
         when(userService.authenticateUser(any(UserLoginRequest.class))).thenReturn(loginResponse);
 
         // Act & Assert
-        mockMvc.perform(post("/user/login")
+        mockMvc.perform(post("/api/users/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
@@ -157,7 +157,7 @@ class UserControllerTest {
                 .thenThrow(new RuntimeException("Invalid credentials"));
 
         // Act & Assert
-        mockMvc.perform(post("/user/login")
+        mockMvc.perform(post("/api/users/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isUnauthorized())
@@ -172,7 +172,7 @@ class UserControllerTest {
         when(userService.usernameExists(anyString())).thenReturn(false);
 
         // Act & Assert
-        mockMvc.perform(get("/user/check-username")
+        mockMvc.perform(get("/api/users/check-username")
                 .param("username", "newuser"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available").value(true));
@@ -186,7 +186,7 @@ class UserControllerTest {
         when(userService.usernameExists(anyString())).thenReturn(true);
 
         // Act & Assert
-        mockMvc.perform(get("/user/check-username")
+        mockMvc.perform(get("/api/users/check-username")
                 .param("username", "existinguser"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available").value(false));
@@ -235,7 +235,7 @@ class UserControllerTest {
         when(userService.emailExists(anyString())).thenReturn(false);
 
         // Act & Assert
-        mockMvc.perform(get("/user/check-email")
+        mockMvc.perform(get("/api/users/check-email")
                 .param("email", "new@example.com"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available").value(true));
@@ -249,7 +249,7 @@ class UserControllerTest {
         when(userService.emailExists(anyString())).thenReturn(true);
 
         // Act & Assert
-        mockMvc.perform(get("/user/check-email")
+        mockMvc.perform(get("/api/users/check-email")
                 .param("email", "existing@example.com"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available").value(false));

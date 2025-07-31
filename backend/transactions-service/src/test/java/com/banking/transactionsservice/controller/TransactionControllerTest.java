@@ -101,7 +101,7 @@ class TransactionControllerTest {
         when(transactionService.getUserTransactions(testUserId)).thenReturn(transactions);
 
         // Act & Assert
-        mockMvc.perform(get("/transactions"))
+        mockMvc.perform(get("/api/transactions"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1L))
                 .andExpect(jsonPath("$[0].amount").value(100.00))
@@ -118,7 +118,7 @@ class TransactionControllerTest {
                 .thenReturn(testTransactionResponse);
 
         // Act & Assert
-        mockMvc.perform(post("/transactions/deposit")
+        mockMvc.perform(post("/api/transactions/deposit")
                 .header("Authorization", testJwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(depositRequest)))
@@ -137,7 +137,7 @@ class TransactionControllerTest {
         depositRequest.setAmount(BigDecimal.valueOf(-10.00)); // Invalid negative amount
 
         // Act & Assert
-        mockMvc.perform(post("/transactions/deposit")
+        mockMvc.perform(post("/api/transactions/deposit")
                 .header("Authorization", testJwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(depositRequest)))
@@ -153,7 +153,7 @@ class TransactionControllerTest {
                 .thenThrow(new RuntimeException("Account not owned by user"));
 
         // Act & Assert
-        mockMvc.perform(post("/transactions/deposit")
+        mockMvc.perform(post("/api/transactions/deposit")
                 .header("Authorization", testJwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(depositRequest)))
@@ -180,7 +180,7 @@ class TransactionControllerTest {
                 .thenReturn(withdrawResponse);
 
         // Act & Assert
-        mockMvc.perform(post("/transactions/withdraw")
+        mockMvc.perform(post("/api/transactions/withdraw")
                 .header("Authorization", testJwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(withdrawRequest)))
@@ -200,7 +200,7 @@ class TransactionControllerTest {
                 .thenThrow(new RuntimeException("Insufficient balance"));
 
         // Act & Assert
-        mockMvc.perform(post("/transactions/withdraw")
+        mockMvc.perform(post("/api/transactions/withdraw")
                 .header("Authorization", testJwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(withdrawRequest)))
@@ -228,7 +228,7 @@ class TransactionControllerTest {
                 .thenReturn(transferResponse);
 
         // Act & Assert
-        mockMvc.perform(post("/transactions/transfer")
+        mockMvc.perform(post("/api/transactions/transfer")
                 .header("Authorization", testJwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(transferRequest)))
@@ -247,7 +247,7 @@ class TransactionControllerTest {
         transferRequest.setToAccountId(testAccountId); // Same as fromAccountId
 
         // Act & Assert
-        mockMvc.perform(post("/transactions/transfer")
+        mockMvc.perform(post("/api/transactions/transfer")
                 .header("Authorization", testJwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(transferRequest)))
@@ -263,7 +263,7 @@ class TransactionControllerTest {
                 .thenThrow(new RuntimeException("Insufficient balance"));
 
         // Act & Assert
-        mockMvc.perform(post("/transactions/transfer")
+        mockMvc.perform(post("/api/transactions/transfer")
                 .header("Authorization", testJwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(transferRequest)))
