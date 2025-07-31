@@ -2,15 +2,16 @@
 
 import React from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useAuth } from '@/lib/auth/context';
 import Button from '@/components/ui/Button';
 
 const DashboardPage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
     <ProtectedRoute requireAuth={true}>
-      <div className="min-h-screen bg-gray-50">
+      <AuthenticatedLayout>
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
             <div className="bg-white shadow rounded-lg">
@@ -56,12 +57,6 @@ const DashboardPage: React.FC = () => {
                       >
                         View Transactions
                       </Button>
-                      <Button
-                        variant="secondary"
-                        onClick={logout}
-                      >
-                        Logout
-                      </Button>
                     </div>
                   </div>
                 </div>
@@ -69,7 +64,7 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+      </AuthenticatedLayout>
     </ProtectedRoute>
   );
 };

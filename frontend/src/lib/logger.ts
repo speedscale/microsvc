@@ -1,7 +1,12 @@
-// Simple logging utility that works with Next.js Edge Runtime
-// This will output structured logs that appear in kubectl logs
+import { trace, context, SpanStatusCode } from '@opentelemetry/api';
 
-const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
+// Logger configuration
+const LOG_LEVELS = {
+  ERROR: 0,
+  WARN: 1,
+  INFO: 2,
+  DEBUG: 3,
+} as const;
 
 interface LogEntry {
   timestamp: string;

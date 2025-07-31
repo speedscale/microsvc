@@ -27,57 +27,20 @@ spring:
           filters:
             - RewritePath=/api/transactions-service/health, /actuator/health
             
-        # Simplified API routes (for frontend compatibility)
-        - id: users-simplified
+        # Simple API routes - no path rewriting needed since services use /api/** internally
+        - id: users-api
           uri: ${services.user-service.url}
           predicates:
             - Path=/api/users/**
-          filters:
-            - RewritePath=/api/users/(?<path>.*), /user/$\{path}
-        - id: accounts-transactions-simplified
-          uri: ${services.accounts-service.url}
-          predicates:
-            - Path=/api/accounts/*/transactions/**
-          filters:
-            - RewritePath=/api/accounts/(?<accountId>[^/]+)/transactions/(?<path>.*), /accounts/account/$\{accountId}/transactions/$\{path}
-        - id: accounts-transactions-root-simplified
-          uri: ${services.accounts-service.url}
-          predicates:
-            - Path=/api/accounts/*/transactions
-          filters:
-            - RewritePath=/api/accounts/(?<accountId>[^/]+)/transactions, /accounts/account/$\{accountId}/transactions
-        - id: accounts-simplified
+        - id: accounts-api
           uri: ${services.accounts-service.url}
           predicates:
             - Path=/api/accounts/**
-          filters:
-            - RewritePath=/api/accounts/(?<path>.*), /accounts/$\{path}
-        - id: transactions-simplified
+        - id: transactions-api
           uri: ${services.transactions-service.url}
           predicates:
             - Path=/api/transactions/**
-          filters:
-            - RewritePath=/api/transactions/(?<path>.*), /transactions/$\{path}
-            
-        # Main service routes (legacy - kept for backward compatibility)
-        - id: user-service
-          uri: ${services.user-service.url}
-          predicates:
-            - Path=/api/user-service/**
-          filters:
-            - RewritePath=/api/user-service/(?<path>.*), /user/$\{path}
-        - id: accounts-service
-          uri: ${services.accounts-service.url}
-          predicates:
-            - Path=/api/accounts-service/**
-          filters:
-            - RewritePath=/api/accounts-service/(?<path>.*), /accounts/$\{path}
-        - id: transactions-service
-          uri: ${services.transactions-service.url}
-          predicates:
-            - Path=/api/transactions-service/**
-          filters:
-            - RewritePath=/api/transactions-service/(?<path>.*), /transactions/$\{path}
+
       globalcors:
         cors-configurations:
           '[/**]':

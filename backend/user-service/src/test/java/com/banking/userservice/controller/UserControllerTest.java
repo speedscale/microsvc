@@ -22,6 +22,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
@@ -193,7 +194,7 @@ class UserControllerTest {
         verify(userService, times(1)).usernameExists("existinguser");
     }
 
-    @TestConfiguration
+    @Profile("!test")
     static class TestConfig {
         
         @Bean

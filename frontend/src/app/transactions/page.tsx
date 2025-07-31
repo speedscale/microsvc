@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useAuth } from '@/lib/auth/context';
 import Button from '@/components/ui/Button';
-import Link from 'next/link';
 
 interface Transaction {
   id: number;
@@ -171,15 +171,15 @@ const TransactionsPage: React.FC = () => {
 
   return (
     <ProtectedRoute requireAuth={true}>
-      <div className="min-h-screen bg-gray-50">
+      <AuthenticatedLayout>
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
             <div className="mb-6">
               <div className="flex justify-between items-center">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">Transaction History</h1>
+                  <h1 className="text-3xl font-bold text-gray-900">Your Transactions</h1>
                   <p className="mt-1 text-sm text-gray-600">
-                    View all your banking transactions and activity
+                    View and manage your transaction history
                   </p>
                 </div>
                 <div className="flex space-x-3">
@@ -189,11 +189,6 @@ const TransactionsPage: React.FC = () => {
                   >
                     New Transaction
                   </Button>
-                  <Link href="/dashboard">
-                    <Button variant="outline">
-                      Back to Dashboard
-                    </Button>
-                  </Link>
                 </div>
               </div>
             </div>
@@ -359,7 +354,7 @@ const TransactionsPage: React.FC = () => {
             )}
           </div>
         </div>
-      </div>
+      </AuthenticatedLayout>
     </ProtectedRoute>
   );
 };

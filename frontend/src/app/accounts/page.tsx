@@ -2,20 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useAuth } from '@/lib/auth/context';
 import Button from '@/components/ui/Button';
 import Link from 'next/link';
-
-interface Account {
-  id: number;
-  accountNumber: string;
-  accountType: string;
-  balance: number;
-  currency: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { AccountsAPI, Account } from '@/lib/api/accounts';
 
 const AccountsPage: React.FC = () => {
   const { } = useAuth();
@@ -26,35 +17,17 @@ const AccountsPage: React.FC = () => {
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
-        // TODO: Replace with actual API call
-        // Simulate API call with mock data
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        const response = await AccountsAPI.getAccounts();
         
-        const mockAccounts: Account[] = [
-          {
-            id: 1,
-            accountNumber: '1234567890',
-            accountType: 'CHECKING',
-            balance: 2500.50,
-            currency: 'USD',
-            status: 'ACTIVE',
-            createdAt: '2024-01-15T10:30:00Z',
-            updatedAt: '2024-01-15T10:30:00Z',
-          },
-          {
-            id: 2,
-            accountNumber: '0987654321',
-            accountType: 'SAVINGS',
-            balance: 10000.00,
-            currency: 'USD',
-            status: 'ACTIVE',
-            createdAt: '2024-02-01T14:20:00Z',
-            updatedAt: '2024-02-01T14:20:00Z',
-          },
-        ];
-        
-        setAccounts(mockAccounts);
-      } catch {
+        if (response.success && response.data) {
+          console.log('Accounts data:', response.data); // Debug log
+          setAccounts(response.data);
+        } else {
+          console.error('Failed to fetch accounts:', response.message);
+          setError(response.message || 'Failed to load accounts');
+        }
+      } catch (err) {
+        console.error('Error fetching accounts:', err);
         setError('Failed to load accounts');
       } finally {
         setIsLoading(false);
@@ -65,10 +38,21 @@ const AccountsPage: React.FC = () => {
   }, []);
 
   const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
+    // Default to USD if currency is null, undefined, or empty
+    const safeCurrency = currency || 'USD';
+    
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: safeCurrency,
+      }).format(amount);
+    } catch (error) {
+      // Fallback formatting if currency code is invalid
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      }).format(amount);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -81,7 +65,7 @@ const AccountsPage: React.FC = () => {
 
   return (
     <ProtectedRoute requireAuth={true}>
-      <div className="min-h-screen bg-gray-50">
+      <AuthenticatedLayout>
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
             <div className="mb-6">
@@ -99,11 +83,6 @@ const AccountsPage: React.FC = () => {
                   >
                     Create New Account
                   </Button>
-                  <Link href="/dashboard">
-                    <Button variant="outline">
-                      Back to Dashboard
-                    </Button>
-                  </Link>
                 </div>
               </div>
             </div>
@@ -167,10 +146,10 @@ const AccountsPage: React.FC = () => {
                               </div>
                               <div className="text-right">
                                 <p className="text-lg font-semibold text-gray-900">
-                                  {formatCurrency(account.balance, account.currency)}
+                                  {formatCurrency(account.balance, account.currency || 'USD')}
                                 </p>
                                 <p className="text-sm text-gray-500">
-                                  {account.status}
+                                  {account.status || 'ACTIVE'}
                                 </p>
                               </div>
                             </div>
@@ -222,7 +201,7 @@ const AccountsPage: React.FC = () => {
             )}
           </div>
         </div>
-      </div>
+      </AuthenticatedLayout>
     </ProtectedRoute>
   );
 };

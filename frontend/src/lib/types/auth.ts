@@ -17,6 +17,7 @@ export interface RegisterRequest {
   username: string;
   email: string;
   password: string;
+  generateDemoData?: boolean;
 }
 
 export interface AuthResponse {
