@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/api/users")
 public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);

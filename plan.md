@@ -42,6 +42,14 @@
 - [x] The images need to be for multiple architectures arm and amd
 - [x] The spring boot apps are taking a very long time like 5+ minutes to start, improve startup time
 
+## Phase 8.5: API Gateway Routing Simplification ✅ COMPLETED
+- [x] Eliminate complex path rewriting in API Gateway configuration
+- [x] Update all controllers to use consistent `/api/service/**` paths internally
+- [x] Remove error-prone RewritePath filters and regex patterns
+- [x] Simplify API Gateway to act as transparent proxy without path transformations
+- [x] Update security configurations to support new endpoint paths
+- [x] Test end-to-end functionality with simplified routing architecture
+
 ## System Architecture & Traffic Flow
 
 ### Traffic Flow Design
@@ -70,23 +78,35 @@ Client → Frontend Service → API Gateway → Backend Services
   - OpenTelemetry integration for request tracing
   - Alternative logging approaches for containerized Next.js applications
 
-## Phase 9: Production Kubernetes Deployment
+## Phase 9: Security Hardening & Architecture Review
+- [ ] **API Gateway Security**: Implement proper authentication at gateway level instead of permitAll()
+- [ ] **Service-to-Service Authentication**: Add authentication between microservices to prevent direct access bypass
+- [ ] **Security Configuration Cleanup**: Remove redundant security rules and consolidate authentication patterns
+- [ ] **CORS Configuration Review**: Tighten CORS policies from allowing all origins to specific allowed origins
+- [ ] **Rate Limiting**: Implement rate limiting at API Gateway level to prevent abuse
+- [ ] **Network Security**: Configure proper network isolation and access controls for backend services
+- [ ] **JWT Security Improvements**: Implement token refresh, proper expiration handling, and secure secret management
+- [ ] **Input Validation & Sanitization**: Add comprehensive input validation across all endpoints
+- [ ] **Security Headers**: Implement proper security headers (HSTS, CSP, etc.)
+- [ ] **Audit Logging**: Add comprehensive audit logging for security events
+
+## Phase 10: Production Kubernetes Deployment
 - [ ] Deploy application to production Kubernetes cluster with registry images
 - [ ] Configure SSL/TLS, load balancing, and ingress controllers
 - [ ] Set up production monitoring, backup, and disaster recovery
 
-## Phase 10: Documentation & Security Audit
+## Phase 11: Documentation & Security Audit
 - [ ] Create comprehensive API documentation and developer guides
 - [ ] Complete security audit and penetration testing
 - [ ] Finalize code quality standards and coverage analysis
 - [ ] Clean up any unused scripts
 
-## Phase 11: Advanced Features & Optimization
+## Phase 12: Advanced Features & Optimization
 - [ ] Implement enhanced banking features (account types, transaction categories)
 - [ ] Add performance optimizations (caching, database tuning)
 - [ ] Create advanced reporting and analytics capabilities
 
-## Phase 12: Comprehensive System Testing
+## Phase 13: Comprehensive System Testing
 - [ ] End-to-end testing with complete user workflows
 - [ ] Performance and load testing under concurrent usage
 - [ ] Production environment validation and stress testing

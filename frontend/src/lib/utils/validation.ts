@@ -33,6 +33,7 @@ export const registerSchema = z.object({
   confirmPassword: z
     .string()
     .min(1, 'Password confirmation is required'),
+  generateDemoData: z.boolean(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],

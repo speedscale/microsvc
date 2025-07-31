@@ -43,6 +43,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/users/login").permitAll()
                 .requestMatchers(HttpMethod.GET, "/users/check-username").permitAll()
                 .requestMatchers(HttpMethod.GET, "/users/check-email").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/users/login").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/users/check-username").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/users/check-email").permitAll()
                 .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
                 
                 // All other endpoints require authentication

@@ -54,18 +54,20 @@ public class AccountService {
     }
     
     public AccountResponse createAccount(AccountCreateRequest request, Long userId) {
-        logger.info("Creating new {} account for user: {}", request.getAccountType(), userId);
+        logger.info("Creating new {} account for user: {} with initial balance: {}", 
+                   request.getAccountType(), userId, request.getInitialBalance());
         
         String accountNumber = generateAccountNumber();
         
         Account account = new Account();
         account.setUserId(userId);
         account.setAccountNumber(accountNumber);
-        account.setBalance(BigDecimal.ZERO);
+        account.setBalance(request.getInitialBalance() != null ? request.getInitialBalance() : BigDecimal.ZERO);
         account.setAccountType(request.getAccountType());
         
         Account savedAccount = accountRepository.save(account);
-        logger.info("Created account {} for user: {}", savedAccount.getAccountNumber(), userId);
+        logger.info("Created account {} for user: {} with balance: {}", 
+                   savedAccount.getAccountNumber(), userId, savedAccount.getBalance());
         
         createdAccountsCounter.add(1);
         

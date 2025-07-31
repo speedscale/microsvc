@@ -19,6 +19,8 @@ public class UserRegistrationRequest {
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
 
+    private Boolean generateDemoData = false;
+
     // Constructors
     public UserRegistrationRequest() {}
 
@@ -26,6 +28,13 @@ public class UserRegistrationRequest {
         this.username = username;
         this.email = email;
         this.password = password;
+    }
+
+    public UserRegistrationRequest(String username, String email, String password, Boolean generateDemoData) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.generateDemoData = generateDemoData;
     }
 
     // Getters and Setters
@@ -51,6 +60,14 @@ public class UserRegistrationRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public Boolean getGenerateDemoData() {
+        return generateDemoData;
+    }
+
+    public void setGenerateDemoData(Boolean generateDemoData) {
+        this.generateDemoData = generateDemoData;
     }
 
     @Override

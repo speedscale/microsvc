@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: banking-app-observability
+  namespace: banking-app
+
+resources:
+  - grafana-deployment.yaml
+  - grafana-config.yaml
+  - prometheus-deployment.yaml
+  - prometheus-config.yaml
+  - jaeger-deployment.yaml
+
+commonLabels:
+  app.kubernetes.io/name: banking-app
+  app.kubernetes.io/component: observability
+  app.kubernetes.io/version: v1.0.0 

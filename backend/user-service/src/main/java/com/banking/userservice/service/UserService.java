@@ -32,9 +32,6 @@ public class UserService {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private JwtTokenUtil jwtTokenUtil;
-
-    @Autowired
     private Tracer tracer;
 
     @Autowired
@@ -46,6 +43,12 @@ public class UserService {
     @Autowired
     private LongCounter failedLoginsCounter;
 
+    @Autowired
+    private DemoDataService demoDataService;
+
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
+
     /**
      * Register a new user
      * @param request user registration request
@@ -55,7 +58,7 @@ public class UserService {
     public User registerUser(UserRegistrationRequest request) {
         Span span = tracer.spanBuilder("UserService.registerUser").startSpan();
         try {
-            logger.info("Registering new user: {}", request.getUsername());
+            logger.info("Registering new user: {} with demo data: {}", request.getUsername(), request.getGenerateDemoData());
 
             // Check if username already exists
             if (userRepository.existsByUsername(request.getUsername())) {
@@ -80,6 +83,24 @@ public class UserService {
             logger.info("User registered successfully: {}", savedUser.getUsername());
             
             registeredUsersCounter.add(1);
+            
+            // Generate demo data if requested
+            if (request.getGenerateDemoData() != null && request.getGenerateDemoData()) {
+                logger.info("Demo data generation requested for user: {}", savedUser.getUsername());
+                try {
+                    // Generate JWT token for demo data creation
+                    String jwtToken = jwtTokenUtil.generateToken(savedUser.getUsername(), savedUser.getId(), savedUser.getRoles());
+                    logger.info("Generated JWT token for demo data creation, user ID: {}", savedUser.getId());
+                    
+                    demoDataService.generateDemoData(savedUser.getId(), jwtToken);
+                    logger.info("Demo data generated successfully for user: {}", savedUser.getUsername());
+                } catch (Exception e) {
+                    logger.error("Failed to generate demo data for user: {}", savedUser.getUsername(), e);
+                    // Don't fail registration if demo data generation fails
+                }
+            } else {
+                logger.info("No demo data generation requested for user: {}", savedUser.getUsername());
+            }
             
             span.setAttribute("user.id", savedUser.getId());
             span.setAttribute("user.username", savedUser.getUsername());
