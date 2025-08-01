@@ -74,6 +74,7 @@
 - [ ] End-to-end testing with complete user workflows
 - [ ] Performance and load testing under concurrent usage
 - [ ] Production environment validation and stress testing
+- [ ] **API Route Testing with Proxymock**: Set up proxymock server with predefined responses for all API endpoints to enable direct testing of Next.js API routes without database dependencies
 
 ## Success Criteria
 
