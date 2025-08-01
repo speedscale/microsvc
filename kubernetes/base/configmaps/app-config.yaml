@@ -27,7 +27,7 @@ data:
   OTEL_METRICS_EXPORTER: "otlp"
   OTEL_LOGS_EXPORTER: "otlp"
   OTEL_TRACES_SAMPLER: "always_on"
-  OTEL_PROPAGATORS: "w3c"
+  OTEL_PROPAGATORS: "tracecontext"
   OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app"
   
   # Logging
@@ -54,7 +54,7 @@ data:
   OTEL_METRICS_EXPORTER: "otlp"
   OTEL_LOGS_EXPORTER: "otlp"
   OTEL_TRACES_SAMPLER: "always_on"
-  OTEL_PROPAGATORS: "w3c"
+  OTEL_PROPAGATORS: "tracecontext"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -76,7 +76,7 @@ data:
   OTEL_METRICS_EXPORTER: "otlp"
   OTEL_LOGS_EXPORTER: "otlp"
   OTEL_TRACES_SAMPLER: "always_on"
-  OTEL_PROPAGATORS: "w3c"
+  OTEL_PROPAGATORS: "tracecontext"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -118,7 +118,7 @@ data:
   OTEL_METRICS_EXPORTER: "otlp"
   OTEL_LOGS_EXPORTER: "otlp"
   OTEL_TRACES_SAMPLER: "always_on"
-  OTEL_PROPAGATORS: "w3c"
+  OTEL_PROPAGATORS: "tracecontext"
   MANAGEMENT_TRACING_ENABLED: "true"
   MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "1.0"
 ---
@@ -144,7 +144,7 @@ data:
   OTEL_METRICS_EXPORTER: "otlp"
   OTEL_LOGS_EXPORTER: "otlp"
   OTEL_TRACES_SAMPLER: "always_on"
-  OTEL_PROPAGATORS: "w3c"
+  OTEL_PROPAGATORS: "tracecontext"
   OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app"
   
   # Next.js configuration

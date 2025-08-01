@@ -73,7 +73,7 @@ otel:
       endpoint: http://jaeger:4318
   traces:
     exporter: otlp
-    propagators: w3c
+    propagators: tracecontext
     sampler:
       type: always_on
   metrics:
@@ -81,4 +81,4 @@ otel:
   logs:
     exporter: otlp
   propagation:
-    type: w3c
+    type: tracecontext

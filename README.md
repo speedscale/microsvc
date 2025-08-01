@@ -12,6 +12,9 @@ kubectl apply -k kubernetes/base/
 # Deploy observability stack
 kubectl apply -k kubernetes/observability/
 
+# Deploy with Speedscale traffic recording (optional)
+kubectl apply -k kubernetes/overlays/speedscale/
+
 # Access the application
 kubectl get svc -n banking-app frontend-service-nodeport
 # For minikube: minikube service frontend-service-nodeport -n banking-app
@@ -136,6 +139,106 @@ kubectl apply -k kubernetes/overlays/speedscale/
 ```
 
 **Note**: For production, edit `kubernetes/overlays/speedscale/frontend-config-patch.yaml` to set your actual API domain instead of `https://your-api-domain.com`.
+
+### Speedscale Overlay Deployment
+
+The Speedscale overlay adds traffic recording and replay capabilities to all services in the banking application. This overlay is useful for:
+
+- **Traffic Recording**: Capturing real API traffic for testing and analysis
+- **Traffic Replay**: Replaying recorded traffic for load testing and regression testing
+- **Performance Testing**: Analyzing service performance under realistic load conditions
+
+#### What the Speedscale Overlay Does
+
+The Speedscale overlay adds the following annotations to all service deployments:
+
+- `sidecar.speedscale.com/inject: "true"` - Injects Speedscale sidecar containers
+- `sidecar.speedscale.com/tls-out: "true"` - Enables TLS termination for outbound traffic
+- `sidecar.speedscale.com/tls-java-tool-options: "true"` - Configures Java applications for TLS interception
+
+#### Prerequisites
+
+Before deploying the Speedscale overlay, ensure you have:
+
+1. **Speedscale CLI installed**: Download from [Speedscale documentation](https://docs.speedscale.com/)
+2. **Speedscale account**: Sign up at [Speedscale](https://speedscale.com/)
+3. **Kubernetes cluster**: The overlay works with any Kubernetes cluster
+
+#### Deployment Steps
+
+1. **Install Speedscale components** (if not already installed):
+   ```bash
+   # Install Speedscale operator and components
+   speedscale install
+   ```
+
+2. **Deploy the Speedscale overlay**:
+   ```bash
+   # Deploy with Speedscale annotations
+   kubectl apply -k kubernetes/overlays/speedscale/
+   ```
+
+3. **Verify deployment**:
+   ```bash
+   # Check that pods have Speedscale sidecars
+   kubectl get pods -n banking-app
+   
+   # Verify Speedscale annotations are applied
+   kubectl describe deployment frontend -n banking-app
+   ```
+
+#### Using Speedscale Features
+
+Once deployed, you can use Speedscale features:
+
+**Record Traffic**:
+```bash
+# Start recording traffic to a service
+speedscale record --service frontend --duration 5m
+```
+
+**Replay Traffic**:
+```bash
+# Replay recorded traffic for load testing
+speedscale replay --recording-id <recording-id> --target http://localhost:3000
+```
+
+**View Recordings**:
+```bash
+# List all recordings
+speedscale recordings list
+```
+
+#### Removing Speedscale Overlay
+
+To remove Speedscale annotations and return to standard deployment:
+
+```bash
+# Delete Speedscale overlay
+kubectl delete -k kubernetes/overlays/speedscale/
+
+# Redeploy without Speedscale
+kubectl apply -k kubernetes/base/
+```
+
+#### Troubleshooting Speedscale
+
+**Sidecar not injected**:
+```bash
+# Check Speedscale operator status
+kubectl get pods -n speedscale-system
+
+# Verify annotations are applied
+kubectl describe deployment frontend -n banking-app | grep speedscale
+```
+
+**Traffic recording issues**:
+```bash
+# Check Speedscale sidecar logs
+kubectl logs -n banking-app deployment/frontend -c speedscale-sidecar
+```
+
+**Performance impact**: The Speedscale sidecars add minimal overhead but monitor resource usage during high-traffic scenarios.
 
 ### Observability Deployment
 

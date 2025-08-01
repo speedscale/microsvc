@@ -45,7 +45,7 @@ services:
       - OTEL_METRICS_EXPORTER=otlp
       - OTEL_LOGS_EXPORTER=otlp
       - OTEL_TRACES_SAMPLER=always_on
-      - OTEL_PROPAGATORS=w3c
+      - OTEL_PROPAGATORS=tracecontext
       - OTEL_RESOURCE_ATTRIBUTES=service.namespace=banking-app
     ports:
       - "8081:8080"
@@ -81,7 +81,7 @@ services:
       - OTEL_METRICS_EXPORTER=otlp
       - OTEL_LOGS_EXPORTER=otlp
       - OTEL_TRACES_SAMPLER=always_on
-      - OTEL_PROPAGATORS=w3c
+      - OTEL_PROPAGATORS=tracecontext
       - OTEL_RESOURCE_ATTRIBUTES=service.namespace=banking-app
     ports:
       - "8082:8080"
@@ -117,7 +117,7 @@ services:
       - OTEL_METRICS_EXPORTER=otlp
       - OTEL_LOGS_EXPORTER=otlp
       - OTEL_TRACES_SAMPLER=always_on
-      - OTEL_PROPAGATORS=w3c
+      - OTEL_PROPAGATORS=tracecontext
       - OTEL_RESOURCE_ATTRIBUTES=service.namespace=banking-app
     ports:
       - "8083:8080"
@@ -168,8 +168,10 @@ services:
       - OTEL_METRICS_EXPORTER=otlp
       - OTEL_LOGS_EXPORTER=otlp
       - OTEL_TRACES_SAMPLER=always_on
-      - OTEL_PROPAGATORS=w3c
+      - OTEL_PROPAGATORS=tracecontext
       - OTEL_RESOURCE_ATTRIBUTES=service.namespace=banking-app
+      - OTEL_EXPORTER_OTLP_TIMEOUT=10000
+      - OTEL_EXPORTER_OTLP_COMPRESSION=none
     ports:
       - "8080:8080"
     networks:
@@ -199,7 +201,7 @@ services:
       - OTEL_METRICS_EXPORTER=otlp
       - OTEL_LOGS_EXPORTER=otlp
       - OTEL_TRACES_SAMPLER=always_on
-      - OTEL_PROPAGATORS=w3c
+      - OTEL_PROPAGATORS=tracecontext
       - OTEL_RESOURCE_ATTRIBUTES=service.namespace=banking-app
     ports:
       - "3000:3000"

@@ -118,15 +118,19 @@ otel:
     otlp:
       protocol: http/protobuf
       endpoint: http://localhost:4318
+      headers: {}
+      timeout: 10s
+      compression: none
   traces:
     exporter: otlp
-    propagators: w3c
+    propagators: tracecontext
     sampler:
       type: always_on
+      arg: 1.0
   metrics:
     exporter: otlp
   logs:
     exporter: otlp
   propagation:
-    type: w3c
+    type: tracecontext
     
