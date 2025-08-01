@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
@@ -17,7 +17,7 @@ jest.mock('@/lib/auth/context', () => ({
 
 // Mock Next.js Link component
 jest.mock('next/link', () => {
-  return function MockLink({ children, href, ...props }: any) {
+  return function MockLink({ children, href, ...props }: Record<string, unknown>) {
     return <a href={href} {...props}>{children}</a>;
   };
 });
@@ -202,7 +202,7 @@ describe('RegisterForm', () => {
   it('shows loading state during submission', async () => {
     const user = userEvent.setup();
     // Create a promise that doesn't resolve immediately
-    let resolvePromise: (value: any) => void;
+    let resolvePromise: (value: unknown) => void;
     const pendingPromise = new Promise((resolve) => {
       resolvePromise = resolve;
     });

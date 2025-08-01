@@ -46,7 +46,7 @@ const AccountsPage: React.FC = () => {
         style: 'currency',
         currency: safeCurrency,
       }).format(amount);
-    } catch (error) {
+    } catch {
       // Fallback formatting if currency code is invalid
       return new Intl.NumberFormat('en-US', {
         style: 'currency',

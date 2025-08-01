@@ -22,7 +22,7 @@ interface Account {
 const TransferPage: React.FC = () => {
   const params = useParams();
   const router = useRouter();
-  const { user: _ } = useAuth();
+  const { user } = useAuth();
   const [fromAccount, setFromAccount] = useState<Account | null>(null);
   const [toAccountId, setToAccountId] = useState('');
   const [amount, setAmount] = useState('');

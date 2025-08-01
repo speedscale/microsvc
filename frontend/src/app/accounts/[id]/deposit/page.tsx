@@ -22,7 +22,7 @@ interface Account {
 const DepositPage: React.FC = () => {
   const params = useParams();
   const router = useRouter();
-  const { user: _ } = useAuth();
+  const { user } = useAuth();
   const [account, setAccount] = useState<Account | null>(null);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');

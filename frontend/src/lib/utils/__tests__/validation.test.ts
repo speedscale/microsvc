@@ -165,7 +165,7 @@ describe('Validation Schemas', () => {
 
     it('rejects invalid account type', () => {
       const invalidData = {
-        accountType: 'INVALID' as any,
+        accountType: 'INVALID' as unknown,
         initialBalance: 1000,
       };
 
@@ -402,7 +402,7 @@ describe('Validation Schemas', () => {
     it('rejects invalid language', () => {
       const invalidData = {
         emailNotifications: true,
-        language: 'invalid' as any,
+        language: 'invalid' as unknown,
       };
 
       const result = preferencesSchema.safeParse(invalidData);

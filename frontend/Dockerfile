@@ -19,7 +19,7 @@ ENV NODE_ENV=production
 RUN npm run build
 
 # Runtime image - use Alpine for Colima compatibility
-FROM --platform=$TARGETPLATFORM node:20-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
