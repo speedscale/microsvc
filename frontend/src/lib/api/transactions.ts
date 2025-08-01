@@ -135,15 +135,14 @@ export class TransactionsAPI {
     currency: string = 'USD'
   ): Promise<ApiResponse<Transaction>> {
     console.log(`[TRANSACTION] Creating deposit: Account ${accountId}, Amount ${amount} ${currency}`);
-    const transactionData: CreateTransactionRequest = {
+    const depositData = {
       accountId,
-      type: 'DEPOSIT',
       amount,
-      currency,
       description,
+      currency,
     };
 
-    const result = await this.createTransaction(transactionData);
+    const result = await apiClient.post<Transaction>('/api/transactions/deposit', depositData);
     logTransaction('deposit', accountId, amount, result.success);
     return result;
   }
@@ -156,15 +155,14 @@ export class TransactionsAPI {
     currency: string = 'USD'
   ): Promise<ApiResponse<Transaction>> {
     console.log(`[TRANSACTION] Creating withdrawal: Account ${accountId}, Amount ${amount} ${currency}`);
-    const transactionData: CreateTransactionRequest = {
+    const withdrawalData = {
       accountId,
-      type: 'WITHDRAWAL',
       amount,
-      currency,
       description,
+      currency,
     };
 
-    const result = await this.createTransaction(transactionData);
+    const result = await apiClient.post<Transaction>('/api/transactions/withdraw', withdrawalData);
     logTransaction('withdrawal', accountId, amount, result.success);
     return result;
   }
@@ -178,16 +176,15 @@ export class TransactionsAPI {
     currency: string = 'USD'
   ): Promise<ApiResponse<Transaction>> {
     console.log(`[TRANSACTION] Creating transfer: From Account ${fromAccountId} to Account ${toAccountId}, Amount ${amount} ${currency}`);
-    const transactionData: CreateTransactionRequest = {
-      accountId: fromAccountId,
+    const transferData = {
+      fromAccountId,
       toAccountId,
-      type: 'TRANSFER',
       amount,
-      currency,
       description,
+      currency,
     };
 
-    const result = await this.createTransaction(transactionData);
+    const result = await apiClient.post<Transaction>('/api/transactions/transfer', transferData);
     logTransaction('transfer', fromAccountId, amount, result.success);
     return result;
   }

@@ -44,6 +44,17 @@
         </encoder>
     </appender>
     
+    <!-- Actuator logging configurations to reduce noise -->
+    <logger name="org.springframework.boot.actuate.endpoint.web" level="WARN"/>
+    <logger name="org.springframework.boot.actuator.health" level="WARN"/>
+    <logger name="org.springframework.boot.actuator.endpoint.health" level="WARN"/>
+    <logger name="org.springframework.boot.actuator.endpoint.HealthEndpoint" level="WARN"/>
+    <logger name="org.springframework.boot.actuator.endpoint.web.servlet" level="WARN"/>
+    <logger name="org.springframework.boot.actuator.endpoint.web.reactive" level="WARN"/>
+    <logger name="org.springframework.boot.actuator.endpoint" level="WARN"/>
+    <logger name="org.springframework.boot.actuator" level="WARN"/>
+    <logger name="com.zaxxer.hikari" level="WARN"/>
+    
     <!-- Logger configurations -->
     <logger name="com.banking" level="DEBUG"/>
     <logger name="org.springframework.web" level="INFO"/>

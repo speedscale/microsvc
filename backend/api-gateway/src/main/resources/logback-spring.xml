@@ -2,7 +2,7 @@
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     
-    <property name="LOG_FILE" value="${LOG_FILE:-${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}}/transactions-service.log}"/>
+    <property name="LOG_FILE" value="${LOG_FILE:-${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}}/api-gateway.log}"/>
     
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -45,9 +45,9 @@
         <!-- <appender-ref ref="FILE"/> -->
     </root>
     
-    <logger name="com.banking.transactionsservice" level="INFO"/>
+    <logger name="com.banking.apigateway" level="INFO"/>
     <logger name="org.springframework.web" level="INFO"/>
     <logger name="org.springframework.security" level="INFO"/>
-    <logger name="org.hibernate.SQL" level="WARN"/>
-    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="WARN"/>
-</configuration>
+    <logger name="org.springframework.cloud.gateway" level="INFO"/>
+    <logger name="io.opentelemetry" level="INFO"/>
+</configuration> 

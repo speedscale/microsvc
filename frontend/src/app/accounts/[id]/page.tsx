@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useAuth } from '@/lib/auth/context';
 import Button from '@/components/ui/Button';
 import Link from 'next/link';
@@ -190,12 +191,14 @@ const AccountDetailsPage: React.FC = () => {
   if (isLoading) {
     return (
       <ProtectedRoute requireAuth={true}>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading account details...</p>
+        <AuthenticatedLayout>
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading account details...</p>
+            </div>
           </div>
-        </div>
+        </AuthenticatedLayout>
       </ProtectedRoute>
     );
   }
@@ -203,33 +206,35 @@ const AccountDetailsPage: React.FC = () => {
   if (error || !account) {
     return (
       <ProtectedRoute requireAuth={true}>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-24 h-24 mx-auto mb-4 text-gray-400">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+        <AuthenticatedLayout>
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-24 h-24 mx-auto mb-4 text-gray-400">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {error || 'Account not found'}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                The account you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to view it.
+              </p>
+              <Link href="/accounts">
+                <Button variant="primary">
+                  Back to Accounts
+                </Button>
+              </Link>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {error || 'Account not found'}
-            </h3>
-            <p className="text-gray-600 mb-4">
-              The account you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to view it.
-            </p>
-            <Link href="/accounts">
-              <Button variant="primary">
-                Back to Accounts
-              </Button>
-            </Link>
           </div>
-        </div>
+        </AuthenticatedLayout>
       </ProtectedRoute>
     );
   }
 
   return (
     <ProtectedRoute requireAuth={true}>
-      <div className="min-h-screen bg-gray-50">
+      <AuthenticatedLayout>
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
             <div className="mb-6">
@@ -413,7 +418,7 @@ const AccountDetailsPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+      </AuthenticatedLayout>
     </ProtectedRoute>
   );
 };

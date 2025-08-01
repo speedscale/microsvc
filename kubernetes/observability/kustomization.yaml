@@ -12,7 +12,7 @@ resources:
   - prometheus-config.yaml
   - jaeger-deployment.yaml
 
-commonLabels:
+labels:
   app.kubernetes.io/name: banking-app
   app.kubernetes.io/component: observability
   app.kubernetes.io/version: v1.0.0 

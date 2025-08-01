@@ -1,13 +1,3 @@
-import { trace, context, SpanStatusCode } from '@opentelemetry/api';
-
-// Logger configuration
-const LOG_LEVELS = {
-  ERROR: 0,
-  WARN: 1,
-  INFO: 2,
-  DEBUG: 3,
-} as const;
-
 interface LogEntry {
   timestamp: string;
   level: string;

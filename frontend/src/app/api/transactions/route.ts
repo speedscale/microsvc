@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     const { searchParams } = new URL(request.url);
     
-    const response = await fetch(`${API_GATEWAY_URL}/api/accounts?${searchParams}`, {
+    const response = await fetch(`${API_GATEWAY_URL}/api/transactions?${searchParams}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Accounts proxy error:', error);
+    console.error('Transactions proxy error:', error);
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     const body = await request.json();
     
-    const response = await fetch(`${API_GATEWAY_URL}/api/accounts`, {
+    const response = await fetch(`${API_GATEWAY_URL}/api/transactions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -45,10 +45,10 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Create account proxy error:', error);
+    console.error('Create transaction proxy error:', error);
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+} 

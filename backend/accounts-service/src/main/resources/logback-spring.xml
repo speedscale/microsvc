@@ -22,9 +22,22 @@
         </rollingPolicy>
     </appender>
     
+    <!-- Actuator logging configurations to reduce noise -->
     <logger name="org.springframework.boot.actuate.endpoint.web" level="WARN"/>
     <logger name="org.springframework.boot.actuator.health" level="WARN"/>
+    <logger name="org.springframework.boot.actuator.endpoint.health" level="WARN"/>
+    <logger name="org.springframework.boot.actuator.endpoint.HealthEndpoint" level="WARN"/>
+    <logger name="org.springframework.boot.actuator.endpoint.web.servlet" level="WARN"/>
+    <logger name="org.springframework.boot.actuator.endpoint.web.reactive" level="WARN"/>
+    <logger name="org.springframework.boot.actuator.endpoint" level="WARN"/>
+    <logger name="org.springframework.boot.actuator" level="WARN"/>
     <logger name="com.zaxxer.hikari" level="WARN"/>
+    
+    <!-- Spring Security and Web logging configurations -->
+    <logger name="org.springframework.security.web.FilterChainProxy" level="WARN"/>
+    <logger name="org.springframework.security.web.authentication.AnonymousAuthenticationFilter" level="WARN"/>
+    <logger name="org.springframework.web.servlet.DispatcherServlet" level="WARN"/>
+    <logger name="org.springframework.web.servlet.mvc.method.annotation.HttpEntityMethodProcessor" level="WARN"/>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>

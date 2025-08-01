@@ -4,10 +4,27 @@
  * Note: This only runs on the server side during SSR/API routes, not in the browser
  */
 
+// Type declaration for EdgeRuntime
+declare global {
+  const EdgeRuntime: string | undefined;
+}
+
 // Register the SDK - only runs on the server side
 export async function register() {
   // Only initialize on server side to avoid bundling issues with browser
   if (typeof window !== 'undefined') {
+    return;
+  }
+  
+  // Check if we're in Edge Runtime (middleware) - skip instrumentation
+  if (typeof EdgeRuntime !== 'undefined') {
+    console.log('🔍 Skipping OpenTelemetry instrumentation in Edge Runtime');
+    return;
+  }
+  
+  // Check if we're in a Node.js environment
+  if (typeof process === 'undefined' || !process.versions?.node) {
+    console.log('🔍 Skipping OpenTelemetry instrumentation - not in Node.js environment');
     return;
   }
   

@@ -182,9 +182,8 @@ describe('TransactionsAPI', () => {
 
       const result = await TransactionsAPI.createDeposit(1, 1000, 'Test deposit')
 
-      expect(mockApiClient.post).toHaveBeenCalledWith('/api/transactions', {
+      expect(mockApiClient.post).toHaveBeenCalledWith('/api/transactions/deposit', {
         accountId: 1,
-        type: 'DEPOSIT',
         amount: 1000,
         currency: 'USD',
         description: 'Test deposit',
@@ -198,9 +197,8 @@ describe('TransactionsAPI', () => {
 
       await TransactionsAPI.createDeposit(1, 1000, 'Test deposit', 'EUR')
 
-      expect(mockApiClient.post).toHaveBeenCalledWith('/api/transactions', {
+      expect(mockApiClient.post).toHaveBeenCalledWith('/api/transactions/deposit', {
         accountId: 1,
-        type: 'DEPOSIT',
         amount: 1000,
         currency: 'EUR',
         description: 'Test deposit',
@@ -218,9 +216,8 @@ describe('TransactionsAPI', () => {
 
       const result = await TransactionsAPI.createWithdrawal(1, 500, 'Test withdrawal')
 
-      expect(mockApiClient.post).toHaveBeenCalledWith('/api/transactions', {
+      expect(mockApiClient.post).toHaveBeenCalledWith('/api/transactions/withdraw', {
         accountId: 1,
-        type: 'WITHDRAWAL',
         amount: 500,
         currency: 'USD',
         description: 'Test withdrawal',
@@ -239,10 +236,9 @@ describe('TransactionsAPI', () => {
 
       const result = await TransactionsAPI.createTransfer(1, 2, 300, 'Test transfer')
 
-      expect(mockApiClient.post).toHaveBeenCalledWith('/api/transactions', {
-        accountId: 1,
+      expect(mockApiClient.post).toHaveBeenCalledWith('/api/transactions/transfer', {
+        fromAccountId: 1,
         toAccountId: 2,
-        type: 'TRANSFER',
         amount: 300,
         currency: 'USD',
         description: 'Test transfer',

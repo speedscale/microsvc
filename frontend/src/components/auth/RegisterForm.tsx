@@ -30,7 +30,7 @@ const RegisterForm: React.FC = () => {
 
     try {
       // Extract registration data, excluding confirmPassword
-      const { confirmPassword, generateDemoData, ...registrationData } = data;
+      const { confirmPassword: _, generateDemoData, ...registrationData } = data;
       const response = await registerUser({ ...registrationData, generateDemoData });
       
       if (response.success) {
