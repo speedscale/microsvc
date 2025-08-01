@@ -69,9 +69,7 @@ management:
     export:
       prometheus:
         enabled: true
-
-# OpenTelemetry Configuration
-management:
+  # OpenTelemetry Configuration
   otlp:
     metrics:
       export:
