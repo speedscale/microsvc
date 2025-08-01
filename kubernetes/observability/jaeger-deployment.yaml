@@ -36,6 +36,8 @@ spec:
         env:
         - name: COLLECTOR_OTLP_ENABLED
           value: "true"
+        - name: COLLECTOR_OTLP_GRPC_HOST_PORT
+          value: ":4317"
         resources:
           limits:
             cpu: 500m

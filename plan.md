@@ -7,7 +7,7 @@
 
 ## Phase 2: Backend Services Development ✅ COMPLETED
 - [x] Implement Spring Boot microservices (user, accounts, transactions, api-gateway)
-- [x] Add JWT authentication, database persistence, and OpenTelemetry instrumentation
+- [x] Add JWT authentication, database persistence, and initial OpenTelemetry instrumentation
 - [x] Create comprehensive test suites with >80% code coverage
 
 ## Phase 3: Frontend Development ✅ COMPLETED
@@ -19,11 +19,12 @@
 - [x] Complete backend testing suite (unit, integration, API tests)
 - [x] Frontend testing with Jest, React Testing Library, and Playwright E2E tests
 - [x] Achieve >80% test coverage across all services
+- [x] **API Route Testing with Proxymock**: Set up proxymock server with predefined responses for all API endpoints to enable direct testing of Next.js API routes without database dependencies
 
 ## Phase 5: Observability & Monitoring ✅ COMPLETED
-- [x] Deploy OpenTelemetry instrumentation across all services
+- [x] Deploy and configure a robust OpenTelemetry instrumentation across all services
 - [x] Set up Jaeger, Prometheus, and Grafana monitoring stack
-- [x] Configure distributed tracing and custom business metrics
+- [x] Configure and verify distributed tracing and custom business metrics
 
 ## Phase 6: Containerization ✅ COMPLETED
 - [x] Create optimized Docker images with multi-stage builds and security hardening
@@ -39,8 +40,6 @@
 - [x] Set up GitHub Actions for automated building and testing with multi-architecture Docker images (ARM/AMD)
 - [x] Configure Docker image registry with proper tagging, versioning, and optimize Spring Boot startup times
 - [x] Simplify API Gateway routing architecture by eliminating complex path rewriting and implementing transparent proxy pattern
-
-
 
 ## Phase 9: Security Hardening & Architecture Review
 - [ ] **API Gateway Security**: Implement proper authentication at gateway level instead of permitAll()
@@ -74,7 +73,6 @@
 - [ ] End-to-end testing with complete user workflows
 - [ ] Performance and load testing under concurrent usage
 - [ ] Production environment validation and stress testing
-- [ ] **API Route Testing with Proxymock**: Set up proxymock server with predefined responses for all API endpoints to enable direct testing of Next.js API routes without database dependencies
 
 ## Success Criteria
 

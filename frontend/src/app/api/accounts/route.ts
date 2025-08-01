@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const API_GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:8080';
 
+// Trace propagation utilities
+const generateTraceId = (): string => {
+  return Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+};
+
+const generateSpanId = (): string => {
+  return Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+};
+
+const createTraceParent = (): string => {
+  const traceId = generateTraceId();
+  const spanId = generateSpanId();
+  return `00-${traceId}-${spanId}-01`;
+};
+
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -12,6 +27,7 @@ export async function GET(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         ...(authHeader && { 'Authorization': authHeader }),
+        'traceparent': createTraceParent(),
       },
     });
 
@@ -37,6 +53,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         ...(authHeader && { 'Authorization': authHeader }),
+        'traceparent': createTraceParent(),
       },
       body: JSON.stringify(body),
     });

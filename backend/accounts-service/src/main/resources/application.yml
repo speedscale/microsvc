@@ -69,20 +69,14 @@ management:
     export:
       prometheus:
         enabled: true
-
-# OpenTelemetry Configuration
-otel:
-  service:
-    name: ${spring.application.name}
-  exporter:
-    otlp:
-      protocol: http/protobuf
-      endpoint: http://localhost:4318
-  traces:
-    exporter: otlp
-  metrics:
-    exporter: otlp
-  logs:
-    exporter: otlp
-  propagation:
-    type: w3c
+  # OpenTelemetry Configuration
+  otlp:
+    metrics:
+      export:
+        url: http://jaeger:4317
+    tracing:
+      endpoint: http://jaeger:4317
+  tracing:
+    sampling:
+      probability: 1.0
+    enabled: true
