@@ -34,45 +34,63 @@ public class DemoDataService {
         logger.info("Generating demo data for user: {}", userId);
         
         try {
+            // Validate JWT token before making service calls
+            if (jwtToken == null || jwtToken.trim().isEmpty()) {
+                logger.warn("JWT token is null or empty for user: {}", userId);
+                return;
+            }
+            
             // Create 2 accounts
             Long checkingAccountId = createDemoAccount(userId, "CHECKING", jwtToken);
             Long savingsAccountId = createDemoAccount(userId, "SAVINGS", jwtToken);
             
-            // Generate 10 transactions
-            generateDemoTransactions(userId, checkingAccountId, savingsAccountId, jwtToken);
-            
-            logger.info("Demo data generated successfully for user: {}", userId);
+            // Only generate transactions if accounts were created successfully
+            if (checkingAccountId != null && savingsAccountId != null) {
+                generateDemoTransactions(userId, checkingAccountId, savingsAccountId, jwtToken);
+                logger.info("Demo data generated successfully for user: {}", userId);
+            } else {
+                logger.warn("Failed to create accounts for user: {}, skipping transaction generation", userId);
+            }
         } catch (Exception e) {
             logger.error("Failed to generate demo data for user: {}", userId, e);
-            throw new RuntimeException("Failed to generate demo data", e);
+            // Don't throw exception to prevent cascading failures
+            // Just log the error and continue
         }
     }
 
     private Long createDemoAccount(Long userId, String accountType, String jwtToken) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + jwtToken);
-        headers.set("X-User-Id", userId.toString());
-        
-        var request = new CreateAccountRequest();
-        request.setAccountType(accountType);
-        request.setInitialBalance(accountType.equals("CHECKING") ? 2500.0 : 10000.0);
-        request.setCurrency("USD");
-        
-        HttpEntity<CreateAccountRequest> entity = new HttpEntity<>(request, headers);
-        
-        ResponseEntity<AccountResponse> response = restTemplate.exchange(
-            accountsServiceUrl + "/api/accounts",
-            HttpMethod.POST,
-            entity,
-            AccountResponse.class
-        );
-        
-        if (response.getBody() != null) {
-            logger.info("Created {} account with ID: {} for user: {}", accountType, response.getBody().getId(), userId);
-            return response.getBody().getId();
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + jwtToken);
+            headers.set("X-User-Id", userId.toString());
+            
+            var request = new CreateAccountRequest();
+            request.setAccountType(accountType);
+            request.setInitialBalance(accountType.equals("CHECKING") ? 2500.0 : 10000.0);
+            request.setCurrency("USD");
+            
+            HttpEntity<CreateAccountRequest> entity = new HttpEntity<>(request, headers);
+            
+            logger.debug("Calling accounts service to create {} account for user: {}", accountType, userId);
+            
+            ResponseEntity<AccountResponse> response = restTemplate.exchange(
+                accountsServiceUrl + "/api/accounts",
+                HttpMethod.POST,
+                entity,
+                AccountResponse.class
+            );
+            
+            if (response.getBody() != null) {
+                logger.info("Created {} account with ID: {} for user: {}", accountType, response.getBody().getId(), userId);
+                return response.getBody().getId();
+            }
+            
+            logger.error("Failed to create {} account for user: {} - no response body", accountType, userId);
+            return null;
+        } catch (Exception e) {
+            logger.error("Failed to create {} account for user: {}", accountType, userId, e);
+            return null;
         }
-        
-        throw new RuntimeException("Failed to create " + accountType + " account");
     }
 
     private void generateDemoTransactions(Long userId, Long checkingAccountId, Long savingsAccountId, String jwtToken) {

@@ -12,7 +12,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import com.banking.userservice.security.UserAuthenticationDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -62,7 +62,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             
             // if token is valid configure Spring Security to manually set authentication
-            if (jwtTokenUtil.validateToken(jwtToken, username)) {
+            if (jwtTokenUtil.validateToken(jwtToken)) {
                 
                 // Get user roles from token
                 String roles = jwtTokenUtil.getRolesFromToken(jwtToken);
@@ -77,7 +77,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(username, null, authorities);
                         
                 // Add user ID to authentication details
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                UserAuthenticationDetails authDetails = new UserAuthenticationDetails(request, userId);
+                authToken.setDetails(authDetails);
                 
                 // Set the authentication in the security context
                 SecurityContextHolder.getContext().setAuthentication(authToken);

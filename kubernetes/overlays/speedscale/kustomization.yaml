@@ -5,8 +5,8 @@ resources:
 - ../../base
 
 patches:
-- user-service-annotations.yaml
-- accounts-service-annotations.yaml
-- transactions-service-annotations.yaml
-- api-gateway-annotations.yaml
-- frontend-annotations.yaml
+- path: user-service-annotations.yaml
+- path: accounts-service-annotations.yaml
+- path: transactions-service-annotations.yaml
+- path: api-gateway-annotations.yaml
+- path: frontend-annotations.yaml

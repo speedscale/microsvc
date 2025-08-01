@@ -109,4 +109,24 @@ logging:
 # Disabled file logging for containerized deployment
 #  file:
 #    name: logs/api-gateway.log
+
+# OpenTelemetry Configuration
+otel:
+  service:
+    name: ${spring.application.name}
+  exporter:
+    otlp:
+      protocol: http/protobuf
+      endpoint: http://localhost:4318
+  traces:
+    exporter: otlp
+    propagators: w3c
+    sampler:
+      type: always_on
+  metrics:
+    exporter: otlp
+  logs:
+    exporter: otlp
+  propagation:
+    type: w3c
     

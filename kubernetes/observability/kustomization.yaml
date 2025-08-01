@@ -13,6 +13,7 @@ resources:
   - jaeger-deployment.yaml
 
 labels:
-  app.kubernetes.io/name: banking-app
-  app.kubernetes.io/component: observability
-  app.kubernetes.io/version: v1.0.0 
+  - pairs:
+      app.kubernetes.io/name: banking-app
+      app.kubernetes.io/component: observability
+      app.kubernetes.io/version: v1.0.0 

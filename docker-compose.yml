@@ -37,6 +37,16 @@ services:
       - DB_USERNAME=user_service_user
       - DB_PASSWORD=user_service_pass
       - DB_SCHEMA=user_service
+      # OpenTelemetry Configuration
+      - OTEL_SERVICE_NAME=user-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_TRACES_SAMPLER=always_on
+      - OTEL_PROPAGATORS=w3c
+      - OTEL_RESOURCE_ATTRIBUTES=service.namespace=banking-app
     ports:
       - "8081:8080"
     networks:
@@ -63,6 +73,16 @@ services:
       - DB_USERNAME=accounts_service_user
       - DB_PASSWORD=accounts_service_pass
       - DB_SCHEMA=accounts_service
+      # OpenTelemetry Configuration
+      - OTEL_SERVICE_NAME=accounts-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_TRACES_SAMPLER=always_on
+      - OTEL_PROPAGATORS=w3c
+      - OTEL_RESOURCE_ATTRIBUTES=service.namespace=banking-app
     ports:
       - "8082:8080"
     networks:
@@ -89,6 +109,16 @@ services:
       - DB_USERNAME=transactions_service_user
       - DB_PASSWORD=transactions_service_pass
       - DB_SCHEMA=transactions_service
+      # OpenTelemetry Configuration
+      - OTEL_SERVICE_NAME=transactions-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_TRACES_SAMPLER=always_on
+      - OTEL_PROPAGATORS=w3c
+      - OTEL_RESOURCE_ATTRIBUTES=service.namespace=banking-app
     ports:
       - "8083:8080"
     networks:
@@ -130,6 +160,16 @@ services:
       - TRANSACTIONS_SERVICE_URL=http://transactions-service:8080
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      # OpenTelemetry Configuration
+      - OTEL_SERVICE_NAME=api-gateway
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_TRACES_SAMPLER=always_on
+      - OTEL_PROPAGATORS=w3c
+      - OTEL_RESOURCE_ATTRIBUTES=service.namespace=banking-app
     ports:
       - "8080:8080"
     networks:
@@ -151,6 +191,16 @@ services:
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8080
       - NODE_ENV=development
+      # OpenTelemetry Configuration
+      - OTEL_SERVICE_NAME=frontend
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_TRACES_SAMPLER=always_on
+      - OTEL_PROPAGATORS=w3c
+      - OTEL_RESOURCE_ATTRIBUTES=service.namespace=banking-app
     ports:
       - "3000:3000"
     networks:
