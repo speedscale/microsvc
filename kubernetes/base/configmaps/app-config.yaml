@@ -21,7 +21,13 @@ data:
   SPRING_PROFILES_ACTIVE: "docker"
   
   # Observability
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+  OTEL_TRACES_EXPORTER: "otlp"
+  OTEL_METRICS_EXPORTER: "otlp"
+  OTEL_LOGS_EXPORTER: "otlp"
+  OTEL_TRACES_SAMPLER: "always_on"
+  OTEL_PROPAGATORS: "w3c"
   OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app"
   
   # Logging
@@ -42,6 +48,13 @@ data:
   DB_SCHEMA: "user_service"
   SERVER_PORT: "8080"
   OTEL_SERVICE_NAME: "user-service"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+  OTEL_TRACES_EXPORTER: "otlp"
+  OTEL_METRICS_EXPORTER: "otlp"
+  OTEL_LOGS_EXPORTER: "otlp"
+  OTEL_TRACES_SAMPLER: "always_on"
+  OTEL_PROPAGATORS: "w3c"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -57,6 +70,13 @@ data:
   DB_SCHEMA: "accounts_service"
   SERVER_PORT: "8080"
   OTEL_SERVICE_NAME: "accounts-service"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+  OTEL_TRACES_EXPORTER: "otlp"
+  OTEL_METRICS_EXPORTER: "otlp"
+  OTEL_LOGS_EXPORTER: "otlp"
+  OTEL_TRACES_SAMPLER: "always_on"
+  OTEL_PROPAGATORS: "w3c"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -72,6 +92,13 @@ data:
   DB_SCHEMA: "transactions_service"
   SERVER_PORT: "8080"
   OTEL_SERVICE_NAME: "transactions-service"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+  OTEL_TRACES_EXPORTER: "otlp"
+  OTEL_METRICS_EXPORTER: "otlp"
+  OTEL_LOGS_EXPORTER: "otlp"
+  OTEL_TRACES_SAMPLER: "always_on"
+  OTEL_PROPAGATORS: "w3c"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -85,7 +112,13 @@ metadata:
 data:
   SERVER_PORT: "8080"
   OTEL_SERVICE_NAME: "api-gateway"
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+  OTEL_TRACES_EXPORTER: "otlp"
+  OTEL_METRICS_EXPORTER: "otlp"
+  OTEL_LOGS_EXPORTER: "otlp"
+  OTEL_TRACES_SAMPLER: "always_on"
+  OTEL_PROPAGATORS: "w3c"
   MANAGEMENT_TRACING_ENABLED: "true"
   MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "1.0"
 ---
@@ -107,6 +140,11 @@ data:
   OTEL_SERVICE_NAME: "frontend"
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318/v1/traces"
   OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+  OTEL_TRACES_EXPORTER: "otlp"
+  OTEL_METRICS_EXPORTER: "otlp"
+  OTEL_LOGS_EXPORTER: "otlp"
+  OTEL_TRACES_SAMPLER: "always_on"
+  OTEL_PROPAGATORS: "w3c"
   OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app"
   
   # Next.js configuration
