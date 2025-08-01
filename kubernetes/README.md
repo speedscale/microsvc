@@ -74,6 +74,33 @@ If you prefer to deploy manually:
    minikube service api-gateway -n banking-app --url
    ```
 
+## Accessing the Frontend
+
+### Minikube
+```bash
+# Access frontend via NodePort service
+minikube service frontend-nodeport -n banking-app
+
+# Or get the URL without opening browser
+minikube service frontend-nodeport -n banking-app --url
+```
+
+### Colima
+```bash
+# Access frontend directly on localhost
+curl http://localhost:30080
+# or open in browser: http://localhost:30080
+```
+
+### Alternative: Port Forwarding
+```bash
+# Forward frontend service
+kubectl port-forward -n banking-app service/frontend 3000:80
+
+# Forward API gateway
+kubectl port-forward -n banking-app service/api-gateway 8080:8080
+```
+
 ## Architecture
 
 The deployment consists of:

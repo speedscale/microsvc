@@ -35,48 +35,12 @@
 - [x] Deploy and debug full stack on minikube with automated scripts
 - [x] Build comprehensive E2E test client validating core authentication workflows
 
-## Phase 8: CI/CD Pipeline & Image Registry ✅ COMPLETED
-- [x] Set up GitHub Actions for automated building and testing
-- [x] Configure Docker image registry with proper tagging and versioning
-- [x] Update Kubernetes manifests to use registry images instead of local builds
-- [x] The images need to be for multiple architectures arm and amd
-- [x] The spring boot apps are taking a very long time like 5+ minutes to start, improve startup time
+## Phase 8: CI/CD Pipeline & Production Readiness ✅ COMPLETED
+- [x] Set up GitHub Actions for automated building and testing with multi-architecture Docker images (ARM/AMD)
+- [x] Configure Docker image registry with proper tagging, versioning, and optimize Spring Boot startup times
+- [x] Simplify API Gateway routing architecture by eliminating complex path rewriting and implementing transparent proxy pattern
 
-## Phase 8.5: API Gateway Routing Simplification ✅ COMPLETED
-- [x] Eliminate complex path rewriting in API Gateway configuration
-- [x] Update all controllers to use consistent `/api/service/**` paths internally
-- [x] Remove error-prone RewritePath filters and regex patterns
-- [x] Simplify API Gateway to act as transparent proxy without path transformations
-- [x] Update security configurations to support new endpoint paths
-- [x] Test end-to-end functionality with simplified routing architecture
 
-## System Architecture & Traffic Flow
-
-### Traffic Flow Design
-All external traffic flows through the frontend service, which acts as the single entry point:
-
-```
-Client → Frontend Service → API Gateway → Backend Services
-```
-
-**Architecture Principles:**
-- **Frontend as Proxy**: Frontend contains Next.js API routes that proxy requests to the API Gateway
-- **No Direct Backend Access**: Clients never directly access backend services or API Gateway
-- **Server-Side Communication**: Backend communication uses internal Kubernetes service URLs (e.g., `http://api-gateway:8080`)
-- **Relative Client URLs**: Frontend client code uses relative URLs (`/api/users/login`) that route to Next.js API handlers
-- **Environment Agnostic**: No hardcoded URLs in client-side code, eliminating `NEXT_PUBLIC_API_URL` configuration issues
-
-**Benefits:**
-- Simplified client configuration (no environment-specific URLs)
-- Proper separation of concerns between client and server
-- Security through single entry point
-- Consistent request/response handling and logging
-
-### Known Issues & Future Improvements
-- **Frontend Pod Logging**: Implemented structured logging with custom logger but logs don't appear in `kubectl logs` output. The logging middleware and API client logging are implemented but may be getting filtered by Next.js internal routing or Edge Runtime limitations. Consider investigating:
-  - Server-side API route logging vs middleware logging
-  - OpenTelemetry integration for request tracing
-  - Alternative logging approaches for containerized Next.js applications
 
 ## Phase 9: Security Hardening & Architecture Review
 - [ ] **API Gateway Security**: Implement proper authentication at gateway level instead of permitAll()

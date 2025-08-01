@@ -31,6 +31,7 @@ resources:
   - services/transactions-service-service.yaml
   - services/api-gateway-service.yaml
   - services/frontend-service.yaml
+  - services/frontend-service-nodeport.yaml
 
 namespace: banking-app
 

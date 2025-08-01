@@ -101,6 +101,7 @@ metadata:
 data:
   # Backend API configuration  
   API_GATEWAY_URL: "http://api-gateway:80"
+  BACKEND_API_URL: "http://api-gateway:80"
   
   # OpenTelemetry configuration
   OTEL_SERVICE_NAME: "frontend"

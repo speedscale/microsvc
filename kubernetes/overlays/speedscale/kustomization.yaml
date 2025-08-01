@@ -3,9 +3,8 @@ kind: Kustomization
 
 resources:
 - ../../base
-- frontend-config-patch.yaml
 
-patchesStrategicMerge:
+patches:
 - user-service-annotations.yaml
 - accounts-service-annotations.yaml
 - transactions-service-annotations.yaml
