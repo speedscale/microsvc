@@ -13,8 +13,10 @@ kubectl apply -k kubernetes/base/
 kubectl apply -k kubernetes/observability/
 
 # Access the application
-kubectl port-forward -n banking-app svc/frontend 3000:3000
-# Open http://localhost:3000
+kubectl get svc -n banking-app frontend-service-nodeport
+# For minikube: minikube service frontend-service-nodeport -n banking-app
+# For colima: kubectl port-forward -n banking-app svc/frontend-service-nodeport 30000:30000
+# Open the URL shown by the command above
 
 # Access observability tools
 kubectl port-forward -n banking-app svc/grafana 3001:3000      # Grafana (admin/admin)
