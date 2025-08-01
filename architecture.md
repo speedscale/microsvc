@@ -22,9 +22,32 @@ Client → Frontend Service → API Gateway → Backend Services
 - Security through single entry point
 - Consistent request/response handling and logging
 
+## Observability
+
+The application is instrumented with OpenTelemetry (OTEL) for comprehensive observability, including distributed tracing, metrics, and logs.
+
+### Monitoring Stack
+
+- **Jaeger**: For distributed trace collection and visualization.
+- **Prometheus**: For collecting and storing time-series metrics.
+- **Grafana**: For visualizing metrics and creating dashboards.
+
+### Distributed Tracing
+
+Distributed tracing is configured across all services (frontend, API Gateway, and all backend microservices) to provide end-to-end visibility of requests.
+
+- **Trace Propagation**: Uses the W3C Trace Context (`tracecontext`) propagation format to ensure traces are linked across service boundaries.
+- **Exporter**: All services use the OTLP (OpenTelemetry Protocol) exporter to send trace data to the Jaeger collector over HTTP/protobuf.
+- **Sampling**: Configured for 100% sampling (`always_on`) in development and testing environments for complete visibility.
+- **Endpoint**: The Jaeger OTLP HTTP endpoint is `http://jaeger:4318`.
+
+The trace flow follows the application's traffic flow:
+`Frontend → API Gateway → Backend Service → Database`
+
+This setup allows for debugging and performance analysis by visualizing the entire lifecycle of a request as it travels through the different components of the system.
+
 ## Known Issues & Future Improvements
 
 - **Frontend Pod Logging**: Implemented structured logging with custom logger but logs don't appear in `kubectl logs` output. The logging middleware and API client logging are implemented but may be getting filtered by Next.js internal routing or Edge Runtime limitations. Consider investigating:
   - Server-side API route logging vs middleware logging
-  - OpenTelemetry integration for request tracing
-  - Alternative logging approaches for containerized Next.js applications 
+  - Alternative logging approaches for containerized Next.js applications
