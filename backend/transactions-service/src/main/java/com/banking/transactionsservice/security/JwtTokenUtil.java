@@ -127,4 +127,20 @@ public class JwtTokenUtil {
             return false;
         }
     }
+
+    /**
+     * Validate JWT token with username check
+     * @param token the JWT token
+     * @param username the username to validate against
+     * @return true if valid, false otherwise
+     */
+    public Boolean validateToken(String token, String username) {
+        try {
+            final String tokenUsername = getUsernameFromToken(token);
+            return (tokenUsername.equals(username) && !isTokenExpired(token));
+        } catch (Exception e) {
+            logger.error("JWT token validation failed: {}", e.getMessage());
+            return false;
+        }
+    }
 }

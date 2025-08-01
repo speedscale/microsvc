@@ -49,20 +49,21 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             jwtToken = requestTokenHeader.substring(7);
             try {
                 username = jwtTokenUtil.getUsernameFromToken(jwtToken);
+                logger.debug("Extracted username '{}' from JWT token", username);
             } catch (IllegalArgumentException e) {
-                logger.error("Unable to get JWT Token");
+                logger.error("Unable to get JWT Token: {}", e.getMessage());
             } catch (ExpiredJwtException e) {
-                logger.error("JWT Token has expired");
+                logger.error("JWT Token has expired: {}", e.getMessage());
             }
-        } else {
-            logger.warn("JWT Token does not begin with Bearer String");
+        } else if (!isPublicEndpoint(request)) {
+            logger.warn("JWT Token does not begin with Bearer String. Header: {}", requestTokenHeader);
         }
 
         // Once we get the token validate it.
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             
             // if token is valid configure Spring Security to manually set authentication
-            if (jwtTokenUtil.validateToken(jwtToken)) {
+            if (jwtTokenUtil.validateToken(jwtToken, username)) {
                 
                 // Get user roles from token
                 String roles = jwtTokenUtil.getRolesFromToken(jwtToken);
@@ -84,6 +85,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authToken);
                 
                 logger.debug("User '{}' authenticated with roles: {}", username, roles);
+            } else {
+                logger.warn("JWT token validation failed for user: {}", username);
             }
         }
         chain.doFilter(request, response);

@@ -54,7 +54,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             } catch (ExpiredJwtException e) {
                 logger.error("JWT Token has expired");
             }
-        } else {
+        } else if (!isPublicEndpoint(request)) {
             logger.warn("JWT Token does not begin with Bearer String");
         }
 
@@ -91,7 +91,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     private boolean isPublicEndpoint(HttpServletRequest request) {
         String path = request.getRequestURI();
-        logger.debug("Checking public endpoint for path: {}", path);
         return path.equals("/user/register") ||
                path.equals("/user/login") ||
                path.equals("/user/check-username") ||

@@ -116,8 +116,8 @@ otel:
     name: ${spring.application.name}
   exporter:
     otlp:
-      protocol: http/protobuf
-      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}
+      protocol: grpc
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}
       headers: {}
       timeout: 10s
       compression: none
