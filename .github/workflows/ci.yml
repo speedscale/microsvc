@@ -113,6 +113,7 @@ jobs:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
         tags: |
           type=raw,value=v${{ steps.version.outputs.version }}-${{ github.sha }}
+          type=raw,value=v${{ steps.version.outputs.version }}
           type=raw,value=latest,enable={{is_default_branch}}
           type=ref,event=branch
           type=ref,event=pr
