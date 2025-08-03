@@ -2,7 +2,7 @@
 
 # Configuration
 REGISTRY ?= ghcr.io/speedscale/microsvc
-IMAGE_TAG ?= latest
+IMAGE_TAG ?= $(shell ./scripts/version.sh tag)
 NAMESPACE ?= banking-app
 KUSTOMIZE_DIR ?= kubernetes/base
 SERVICES = user-service accounts-service transactions-service api-gateway
@@ -29,7 +29,7 @@ build-all: build-backend build-frontend
 # Docker image targets
 .PHONY: docker-build docker-push docker-build-push
 docker-build:
-	@echo "Building Docker images..."
+	@echo "Building Docker images with version: $(IMAGE_TAG)..."
 	@for service in $(SERVICES); do \
 		echo "Building Docker image for $$service..."; \
 		docker build -t $(REGISTRY)/$$service:$(IMAGE_TAG) backend/$$service/; \
@@ -45,6 +45,30 @@ docker-push:
 	done
 
 docker-build-push: docker-build docker-push
+
+# Local development with versioned images
+.PHONY: docker-build-versioned docker-clean-versioned
+docker-build-versioned:
+	@echo "Building versioned Docker images for local development..."
+	@VERSION_TAG=$$(./scripts/version.sh tag); \
+	for service in $(SERVICES); do \
+		echo "Building Docker image for $$service with tag: $$VERSION_TAG..."; \
+		docker build -t $(REGISTRY)/$$service:$$VERSION_TAG backend/$$service/; \
+	done
+	@VERSION_TAG=$$(./scripts/version.sh tag); \
+	echo "Building Docker image for frontend with tag: $$VERSION_TAG..."; \
+	docker build -t $(REGISTRY)/frontend:$$VERSION_TAG frontend/
+	@echo "Versioned images built successfully!"
+	@echo "Current version: $(shell ./scripts/version.sh get)"
+	@echo "Image tag: $(shell ./scripts/version.sh tag)"
+
+docker-clean-versioned:
+	@echo "Cleaning versioned Docker images..."
+	@VERSION_TAG=$$(./scripts/version.sh tag); \
+	for service in $(SERVICES) frontend; do \
+		echo "Removing $$service:$$VERSION_TAG..."; \
+		docker rmi $(REGISTRY)/$$service:$$VERSION_TAG 2>/dev/null || true; \
+	done
 
 # Test targets
 .PHONY: test-backend test-frontend test-all test-e2e validate-e2e
@@ -90,7 +114,9 @@ k8s-status:
 k8s-cleanup: k8s-undeploy
 
 k8s-deploy-local:
-	@echo "Deploying to Kubernetes..."
+	@echo "Deploying to Kubernetes with local versioned images..."
+	@echo "Current version: $(shell ./scripts/version.sh get)"
+	@echo "Image tag: $(IMAGE_TAG)"
 	kubectl apply -k $(KUSTOMIZE_DIR)/
 
 # Production deployment
@@ -210,6 +236,8 @@ help:
 	@echo "  docker-build       - Build Docker images"
 	@echo "  docker-push        - Push Docker images to registry"
 	@echo "  docker-build-push  - Build and push Docker images"
+	@echo "  docker-build-versioned - Build Docker images with current version tag"
+	@echo "  docker-clean-versioned - Remove versioned Docker images"
 	@echo "  test-backend       - Run backend tests"
 	@echo "  test-frontend      - Run frontend tests"
 	@echo "  test-e2e           - Run E2E tests with CI configuration"

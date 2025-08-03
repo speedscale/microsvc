@@ -60,7 +60,8 @@ bump_version() {
 # Get Docker image tag
 get_image_tag() {
     local version=$(get_version)
-    echo "v${version}"
+    local git_sha=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    echo "v${version}-${git_sha}"
 }
 
 # Get full image name for a service
