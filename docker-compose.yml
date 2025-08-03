@@ -37,10 +37,13 @@ services:
       - DB_USERNAME=user_service_user
       - DB_PASSWORD=user_service_pass
       - DB_SCHEMA=user_service
+      # JWT Configuration
+      - JWT_SECRET=banking-app-super-secret-key-change-this-in-production-256-bit
+      - JWT_EXPIRATION=86400000
       # OpenTelemetry Configuration
       - OTEL_SERVICE_NAME=user-service
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
-      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=otlp
       - OTEL_LOGS_EXPORTER=otlp
@@ -73,10 +76,13 @@ services:
       - DB_USERNAME=accounts_service_user
       - DB_PASSWORD=accounts_service_pass
       - DB_SCHEMA=accounts_service
+      # JWT Configuration
+      - JWT_SECRET=banking-app-super-secret-key-change-this-in-production-256-bit
+      - JWT_EXPIRATION=86400000
       # OpenTelemetry Configuration
       - OTEL_SERVICE_NAME=accounts-service
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
-      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=otlp
       - OTEL_LOGS_EXPORTER=otlp
@@ -109,10 +115,15 @@ services:
       - DB_USERNAME=transactions_service_user
       - DB_PASSWORD=transactions_service_pass
       - DB_SCHEMA=transactions_service
+      # JWT Configuration
+      - JWT_SECRET=banking-app-super-secret-key-change-this-in-production-256-bit
+      - JWT_EXPIRATION=86400000
+      # Service URLs
+      - ACCOUNTS_SERVICE_URL=http://accounts-service:8080
       # OpenTelemetry Configuration
       - OTEL_SERVICE_NAME=transactions-service
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
-      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=otlp
       - OTEL_LOGS_EXPORTER=otlp
@@ -160,10 +171,13 @@ services:
       - TRANSACTIONS_SERVICE_URL=http://transactions-service:8080
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      # JWT Configuration
+      - JWT_SECRET=banking-app-super-secret-key-change-this-in-production-256-bit
+      - JWT_EXPIRATION=86400000
       # OpenTelemetry Configuration
       - OTEL_SERVICE_NAME=api-gateway
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
-      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=otlp
       - OTEL_LOGS_EXPORTER=otlp

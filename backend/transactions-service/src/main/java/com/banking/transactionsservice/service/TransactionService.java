@@ -235,6 +235,41 @@ public class TransactionService {
         }
     }
     
+    public TransactionResponse createTransaction(CreateTransactionRequest request, Long userId, String jwtToken) {
+        logger.info("Creating transaction for user: {}, account: {}, type: {}, amount: {}", 
+                   userId, request.getAccountId(), request.getType(), request.getAmount());
+        
+        switch (request.getType()) {
+            case "DEPOSIT":
+                DepositRequest depositRequest = new DepositRequest();
+                depositRequest.setAccountId(request.getAccountId());
+                depositRequest.setAmount(request.getAmount());
+                depositRequest.setDescription(request.getDescription());
+                return deposit(depositRequest, userId, jwtToken);
+                
+            case "WITHDRAWAL":
+                WithdrawRequest withdrawRequest = new WithdrawRequest();
+                withdrawRequest.setAccountId(request.getAccountId());
+                withdrawRequest.setAmount(request.getAmount());
+                withdrawRequest.setDescription(request.getDescription());
+                return withdraw(withdrawRequest, userId, jwtToken);
+                
+            case "TRANSFER":
+                if (request.getToAccountId() == null) {
+                    throw new RuntimeException("To account ID is required for transfer transactions");
+                }
+                TransferRequest transferRequest = new TransferRequest();
+                transferRequest.setFromAccountId(request.getAccountId());
+                transferRequest.setToAccountId(request.getToAccountId());
+                transferRequest.setAmount(request.getAmount());
+                transferRequest.setDescription(request.getDescription());
+                return transfer(transferRequest, userId, jwtToken);
+                
+            default:
+                throw new RuntimeException("Invalid transaction type: " + request.getType());
+        }
+    }
+    
     private TransactionResponse convertToResponse(Transaction transaction) {
         return new TransactionResponse(
             transaction.getId(),

@@ -69,8 +69,8 @@ otel:
     name: ${spring.application.name}
   exporter:
     otlp:
-      protocol: http/protobuf
-      endpoint: http://jaeger:4318
+      protocol: grpc
+      endpoint: http://jaeger:4317
   traces:
     exporter: otlp
     propagators: tracecontext

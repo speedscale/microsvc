@@ -2,7 +2,7 @@
 
 # Configuration
 REGISTRY ?= ghcr.io/speedscale/microsvc
-IMAGE_TAG ?= latest
+IMAGE_TAG ?= $(shell ./scripts/version.sh tag)
 NAMESPACE ?= banking-app
 KUSTOMIZE_DIR ?= kubernetes/base
 SERVICES = user-service accounts-service transactions-service api-gateway
@@ -29,7 +29,7 @@ build-all: build-backend build-frontend
 # Docker image targets
 .PHONY: docker-build docker-push docker-build-push
 docker-build:
-	@echo "Building Docker images..."
+	@echo "Building Docker images with version: $(IMAGE_TAG)..."
 	@for service in $(SERVICES); do \
 		echo "Building Docker image for $$service..."; \
 		docker build -t $(REGISTRY)/$$service:$(IMAGE_TAG) backend/$$service/; \
@@ -45,6 +45,30 @@ docker-push:
 	done
 
 docker-build-push: docker-build docker-push
+
+# Local development with versioned images
+.PHONY: docker-build-versioned docker-clean-versioned
+docker-build-versioned:
+	@echo "Building versioned Docker images for local development..."
+	@VERSION_TAG=$$(./scripts/version.sh tag); \
+	for service in $(SERVICES); do \
+		echo "Building Docker image for $$service with tag: $$VERSION_TAG..."; \
+		docker build -t $(REGISTRY)/$$service:$$VERSION_TAG backend/$$service/; \
+	done
+	@VERSION_TAG=$$(./scripts/version.sh tag); \
+	echo "Building Docker image for frontend with tag: $$VERSION_TAG..."; \
+	docker build -t $(REGISTRY)/frontend:$$VERSION_TAG frontend/
+	@echo "Versioned images built successfully!"
+	@echo "Current version: $(shell ./scripts/version.sh get)"
+	@echo "Image tag: $(shell ./scripts/version.sh tag)"
+
+docker-clean-versioned:
+	@echo "Cleaning versioned Docker images..."
+	@VERSION_TAG=$$(./scripts/version.sh tag); \
+	for service in $(SERVICES) frontend; do \
+		echo "Removing $$service:$$VERSION_TAG..."; \
+		docker rmi $(REGISTRY)/$$service:$$VERSION_TAG 2>/dev/null || true; \
+	done
 
 # Test targets
 .PHONY: test-backend test-frontend test-all test-e2e validate-e2e
@@ -90,7 +114,9 @@ k8s-status:
 k8s-cleanup: k8s-undeploy
 
 k8s-deploy-local:
-	@echo "Deploying to Kubernetes..."
+	@echo "Deploying to Kubernetes with local versioned images..."
+	@echo "Current version: $(shell ./scripts/version.sh get)"
+	@echo "Image tag: $(IMAGE_TAG)"
 	kubectl apply -k $(KUSTOMIZE_DIR)/
 
 # Production deployment
@@ -148,12 +174,48 @@ minikube-deploy: k8s-deploy-local
 minikube-cleanup: k8s-cleanup
 
 # CI/CD targets
-.PHONY: ci-test ci-build ci-deploy
+.PHONY: ci-test ci-build ci-deploy pre-commit
 ci-test: test-all
 
 ci-build: build-all docker-build-push
 
 ci-deploy: ci-build deploy-k8s
+
+# Pre-commit validation
+pre-commit:
+	@echo "🔍 Running pre-commit validation..."
+	@if [ -n "$(shell git diff --cached --name-only | grep -E '^frontend/')" ] || [ -n "$(shell git diff --name-only | grep -E '^frontend/')" ]; then \
+		echo "⚠️  Frontend changes detected. Running E2E validation..."; \
+		$(MAKE) test-e2e; \
+	else \
+		echo "✅ No frontend changes detected. Skipping E2E validation."; \
+	fi
+	@echo "✅ Pre-commit validation completed successfully!"
+
+# Version management targets
+.PHONY: version version-info version-bump version-set update-k8s-version
+version:
+	@./scripts/version.sh get
+
+version-info:
+	@./scripts/version.sh info
+
+version-bump:
+	@if [ -z "$(BUMP_TYPE)" ]; then \
+		echo "Usage: make version-bump BUMP_TYPE=<patch|minor|major>"; \
+		exit 1; \
+	fi
+	@./scripts/version.sh bump $(BUMP_TYPE)
+
+version-set:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Usage: make version-set VERSION=<version>"; \
+		exit 1; \
+	fi
+	@./scripts/version.sh set $(VERSION)
+
+update-k8s-version:
+	@./scripts/version.sh update-k8s
 
 # Utility targets
 .PHONY: clean help
@@ -174,6 +236,8 @@ help:
 	@echo "  docker-build       - Build Docker images"
 	@echo "  docker-push        - Push Docker images to registry"
 	@echo "  docker-build-push  - Build and push Docker images"
+	@echo "  docker-build-versioned - Build Docker images with current version tag"
+	@echo "  docker-clean-versioned - Remove versioned Docker images"
 	@echo "  test-backend       - Run backend tests"
 	@echo "  test-frontend      - Run frontend tests"
 	@echo "  test-e2e           - Run E2E tests with CI configuration"
@@ -188,6 +252,18 @@ help:
 	@echo "  k8s-status         - Check deployment status"
 	@echo "  k8s-cleanup        - Cleanup Kubernetes deployment"
 	@echo "  deploy             - Deploy to Kubernetes (registry images)"
+	@echo ""
+	@echo "Speedscale:"
+	@echo "  speedscale-deploy  - Deploy with Speedscale overlay"
+	@echo "  speedscale-undeploy - Remove Speedscale overlay"
+	@echo "  speedscale-record  - Record traffic with Speedscale"
+	@echo "  speedscale-replay  - Replay recorded traffic"
+	@echo "  speedscale-status  - Check Speedscale deployment status"
+	@echo ""
+	@echo "Proxymock:"
+	@echo "  proxymock-record   - Record traffic with Proxymock"
+	@echo "  proxymock-replay   - Replay recorded traffic"
+	@echo "  proxymock-status   - Check Proxymock status"
 	@echo ""
 	@echo "Image Management:"
 	@echo "  update-images      - Update manifests to use registry images"
@@ -208,6 +284,14 @@ help:
 	@echo "  ci-test            - Run CI tests"
 	@echo "  ci-build           - Run CI build and push"
 	@echo "  ci-deploy          - Run full CI/CD pipeline"
+	@echo "  pre-commit         - Run pre-commit validation"
+	@echo ""
+	@echo "Version Management:"
+	@echo "  version            - Get current version"
+	@echo "  version-info       - Show version information"
+	@echo "  version-bump       - Bump version (BUMP_TYPE=<patch|minor|major>)"
+	@echo "  version-set        - Set version (VERSION=<version>)"
+	@echo "  update-k8s-version - Update Kubernetes manifests with current version"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  clean              - Clean build artifacts"

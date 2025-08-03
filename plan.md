@@ -20,6 +20,7 @@
 - [x] Frontend testing with Jest, React Testing Library, and Playwright E2E tests
 - [x] Achieve >80% test coverage across all services
 - [x] **API Route Testing with Proxymock**: Set up proxymock server with predefined responses for all API endpoints to enable direct testing of Next.js API routes without database dependencies
+- [x] **Backend Test Fixes**: Resolved JWT configuration issues in accounts-service by removing OAuth2 resource server configuration and using consistent custom JWT filter approach across all services
 
 ## Phase 5: Observability & Monitoring ✅ COMPLETED
 - [x] Deploy and configure a robust OpenTelemetry instrumentation across all services
@@ -42,8 +43,25 @@
 - [x] Simplify API Gateway routing architecture by eliminating complex path rewriting and implementing transparent proxy pattern
 
 ## Phase 9: Security Hardening & Architecture Review
-- [ ] **API Gateway Security**: Implement proper authentication at gateway level instead of permitAll()
+- [x] API calls to transactions service not showing up in api-gateway logs
+- [x] OTEL should be able to ignore the actuator and prometheus endpoints
+- [x] **Version Management & Tagging**
+    - [x] Implement semantic versioning starting with v1.1.0 for all services
+    - [x] Update Docker images to use proper version tags instead of 'latest'
+    - [x] Configure CI/CD pipeline to automatically tag releases
+    - [x] Update Kubernetes manifests to reference specific versions
+    - [x] Create version tracking documentation for all components
+- [ ] **Speedscale Implementation**
+    - [ ] Add DLP setting to redact the authentication
+    - [ ] Record a snapshot of api-gateway traffic
+    - [ ] Add in Speedscale transform to get rid of the trace context
+    - [ ] Download the snapshot locally with proxymock cloud pull
+    - [ ] Add a step in Makefile and GHA to run the replay in the CI pipeline
+    
+- [x] **API Gateway Security**: Implement proper authentication at gateway level instead of permitAll()
 - [ ] **Service-to-Service Authentication**: Add authentication between microservices to prevent direct access bypass
+    - [ ] **Inter-Service Identity Propagation**: Implement a mechanism to securely propagate the original user's identity (JWT) from one service to another. This is critical for operations like transaction creation where the `transactions-service` needs to call the `accounts-service` on behalf of the user.
+        - [x] **Fix 401 Unauthorized Error**: Resolve the immediate authentication failure where `transactions-service` calls to `accounts-service` are rejected.
 - [ ] **Security Configuration Cleanup**: Remove redundant security rules and consolidate authentication patterns
 - [ ] **CORS Configuration Review**: Tighten CORS policies from allowing all origins to specific allowed origins
 - [ ] **Rate Limiting**: Implement rate limiting at API Gateway level to prevent abuse

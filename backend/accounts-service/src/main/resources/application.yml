@@ -41,8 +41,8 @@ spring:
 
 # JWT Configuration
 jwt:
-  secret: banking-app-super-secret-key-change-this-in-production-256-bit
-  expiration: 86400000
+  secret: ${JWT_SECRET:banking-app-super-secret-key-change-this-in-production-256-bit}
+  expiration: ${JWT_EXPIRATION:86400000}
 
 # Logging Configuration
 logging:
@@ -80,3 +80,11 @@ management:
     sampling:
       probability: 1.0
     enabled: true
+  # Filter out actuator and prometheus endpoints from tracing
+  filter:
+    exclude:
+      - "/actuator/**"
+      - "/actuator/health"
+      - "/actuator/info"
+      - "/actuator/metrics"
+      - "/actuator/prometheus"
