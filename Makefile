@@ -148,12 +148,23 @@ minikube-deploy: k8s-deploy-local
 minikube-cleanup: k8s-cleanup
 
 # CI/CD targets
-.PHONY: ci-test ci-build ci-deploy
+.PHONY: ci-test ci-build ci-deploy pre-commit
 ci-test: test-all
 
 ci-build: build-all docker-build-push
 
 ci-deploy: ci-build deploy-k8s
+
+# Pre-commit validation
+pre-commit:
+	@echo "🔍 Running pre-commit validation..."
+	@if [ -n "$(shell git diff --cached --name-only | grep -E '^frontend/')" ] || [ -n "$(shell git diff --name-only | grep -E '^frontend/')" ]; then \
+		echo "⚠️  Frontend changes detected. Running E2E validation..."; \
+		$(MAKE) test-e2e; \
+	else \
+		echo "✅ No frontend changes detected. Skipping E2E validation."; \
+	fi
+	@echo "✅ Pre-commit validation completed successfully!"
 
 # Version management targets
 .PHONY: version version-info version-bump version-set update-k8s-version
@@ -245,6 +256,7 @@ help:
 	@echo "  ci-test            - Run CI tests"
 	@echo "  ci-build           - Run CI build and push"
 	@echo "  ci-deploy          - Run full CI/CD pipeline"
+	@echo "  pre-commit         - Run pre-commit validation"
 	@echo ""
 	@echo "Version Management:"
 	@echo "  version            - Get current version"

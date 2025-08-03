@@ -58,7 +58,7 @@ A comprehensive banking application demonstrating microservices architecture wit
 ├── frontend/               # Next.js web application
 ├── kubernetes/             # Kubernetes manifests and configs
 ├── config/                 # Application and monitoring configs
-└── scripts/                # Deployment and utility scripts
+└── scripts/                # Essential utility scripts (version, testing, debugging)
 ```
 
 ## Local Development
