@@ -126,7 +126,7 @@ public class DemoDataService {
             
             try {
                 ResponseEntity<TransactionResponse> response = restTemplate.exchange(
-                    transactionsServiceUrl + "/api/transactions",
+                    transactionsServiceUrl + "/api/transactions/create",
                     HttpMethod.POST,
                     entity,
                     TransactionResponse.class

@@ -155,6 +155,31 @@ ci-build: build-all docker-build-push
 
 ci-deploy: ci-build deploy-k8s
 
+# Version management targets
+.PHONY: version version-info version-bump version-set update-k8s-version
+version:
+	@./scripts/version.sh get
+
+version-info:
+	@./scripts/version.sh info
+
+version-bump:
+	@if [ -z "$(BUMP_TYPE)" ]; then \
+		echo "Usage: make version-bump BUMP_TYPE=<patch|minor|major>"; \
+		exit 1; \
+	fi
+	@./scripts/version.sh bump $(BUMP_TYPE)
+
+version-set:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Usage: make version-set VERSION=<version>"; \
+		exit 1; \
+	fi
+	@./scripts/version.sh set $(VERSION)
+
+update-k8s-version:
+	@./scripts/version.sh update-k8s
+
 # Utility targets
 .PHONY: clean help
 clean:
@@ -189,6 +214,18 @@ help:
 	@echo "  k8s-cleanup        - Cleanup Kubernetes deployment"
 	@echo "  deploy             - Deploy to Kubernetes (registry images)"
 	@echo ""
+	@echo "Speedscale:"
+	@echo "  speedscale-deploy  - Deploy with Speedscale overlay"
+	@echo "  speedscale-undeploy - Remove Speedscale overlay"
+	@echo "  speedscale-record  - Record traffic with Speedscale"
+	@echo "  speedscale-replay  - Replay recorded traffic"
+	@echo "  speedscale-status  - Check Speedscale deployment status"
+	@echo ""
+	@echo "Proxymock:"
+	@echo "  proxymock-record   - Record traffic with Proxymock"
+	@echo "  proxymock-replay   - Replay recorded traffic"
+	@echo "  proxymock-status   - Check Proxymock status"
+	@echo ""
 	@echo "Image Management:"
 	@echo "  update-images      - Update manifests to use registry images"
 	@echo "  restore-local-images - Restore local image references"
@@ -208,6 +245,13 @@ help:
 	@echo "  ci-test            - Run CI tests"
 	@echo "  ci-build           - Run CI build and push"
 	@echo "  ci-deploy          - Run full CI/CD pipeline"
+	@echo ""
+	@echo "Version Management:"
+	@echo "  version            - Get current version"
+	@echo "  version-info       - Show version information"
+	@echo "  version-bump       - Bump version (BUMP_TYPE=<patch|minor|major>)"
+	@echo "  version-set        - Set version (VERSION=<version>)"
+	@echo "  update-k8s-version - Update Kubernetes manifests with current version"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  clean              - Clean build artifacts"

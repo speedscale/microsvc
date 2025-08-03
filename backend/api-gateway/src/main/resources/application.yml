@@ -3,43 +3,8 @@ spring:
     name: api-gateway
   cloud:
     gateway:
-      routes:
-        # Health check routes for direct access (higher priority with lower order)
-        - id: user-service-health
-          uri: ${services.user-service.url}
-          order: -1
-          predicates:
-            - Path=/api/user-service/health
-          filters:
-            - RewritePath=/api/user-service/health, /actuator/health
-        - id: accounts-service-health
-          uri: ${services.accounts-service.url}
-          order: -1
-          predicates:
-            - Path=/api/accounts-service/health
-          filters:
-            - RewritePath=/api/accounts-service/health, /actuator/health
-        - id: transactions-service-health
-          uri: ${services.transactions-service.url}
-          order: -1
-          predicates:
-            - Path=/api/transactions-service/health
-          filters:
-            - RewritePath=/api/transactions-service/health, /actuator/health
-            
-        # Simple API routes - no path rewriting needed since services use /api/** internally
-        - id: users-api
-          uri: ${services.user-service.url}
-          predicates:
-            - Path=/api/users/**
-        - id: accounts-api
-          uri: ${services.accounts-service.url}
-          predicates:
-            - Path=/api/accounts/**
-        - id: transactions-api
-          uri: ${services.transactions-service.url}
-          predicates:
-            - Path=/api/transactions/**
+      # Routes are configured programmatically in GatewayConfig.java
+
 
       globalcors:
         cors-configurations:
@@ -133,4 +98,12 @@ otel:
     exporter: otlp
   propagation:
     type: tracecontext
+  # Filter out actuator and prometheus endpoints from tracing
+  filter:
+    exclude:
+      - "/actuator/**"
+      - "/actuator/health"
+      - "/actuator/info"
+      - "/actuator/metrics"
+      - "/actuator/prometheus"
     

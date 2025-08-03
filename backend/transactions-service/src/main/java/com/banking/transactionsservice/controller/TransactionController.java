@@ -1,5 +1,6 @@
 package com.banking.transactionsservice.controller;
 
+import com.banking.transactionsservice.dto.CreateTransactionRequest;
 import com.banking.transactionsservice.dto.*;
 import com.banking.transactionsservice.security.UserAuthenticationDetails;
 import com.banking.transactionsservice.service.TransactionService;
@@ -48,6 +49,39 @@ public class TransactionController {
         } catch (Exception e) {
             span.recordException(e);
             logger.error("Error fetching transactions", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } finally {
+            span.end();
+        }
+    }
+    
+    @PostMapping("/create")
+    public ResponseEntity<TransactionResponse> createTransaction(
+            @Valid @RequestBody CreateTransactionRequest request,
+            HttpServletRequest httpRequest) {
+        Span span = tracer.spanBuilder("create-transaction").startSpan();
+        try {
+            Long userId = getUserIdFromAuthentication();
+            String jwtToken = httpRequest.getHeader("Authorization");
+            
+            logger.info("Creating transaction for user: {}, account: {}, type: {}, amount: {}", 
+                       userId, request.getAccountId(), request.getType(), request.getAmount());
+            
+            TransactionResponse transaction = transactionService.createTransaction(request, userId, jwtToken);
+            span.setAttribute("user.id", userId);
+            span.setAttribute("account.id", request.getAccountId());
+            span.setAttribute("transaction.type", request.getType());
+            span.setAttribute("transaction.amount", request.getAmount().toString());
+            span.setAttribute("transaction.id", transaction.getId());
+            
+            return ResponseEntity.status(HttpStatus.CREATED).body(transaction);
+        } catch (RuntimeException e) {
+            span.recordException(e);
+            logger.error("Transaction creation failed", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (Exception e) {
+            span.recordException(e);
+            logger.error("Error creating transaction", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         } finally {
             span.end();

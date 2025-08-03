@@ -63,7 +63,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             
             // if token is valid configure Spring Security to manually set authentication
-            if (jwtTokenUtil.validateToken(jwtToken, username)) {
+            if (jwtTokenUtil.validateToken(jwtToken)) {
                 
                 // Get user roles from token
                 String roles = jwtTokenUtil.getRolesFromToken(jwtToken);
