@@ -60,8 +60,7 @@ bump_version() {
 # Get Docker image tag
 get_image_tag() {
     local version=$(get_version)
-    local git_sha=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-    echo "v${version}-${git_sha}"
+    echo "v${version}"
 }
 
 # Get full image name for a service
@@ -89,11 +88,10 @@ update_k8s_manifests() {
     for service in "${SERVICES[@]}"; do
         local deployment_file="$k8s_dir/${service}-deployment.yaml"
         if [ -f "$deployment_file" ]; then
-            # Replace image references - handle both latest and versioned tags
+            # Replace image references - handle latest, versioned tags, and old hash-based tags
             sed -i.bak "s|${REGISTRY}/${service}:latest|${REGISTRY}/${service}:${tag}|g" "$deployment_file"
             sed -i.bak "s|${REGISTRY}/${service}:v[0-9]*\.[0-9]*\.[0-9]*-[a-f0-9]*|${REGISTRY}/${service}:${tag}|g" "$deployment_file"
-            # Also handle any existing version tags with spaces
-            sed -i.bak "s|${REGISTRY}/${service}:v[0-9]*\.[0-9]*\.[0-9]* -[a-f0-9]*|${REGISTRY}/${service}:${tag}|g" "$deployment_file"
+            sed -i.bak "s|${REGISTRY}/${service}:v[0-9]*\.[0-9]*\.[0-9]*|${REGISTRY}/${service}:${tag}|g" "$deployment_file"
             rm -f "${deployment_file}.bak"
             echo "Updated $deployment_file"
         fi
