@@ -11,6 +11,7 @@ resources:
   - prometheus-deployment.yaml
   - prometheus-config.yaml
   - jaeger-deployment.yaml
+  - otel-collector.yaml
 
 labels:
   - pairs:

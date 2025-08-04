@@ -29,7 +29,7 @@ public class AccountsServiceClient {
     
     public boolean validateAccountOwnership(Long accountId, HttpServletRequest request) {
         try {
-            String url = accountsServiceUrl + "/" + accountId;
+            String url = accountsServiceUrl + "/api/accounts/" + accountId;
             
             HttpHeaders headers = new HttpHeaders();
             String authHeader = request.getHeader("Authorization");
@@ -50,7 +50,7 @@ public class AccountsServiceClient {
     
     public Double getAccountBalance(Long accountId, HttpServletRequest request) {
         try {
-            String url = accountsServiceUrl + "/" + accountId + "/balance";
+            String url = accountsServiceUrl + "/api/accounts/" + accountId + "/balance";
             
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", request.getHeader("Authorization"));
@@ -74,7 +74,7 @@ public class AccountsServiceClient {
     
     public boolean updateAccountBalance(Long accountId, Double newBalance, HttpServletRequest request) {
         try {
-            String url = accountsServiceUrl + "/" + accountId + "/balance";
+            String url = accountsServiceUrl + "/api/accounts/" + accountId + "/balance";
             
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", request.getHeader("Authorization"));

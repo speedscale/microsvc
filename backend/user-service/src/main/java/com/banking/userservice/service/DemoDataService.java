@@ -12,8 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Random;
 
 @Service
@@ -24,10 +22,10 @@ public class DemoDataService {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Value("${accounts.service.url:http://localhost:8081}")
+    @Value("${accounts.service.url:http://accounts-service:8080}")
     private String accountsServiceUrl;
 
-    @Value("${transactions.service.url:http://localhost:8082}")
+    @Value("${transactions.service.url:http://transactions-service:8080}")
     private String transactionsServiceUrl;
 
     private final Random random = new Random();
@@ -115,7 +113,7 @@ public class DemoDataService {
             
             var request = new CreateTransactionRequest();
             request.setType(type);
-            request.setAmount(BigDecimal.valueOf(amount).setScale(2, RoundingMode.HALF_UP));
+            request.setAmount(Math.round(amount * 100.0) / 100.0);
             request.setCurrency("USD");
             request.setDescription(description);
             
@@ -166,7 +164,7 @@ public class DemoDataService {
         private Long id;
         private String accountNumber;
         private String accountType;
-        private BigDecimal balance;
+        private Double balance;
         private String currency;
         private String status;
 
@@ -176,8 +174,8 @@ public class DemoDataService {
         public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }
         public String getAccountType() { return accountType; }
         public void setAccountType(String accountType) { this.accountType = accountType; }
-        public BigDecimal getBalance() { return balance; }
-        public void setBalance(BigDecimal balance) { this.balance = balance; }
+        public Double getBalance() { return balance; }
+        public void setBalance(Double balance) { this.balance = balance; }
         public String getCurrency() { return currency; }
         public void setCurrency(String currency) { this.currency = currency; }
         public String getStatus() { return status; }
@@ -188,7 +186,7 @@ public class DemoDataService {
         private Long accountId;
         private Long toAccountId;
         private String type;
-        private BigDecimal amount;
+        private Double amount;
         private String currency;
         private String description;
 
@@ -198,8 +196,8 @@ public class DemoDataService {
         public void setToAccountId(Long toAccountId) { this.toAccountId = toAccountId; }
         public String getType() { return type; }
         public void setType(String type) { this.type = type; }
-        public BigDecimal getAmount() { return amount; }
-        public void setAmount(BigDecimal amount) { this.amount = amount; }
+        public Double getAmount() { return amount; }
+        public void setAmount(Double amount) { this.amount = amount; }
         public String getCurrency() { return currency; }
         public void setCurrency(String currency) { this.currency = currency; }
         public String getDescription() { return description; }
@@ -210,7 +208,7 @@ public class DemoDataService {
         private Long id;
         private Long accountId;
         private String type;
-        private BigDecimal amount;
+        private Double amount;
         private String currency;
         private String description;
         private String status;
@@ -221,8 +219,8 @@ public class DemoDataService {
         public void setAccountId(Long accountId) { this.accountId = accountId; }
         public String getType() { return type; }
         public void setType(String type) { this.type = type; }
-        public BigDecimal getAmount() { return amount; }
-        public void setAmount(BigDecimal amount) { this.amount = amount; }
+        public Double getAmount() { return amount; }
+        public void setAmount(Double amount) { this.amount = amount; }
         public String getCurrency() { return currency; }
         public void setCurrency(String currency) { this.currency = currency; }
         public String getDescription() { return description; }
