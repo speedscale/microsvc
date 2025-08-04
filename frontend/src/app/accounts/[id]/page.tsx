@@ -7,30 +7,10 @@ import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useAuth } from '@/lib/auth/context';
 import Button from '@/components/ui/Button';
 import Link from 'next/link';
+import { AccountsAPI, Account } from '@/lib/api/accounts';
+import { TransactionsAPI, Transaction } from '@/lib/api/transactions';
 
-interface Account {
-  id: number;
-  accountNumber: string;
-  accountType: string;
-  balance: number;
-  currency: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  userId: number;
-}
-
-interface Transaction {
-  id: number;
-  accountId: number;
-  type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER';
-  amount: number;
-  currency: string;
-  description: string;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED';
-  createdAt: string;
-  updatedAt: string;
-}
+// Account and Transaction interfaces are imported from API modules
 
 const AccountDetailsPage: React.FC = () => {
   const params = useParams();
@@ -47,24 +27,18 @@ const AccountDetailsPage: React.FC = () => {
   useEffect(() => {
     const fetchAccountDetails = async () => {
       try {
-        // TODO: Replace with actual API call
-        // Simulate API call with mock data
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        setIsLoading(true);
+        setError(null);
         
-        const mockAccount: Account = {
-          id: parseInt(accountId),
-          accountNumber: accountId === '1' ? '1234567890' : '0987654321',
-          accountType: accountId === '1' ? 'CHECKING' : 'SAVINGS',
-          balance: accountId === '1' ? 2500.50 : 10000.00,
-          currency: 'USD',
-          status: 'ACTIVE',
-          createdAt: '2024-01-15T10:30:00Z',
-          updatedAt: '2024-01-15T10:30:00Z',
-          userId: user?.id || 1,
-        };
+        const response = await AccountsAPI.getAccount(parseInt(accountId));
         
-        setAccount(mockAccount);
-      } catch {
+        if (response.success && response.data) {
+          setAccount(response.data);
+        } else {
+          setError(response.message || 'Failed to load account details');
+        }
+      } catch (error) {
+        console.error('Error fetching account details:', error);
         setError('Failed to load account details');
       } finally {
         setIsLoading(false);
@@ -73,47 +47,15 @@ const AccountDetailsPage: React.FC = () => {
 
     const fetchAccountTransactions = async () => {
       try {
-        // TODO: Replace with actual API call
-        // Simulate API call with mock data
-        await new Promise(resolve => setTimeout(resolve, 800));
+        setTransactionsLoading(true);
         
-        const mockTransactions: Transaction[] = [
-          {
-            id: 1,
-            accountId: parseInt(accountId),
-            type: 'DEPOSIT' as const,
-            amount: 1000.00,
-            currency: 'USD',
-            description: 'Salary deposit',
-            status: 'COMPLETED' as const,
-            createdAt: '2024-01-20T09:00:00Z',
-            updatedAt: '2024-01-20T09:00:00Z',
-          },
-          {
-            id: 2,
-            accountId: parseInt(accountId),
-            type: 'WITHDRAWAL' as const,
-            amount: 150.00,
-            currency: 'USD',
-            description: 'ATM withdrawal',
-            status: 'COMPLETED' as const,
-            createdAt: '2024-01-19T14:30:00Z',
-            updatedAt: '2024-01-19T14:30:00Z',
-          },
-          {
-            id: 3,
-            accountId: parseInt(accountId),
-            type: 'TRANSFER' as const,
-            amount: 500.00,
-            currency: 'USD',
-            description: 'Transfer to savings',
-            status: 'COMPLETED' as const,
-            createdAt: '2024-01-18T11:15:00Z',
-            updatedAt: '2024-01-18T11:15:00Z',
-          },
-        ].filter(t => t.accountId === parseInt(accountId));
+        const response = await TransactionsAPI.getAccountTransactions(parseInt(accountId), 0, 20);
         
-        setTransactions(mockTransactions);
+        if (response.success && response.data) {
+          setTransactions(response.data.content || []);
+        } else {
+          console.error('Failed to load transactions:', response.message);
+        }
       } catch (err) {
         console.error('Failed to load transactions:', err);
       } finally {
@@ -127,10 +69,10 @@ const AccountDetailsPage: React.FC = () => {
     }
   }, [accountId, user?.id]);
 
-  const formatCurrency = (amount: number, currency: string) => {
+  const formatCurrency = (amount: number, currency?: string) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency,
+      currency: currency || 'USD',
     }).format(amount);
   };
 
