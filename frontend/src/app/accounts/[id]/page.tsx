@@ -52,7 +52,7 @@ const AccountDetailsPage: React.FC = () => {
         const response = await TransactionsAPI.getAccountTransactions(parseInt(accountId), 0, 20);
         
         if (response.success && response.data) {
-          setTransactions(response.data.content || []);
+          setTransactions(response.data);
         } else {
           console.error('Failed to load transactions:', response.message);
         }
@@ -340,7 +340,7 @@ const AccountDetailsPage: React.FC = () => {
                             'text-blue-600'
                           }`}>
                             {transaction.type === 'DEPOSIT' ? '+' : '-'}
-                            {formatCurrency(transaction.amount, transaction.currency)}
+                            {formatCurrency(transaction.amount)}
                           </p>
                         </div>
                       </div>

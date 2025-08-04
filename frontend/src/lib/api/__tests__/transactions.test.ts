@@ -24,8 +24,8 @@ describe('TransactionsAPI', () => {
       const mockResponse = {
         success: true,
         data: [
-          { id: 1, accountId: 1, type: 'DEPOSIT' as const, amount: 1000, description: 'Initial deposit' },
-          { id: 2, accountId: 1, type: 'WITHDRAWAL' as const, amount: 100, description: 'ATM withdrawal' },
+          { id: 1, userId: 1, fromAccountId: null, toAccountId: 1, type: 'DEPOSIT' as const, amount: 1000, description: 'Initial deposit', status: 'COMPLETED' as const, createdAt: '2024-01-01T00:00:00Z' },
+          { id: 2, userId: 1, fromAccountId: 1, toAccountId: null, type: 'WITHDRAWAL' as const, amount: 100, description: 'ATM withdrawal', status: 'COMPLETED' as const, createdAt: '2024-01-02T00:00:00Z' },
         ],
       }
       mockApiClient.get.mockResolvedValue(mockResponse)
@@ -125,7 +125,7 @@ describe('TransactionsAPI', () => {
 
       const result = await TransactionsAPI.getAccountTransactions(1)
 
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/accounts/1/transactions?page=0&size=10&sort=createdAt%2Cdesc')
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/transactions?accountId=1')
       expect(result).toEqual(mockResponse)
     })
   })
@@ -141,7 +141,7 @@ describe('TransactionsAPI', () => {
       }
       const mockResponse = {
         success: true,
-        data: { id: 1, ...transactionData, status: 'COMPLETED' as const },
+        data: { id: 1, userId: 1, fromAccountId: null, toAccountId: 1, type: 'DEPOSIT' as const, amount: 1000, description: 'Test deposit', status: 'COMPLETED' as const, createdAt: '2024-01-01T00:00:00Z' },
       }
       mockApiClient.post.mockResolvedValue(mockResponse)
 

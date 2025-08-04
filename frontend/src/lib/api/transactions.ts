@@ -8,13 +8,9 @@ export interface Transaction {
   toAccountId?: number;
   type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER';
   amount: number;
-  currency?: string;
   description: string;
   status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
-  referenceNumber?: string;
-  metadata?: Record<string, unknown>;
   createdAt: string;
-  updatedAt?: string;
   processedAt?: string;
 }
 
@@ -113,15 +109,12 @@ export class TransactionsAPI {
     page: number = 0,
     size: number = 10,
     sort: string = 'createdAt,desc'
-  ): Promise<ApiResponse<PaginatedResponse<Transaction>>> {
+  ): Promise<ApiResponse<Transaction[]>> {
     const params = new URLSearchParams({
       accountId: accountId.toString(),
-      page: page.toString(),
-      size: size.toString(),
-      sort,
     });
 
-    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/transactions?${params}`);
+    return await apiClient.get<Transaction[]>(`/api/transactions?${params}`);
   }
 
   // Create new transaction

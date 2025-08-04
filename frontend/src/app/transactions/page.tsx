@@ -5,17 +5,16 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useAuth } from '@/lib/auth/context';
 import Button from '@/components/ui/Button';
-import { TransactionsAPI, Transaction as ApiTransaction } from '@/lib/api/transactions';
+import { TransactionsAPI, Transaction } from '@/lib/api/transactions';
 
-// Use the API Transaction type and extend it with accountNumber for display
-interface Transaction extends Omit<ApiTransaction, 'status'> {
+// Create display transaction interface with accountNumber for display
+interface DisplayTransaction extends Transaction {
   accountNumber?: string;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
 }
 
 const TransactionsPage: React.FC = () => {
   const { } = useAuth();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<DisplayTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<string>('ALL');
@@ -31,7 +30,7 @@ const TransactionsPage: React.FC = () => {
         
         if (response.success && response.data) {
           // Map API transactions to display format
-          const mappedTransactions: Transaction[] = response.data.map(transaction => ({
+          const mappedTransactions: DisplayTransaction[] = response.data.map(transaction => ({
             ...transaction,
             accountNumber: `****${transaction.fromAccountId || transaction.toAccountId || 'Unknown'}`, // Generate display account number
           }));
@@ -260,7 +259,7 @@ const TransactionsPage: React.FC = () => {
                             'text-blue-600'
                           }`}>
                             {transaction.type === 'DEPOSIT' ? '+' : '-'}
-                            {formatCurrency(transaction.amount, transaction.currency)}
+                            {formatCurrency(transaction.amount)}
                           </p>
                         </div>
                       </div>
