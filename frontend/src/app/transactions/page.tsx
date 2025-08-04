@@ -33,7 +33,7 @@ const TransactionsPage: React.FC = () => {
           // Map API transactions to display format
           const mappedTransactions: Transaction[] = response.data.map(transaction => ({
             ...transaction,
-            accountNumber: `****${transaction.accountId}`, // Generate display account number
+            accountNumber: `****${transaction.fromAccountId || transaction.toAccountId || 'Unknown'}`, // Generate display account number
           }));
           setTransactions(mappedTransactions);
         } else {
@@ -50,10 +50,10 @@ const TransactionsPage: React.FC = () => {
     fetchTransactions();
   }, []);
 
-  const formatCurrency = (amount: number, currency: string) => {
+  const formatCurrency = (amount: number, currency?: string) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency,
+      currency: currency || 'USD',
     }).format(amount);
   };
 

@@ -3,17 +3,18 @@ import { logTransaction } from '../logger';
 
 export interface Transaction {
   id: number;
-  accountId: number;
+  userId: number;
+  fromAccountId?: number;
   toAccountId?: number;
   type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER';
   amount: number;
-  currency: string;
+  currency?: string;
   description: string;
   status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
   referenceNumber?: string;
   metadata?: Record<string, unknown>;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
   processedAt?: string;
 }
 

@@ -6,10 +6,10 @@ spring:
     name: user-service
   
   datasource:
-    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:banking_app}
+    url: jdbc:otel:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:banking_app}
     username: ${DB_USERNAME:user_service_user}
     password: ${DB_PASSWORD:user_service_pass}
-    driver-class-name: org.postgresql.Driver
+    driver-class-name: io.opentelemetry.instrumentation.jdbc.OpenTelemetryDriver
     
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect

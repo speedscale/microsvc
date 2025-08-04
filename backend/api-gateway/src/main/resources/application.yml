@@ -1,9 +1,6 @@
 spring:
   application:
     name: api-gateway
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.actuate.autoconfigure.tracing.OpenTelemetryAutoConfiguration
   cloud:
     gateway:
       # Routes are configured programmatically in GatewayConfig.java
@@ -41,9 +38,9 @@ management:
     health:
       show-details: when-authorized
   tracing:
-    enabled: false  # Disable Spring Boot's built-in tracing, use OpenTelemetry instead
+    enabled: true
     sampling:
-      probability: 0.0  # Disable sampling completely
+      probability: 1.0
   metrics:
     export:
       prometheus:
@@ -113,4 +110,9 @@ otel:
   span:
     name:
       pattern: "{http.method} {http.route}"
+  # Instrumentation configuration
+  instrumentation:
+    http:
+      server:
+        suppress-span-names: "/actuator/**"
     
