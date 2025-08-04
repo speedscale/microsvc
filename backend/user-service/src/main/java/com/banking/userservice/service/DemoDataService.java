@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Random;
 
 @Service
@@ -113,7 +114,7 @@ public class DemoDataService {
             var request = new CreateTransactionRequest();
             request.setAccountId(checkingAccountId);
             request.setType(type);
-            request.setAmount(amount);
+            request.setAmount(BigDecimal.valueOf(amount).setScale(2, RoundingMode.HALF_UP));
             request.setCurrency("USD");
             request.setDescription(description);
             
@@ -181,7 +182,7 @@ public class DemoDataService {
         private Long accountId;
         private Long toAccountId;
         private String type;
-        private Double amount;
+        private BigDecimal amount;
         private String currency;
         private String description;
 
@@ -191,8 +192,8 @@ public class DemoDataService {
         public void setToAccountId(Long toAccountId) { this.toAccountId = toAccountId; }
         public String getType() { return type; }
         public void setType(String type) { this.type = type; }
-        public Double getAmount() { return amount; }
-        public void setAmount(Double amount) { this.amount = amount; }
+        public BigDecimal getAmount() { return amount; }
+        public void setAmount(BigDecimal amount) { this.amount = amount; }
         public String getCurrency() { return currency; }
         public void setCurrency(String currency) { this.currency = currency; }
         public String getDescription() { return description; }
@@ -223,4 +224,4 @@ public class DemoDataService {
         public String getStatus() { return status; }
         public void setStatus(String status) { this.status = status; }
     }
-} 
+}
