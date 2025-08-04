@@ -1,5 +1,6 @@
 package com.banking.userservice.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,7 @@ public class DemoDataService {
     private String transactionsServiceUrl;
 
     private final Random random = new Random();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public void generateDemoData(Long userId, String jwtToken) {
         logger.info("Generating demo data for user: {}", userId);
@@ -112,20 +114,24 @@ public class DemoDataService {
             double amount = 10.0 + random.nextDouble() * 500.0; // $10 to $510
             
             var request = new CreateTransactionRequest();
-            request.setAccountId(checkingAccountId);
             request.setType(type);
             request.setAmount(BigDecimal.valueOf(amount).setScale(2, RoundingMode.HALF_UP));
             request.setCurrency("USD");
             request.setDescription(description);
             
-            // For transfers, set the destination account
             if (type.equals("TRANSFER")) {
+                request.setAccountId(checkingAccountId);
                 request.setToAccountId(savingsAccountId);
+            } else if (type.equals("DEPOSIT")) {
+                request.setAccountId(savingsAccountId);
+            } else { // WITHDRAWAL
+                request.setAccountId(checkingAccountId);
             }
             
             HttpEntity<CreateTransactionRequest> entity = new HttpEntity<>(request, headers);
             
             try {
+                logger.info("Sending transaction request: {}", objectMapper.writeValueAsString(request));
                 ResponseEntity<TransactionResponse> response = restTemplate.exchange(
                     transactionsServiceUrl + "/api/transactions/create",
                     HttpMethod.POST,

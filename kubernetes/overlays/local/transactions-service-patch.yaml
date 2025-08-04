@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transactions-service
+spec:
+  template:
+    spec:
+      containers:
+      - name: transactions-service
+        image: localhost:5000/transactions-service:v1.1.4
+        imagePullPolicy: IfNotPresent

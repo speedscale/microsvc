@@ -112,8 +112,10 @@ services:
       - OTEL_TRACES_SAMPLER=always_on
       - OTEL_PROPAGATORS=tracecontext
       - OTEL_RESOURCE_ATTRIBUTES=service.namespace=banking-app
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
     ports:
       - "8083:8080"
+      - "5005:5005"
     networks:
       - banking-network
 

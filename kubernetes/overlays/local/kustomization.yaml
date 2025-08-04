@@ -11,3 +11,11 @@ patches:
   target:
     kind: Deployment
     name: user-service
+- path: transactions-service-patch.yaml
+  target:
+    kind: Deployment
+    name: transactions-service
+- path: accounts-service-patch.yaml
+  target:
+    kind: Deployment
+    name: accounts-service

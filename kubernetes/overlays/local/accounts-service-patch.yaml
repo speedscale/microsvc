@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: accounts-service
+spec:
+  template:
+    spec:
+      containers:
+      - name: accounts-service
+        image: localhost:5000/accounts-service:v1.1.4
+        imagePullPolicy: IfNotPresent
