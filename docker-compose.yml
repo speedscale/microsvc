@@ -14,11 +14,6 @@ services:
       - ./database/init:/docker-entrypoint-initdb.d
     networks:
       - banking-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   # Backend Services
   user-service:
@@ -27,8 +22,7 @@ services:
       dockerfile: Dockerfile
     container_name: banking-user-service
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - DB_HOST=postgres
@@ -54,11 +48,6 @@ services:
       - "8081:8080"
     networks:
       - banking-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   accounts-service:
     build: 
@@ -66,8 +55,7 @@ services:
       dockerfile: Dockerfile
     container_name: banking-accounts-service
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - DB_HOST=postgres
@@ -93,11 +81,6 @@ services:
       - "8082:8080"
     networks:
       - banking-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   transactions-service:
     build: 
@@ -105,8 +88,7 @@ services:
       dockerfile: Dockerfile
     container_name: banking-transactions-service
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - DB_HOST=postgres
@@ -134,11 +116,6 @@ services:
       - "8083:8080"
     networks:
       - banking-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   # Redis for rate limiting
   redis:
@@ -148,11 +125,6 @@ services:
       - "6379:6379"
     networks:
       - banking-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
 
   api-gateway:
     build: 
@@ -190,11 +162,6 @@ services:
       - "8080:8080"
     networks:
       - banking-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   # Frontend
   frontend:
@@ -206,24 +173,29 @@ services:
       - api-gateway
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - API_GATEWAY_URL=http://api-gateway:8080
       - NODE_ENV=development
       # OpenTelemetry Configuration
       - OTEL_SERVICE_NAME=frontend
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
-      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=otlp
       - OTEL_LOGS_EXPORTER=otlp
       - OTEL_TRACES_SAMPLER=always_on
       - OTEL_PROPAGATORS=tracecontext
       - OTEL_RESOURCE_ATTRIBUTES=service.namespace=banking-app
+      # Debug logging for OpenTelemetry
+      - OTEL_LOG_LEVEL=DEBUG
+      - OTEL_TRACES_SAMPLER_ARG=1.0
+      - OTEL_EXPORTER_OTLP_TIMEOUT=10000
+      - OTEL_EXPORTER_OTLP_COMPRESSION=none
+      # Node.js debug logging
+      - DEBUG=*
+      - NODE_OPTIONS=--trace-warnings
     ports:
       - "3000:3000"
     networks:
       - banking-network
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
 
   # Observability Stack
   jaeger:
@@ -233,8 +205,10 @@ services:
       - "16686:16686"
       - "14268:14268"
       - "4318:4318"
+      - "4317:4317"
     environment:
       - COLLECTOR_OTLP_ENABLED=true
+      - COLLECTOR_OTLP_GRPC_HOST_PORT=:4317
     networks:
       - banking-network
 

@@ -57,8 +57,14 @@ bump_version() {
     echo "Version bumped to: $new_version"
 }
 
-# Get Docker image tag
+# Get simple image tag (e.g., v1.2.3)
 get_image_tag() {
+    local version=$(get_version)
+    echo "v${version}"
+}
+
+# Get image tag with Git SHA (e.g., v1.2.3-a1b2c3d)
+get_image_tag_with_sha() {
     local version=$(get_version)
     local git_sha=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
     echo "v${version}-${git_sha}"
@@ -67,7 +73,8 @@ get_image_tag() {
 # Get full image name for a service
 get_image_name() {
     local service="$1"
-    local tag=$(get_image_tag)
+    # Use the tag with SHA by default for image names
+    local tag=$(get_image_tag_with_sha)
     echo "${REGISTRY}/${service}:${tag}"
 }
 
@@ -77,10 +84,9 @@ get_latest_image_name() {
     echo "${REGISTRY}/${service}:latest"
 }
 
-# Update Kubernetes manifests with current version
+# Update Kubernetes manifests with the simple version tag
 update_k8s_manifests() {
-    local version=$(get_version)
-    local tag=$(get_image_tag)
+    local tag=$(get_image_tag) # Explicitly use the simple tag
     local k8s_dir="kubernetes/base/deployments"
     
     echo "Updating Kubernetes manifests with version: $tag"
@@ -102,14 +108,16 @@ update_k8s_manifests() {
 # Show version information
 show_version_info() {
     local version=$(get_version)
-    local tag=$(get_image_tag)
+    local simple_tag=$(get_image_tag)
+    local sha_tag=$(get_image_tag_with_sha)
     
     echo "Current Version: $version"
-    echo "Image Tag: $tag"
+    echo "Simple Image Tag: $simple_tag"
+    echo "Image Tag with SHA: $sha_tag"
     echo ""
-    echo "Service Images:"
+    echo "Service Images (using SHA tag):"
     for service in "${SERVICES[@]}"; do
-        echo "  $service: ${REGISTRY}/${service}:${tag}"
+        echo "  $service: $(get_image_name "$service")"
     done
 }
 
@@ -135,6 +143,9 @@ case "${1:-help}" in
     "tag")
         get_image_tag
         ;;
+    "tag-sha")
+        get_image_tag_with_sha
+        ;;
     "image")
         if [ -z "$2" ]; then
             echo "Usage: $0 image <service-name>"
@@ -157,9 +168,10 @@ case "${1:-help}" in
         echo "  get                    - Get current version"
         echo "  set <version>          - Set version (e.g., 1.1.0)"
         echo "  bump <type>            - Bump version (patch|minor|major)"
-        echo "  tag                    - Get current image tag"
-        echo "  image <service>        - Get full image name for service"
-        echo "  update-k8s             - Update Kubernetes manifests with current version"
+        echo "  tag                    - Get simple image tag (e.g., v1.2.3)"
+        echo "  tag-sha                - Get image tag with git hash (e.g., v1.2.3-a1b2c3d)"
+        echo "  image <service>        - Get full image name for service with SHA"
+        echo "  update-k8s             - Update Kubernetes manifests with simple version"
         echo "  info                   - Show version information"
         echo "  help                   - Show this help"
         echo ""
@@ -167,7 +179,9 @@ case "${1:-help}" in
         echo "  $0 get                 # Get current version"
         echo "  $0 set 1.1.0           # Set version to 1.1.0"
         echo "  $0 bump patch          # Bump patch version"
+        echo "  $0 tag                 # Get simple tag"
+        echo "  $0 tag-sha             # Get tag with SHA"
         echo "  $0 image api-gateway   # Get image name for api-gateway"
-        echo "  $0 update-k8s          # Update K8s manifests"
+        echo "  $0 update-k8s          # Update K8s manifests with simple version"
         ;;
-esac 
+esac

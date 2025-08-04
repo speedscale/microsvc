@@ -91,17 +91,25 @@ validate-e2e: test-e2e
 
 test-all: test-backend test-frontend test-e2e
 
-# Kubernetes targets
-.PHONY: k8s-deploy k8s-deploy-local k8s-undeploy k8s-redeploy k8s-status k8s-cleanup deploy undeploy redeploy status deploy-k8s cleanup-k8s
+# Kubernetes targets - Consolidated
+.PHONY: k8s-deploy observability-deploy speedscale-deploy k8s-cleanup k8s-status
 k8s-deploy:
-	@echo "Deploying to Kubernetes..."
+	@echo "Deploying banking application to Kubernetes..."
 	kubectl apply -k $(KUSTOMIZE_DIR)/
 
-k8s-undeploy:
-	@echo "Removing application from Kubernetes..."
-	kubectl delete -k $(KUSTOMIZE_DIR)/ || true
+observability-deploy:
+	@echo "Deploying observability stack..."
+	kubectl apply -k kubernetes/observability/
 
-k8s-redeploy: k8s-undeploy k8s-deploy
+speedscale-deploy:
+	@echo "Deploying with Speedscale overlay..."
+	kubectl apply -k kubernetes/overlays/speedscale/
+
+k8s-cleanup:
+	@echo "Cleaning up all Kubernetes resources..."
+	kubectl delete -k kubernetes/overlays/speedscale/ || true
+	kubectl delete -k kubernetes/observability/ || true
+	kubectl delete -k $(KUSTOMIZE_DIR)/ || true
 
 k8s-status:
 	@echo "Checking deployment status..."
@@ -110,27 +118,6 @@ k8s-status:
 	kubectl get pods -n $(NAMESPACE) -o wide
 	@echo "\nService endpoints:"
 	kubectl get svc -n $(NAMESPACE)
-
-k8s-cleanup: k8s-undeploy
-
-k8s-deploy-local:
-	@echo "Deploying to Kubernetes with local versioned images..."
-	@echo "Current version: $(shell ./scripts/version.sh get)"
-	@echo "Image tag: $(IMAGE_TAG)"
-	kubectl apply -k $(KUSTOMIZE_DIR)/
-
-# Production deployment
-deploy:
-	@echo "Deploying banking application to Kubernetes..."
-	kubectl apply -k $(KUSTOMIZE_DIR)/
-
-# Legacy aliases
-undeploy: k8s-undeploy
-redeploy: k8s-redeploy  
-status: k8s-status
-deploy-k8s: deploy
-cleanup-k8s: k8s-undeploy
-
 
 # Development targets
 .PHONY: dev-up dev-down dev-logs dev-reset
@@ -168,18 +155,13 @@ test-deployment:
 	kubectl logs -n $(NAMESPACE) job/banking-e2e-test
 	kubectl delete job/banking-e2e-test -n $(NAMESPACE)
 
-# Legacy minikube aliases (deprecated)
-.PHONY: minikube-deploy minikube-cleanup
-minikube-deploy: k8s-deploy-local
-minikube-cleanup: k8s-cleanup
-
 # CI/CD targets
 .PHONY: ci-test ci-build ci-deploy pre-commit
 ci-test: test-all
 
 ci-build: build-all docker-build-push
 
-ci-deploy: ci-build deploy-k8s
+ci-deploy: ci-build k8s-deploy
 
 # Pre-commit validation
 pre-commit:
@@ -245,29 +227,11 @@ help:
 	@echo "  test-all           - Run all tests (backend, frontend, e2e)"
 	@echo ""
 	@echo "Kubernetes:"
-	@echo "  k8s-deploy         - Deploy to Kubernetes (registry images)"
-	@echo "  k8s-deploy-local   - Deploy to Kubernetes (local images)"
-	@echo "  k8s-undeploy       - Remove application from Kubernetes"
-	@echo "  k8s-redeploy       - Remove and redeploy application"
-	@echo "  k8s-status         - Check deployment status"
-	@echo "  k8s-cleanup        - Cleanup Kubernetes deployment"
-	@echo "  deploy             - Deploy to Kubernetes (registry images)"
-	@echo ""
-	@echo "Speedscale:"
+	@echo "  k8s-deploy         - Deploy banking application to Kubernetes"
+	@echo "  observability-deploy - Deploy observability stack (Grafana, Prometheus, Jaeger)"
 	@echo "  speedscale-deploy  - Deploy with Speedscale overlay"
-	@echo "  speedscale-undeploy - Remove Speedscale overlay"
-	@echo "  speedscale-record  - Record traffic with Speedscale"
-	@echo "  speedscale-replay  - Replay recorded traffic"
-	@echo "  speedscale-status  - Check Speedscale deployment status"
-	@echo ""
-	@echo "Proxymock:"
-	@echo "  proxymock-record   - Record traffic with Proxymock"
-	@echo "  proxymock-replay   - Replay recorded traffic"
-	@echo "  proxymock-status   - Check Proxymock status"
-	@echo ""
-	@echo "Image Management:"
-	@echo "  update-images      - Update manifests to use registry images"
-	@echo "  restore-local-images - Restore local image references"
+	@echo "  k8s-cleanup        - Clean up all Kubernetes resources"
+	@echo "  k8s-status         - Check deployment status"
 	@echo ""
 	@echo "Testing & Debugging:"
 	@echo "  logs               - Fetch logs from all services"

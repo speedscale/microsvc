@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-conf
+  namespace: banking-app
+  labels:
+    app: opentelemetry
+    component: otel-collector-conf
+data:
+  otel-collector-config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+          http:
+
+    processors:
+      filter:
+        spans:
+          exclude:
+            match_type: regexp
+            attributes:
+              - key: url.path
+                value: ".*actuator.*"
+
+    exporters:
+      otlp:
+        endpoint: "jaeger:4317"
+        tls:
+          insecure: true
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [filter]
+          exporters: [otlp]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: banking-app
+  labels:
+    app: opentelemetry
+    component: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opentelemetry
+      component: otel-collector
+  template:
+    metadata:
+      labels:
+        app: opentelemetry
+        component: otel-collector
+    spec:
+      containers:
+        - name: otel-collector
+          image: otel/opentelemetry-collector:0.102.1
+          command:
+            - "/otelcol"
+            - "--config=/conf/otel-collector-config.yaml"
+          volumeMounts:
+            - name: otel-collector-config-vol
+              mountPath: /conf
+          ports:
+            - name: otlp-grpc
+              containerPort: 4317
+            - name: otlp-http
+              containerPort: 4318
+      volumes:
+        - name: otel-collector-config-vol
+          configMap:
+            name: otel-collector-conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: banking-app
+spec:
+  selector:
+    component: otel-collector
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318

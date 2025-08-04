@@ -3,18 +3,13 @@ import { TokenManager } from '../auth/token';
 import { logApiRequest, logApiResponse, logError } from '../logger';
 
 // Trace propagation utilities
-const generateTraceId = (): string => {
-  return Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-};
-
-const generateSpanId = (): string => {
-  return Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-};
-
-const createTraceParent = (): string => {
-  const traceId = generateTraceId();
-  const spanId = generateSpanId();
-  return `00-${traceId}-${spanId}-01`;
+const getCurrentTraceContext = (): string | null => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (typeof window !== 'undefined' && (window as any).__OTEL_TRACE_CONTEXT__) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (window as any).__OTEL_TRACE_CONTEXT__;
+  }
+  return null;
 };
 
 // Always use relative URLs - Next.js will handle API routing
@@ -82,8 +77,9 @@ class ApiClient {
         }
         
         // Add trace context header for distributed tracing
-        if (typeof window !== 'undefined') {
-          config.headers['traceparent'] = createTraceParent();
+        const traceContext = getCurrentTraceContext();
+        if (traceContext) {
+          config.headers['traceparent'] = traceContext;
         }
         
         return config;

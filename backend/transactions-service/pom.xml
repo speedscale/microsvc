@@ -109,6 +109,11 @@
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-exporter-otlp</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.opentelemetry.instrumentation</groupId>
+            <artifactId>opentelemetry-jdbc</artifactId>
+            <version>1.32.0-alpha</version>
+        </dependency>
 
         <!-- Metrics -->
         <dependency>

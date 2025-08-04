@@ -31,6 +31,8 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+# Copy instrumentation.ts for OpenTelemetry
+COPY --from=builder /app/src/instrumentation.ts ./src/
 
 # Change ownership to non-root user
 RUN chown -R nextjs:nodejs /app

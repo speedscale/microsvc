@@ -84,10 +84,13 @@
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
+        <!-- Temporarily disabled to test OpenTelemetry filtering -->
+        <!--
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-tracing-bridge-otel</artifactId>
         </dependency>
+        -->
 
         <!-- Development Tools -->
         <dependency>
