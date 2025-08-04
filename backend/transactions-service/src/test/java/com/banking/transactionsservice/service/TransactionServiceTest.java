@@ -13,7 +13,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -58,7 +57,7 @@ class TransactionServiceTest {
         testTransaction.setId(1L);
         testTransaction.setUserId(testUserId);
         testTransaction.setToAccountId(testAccountId);
-        testTransaction.setAmount(BigDecimal.valueOf(100.00));
+        testTransaction.setAmount(100.00);
         testTransaction.setType(Transaction.TransactionType.DEPOSIT);
         testTransaction.setDescription("Test deposit");
         testTransaction.setStatus(Transaction.TransactionStatus.COMPLETED);
@@ -88,10 +87,10 @@ class TransactionServiceTest {
     @Test
     void testDepositSuccess() {
         // Arrange
-        DepositRequest request = new DepositRequest(testAccountId, BigDecimal.valueOf(100.00), "Test deposit");
+        DepositRequest request = new DepositRequest(testAccountId, 100.00, "Test deposit");
         when(accountsServiceClient.validateAccountOwnership(testAccountId, httpServletRequest)).thenReturn(true);
-        when(accountsServiceClient.getAccountBalance(testAccountId, httpServletRequest)).thenReturn(BigDecimal.valueOf(500.00));
-        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), eq(BigDecimal.valueOf(600.00)), eq(httpServletRequest))).thenReturn(true);
+        when(accountsServiceClient.getAccountBalance(testAccountId, httpServletRequest)).thenReturn(500.00);
+        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), eq(600.00), eq(httpServletRequest))).thenReturn(true);
         when(transactionRepository.save(any(Transaction.class))).thenReturn(testTransaction);
 
         // Act
@@ -105,14 +104,14 @@ class TransactionServiceTest {
         
         verify(accountsServiceClient, times(1)).validateAccountOwnership(testAccountId, httpServletRequest);
         verify(accountsServiceClient, times(1)).getAccountBalance(testAccountId, httpServletRequest);
-        verify(accountsServiceClient, times(1)).updateAccountBalance(testAccountId, BigDecimal.valueOf(600.00), httpServletRequest);
+        verify(accountsServiceClient, times(1)).updateAccountBalance(testAccountId, 600.00, httpServletRequest);
         verify(transactionRepository, times(1)).save(any(Transaction.class));
     }
 
     @Test
     void testDepositAccountNotOwned() {
         // Arrange
-        DepositRequest request = new DepositRequest(testAccountId, BigDecimal.valueOf(100.00), "Test deposit");
+        DepositRequest request = new DepositRequest(testAccountId, 100.00, "Test deposit");
         when(accountsServiceClient.validateAccountOwnership(testAccountId, httpServletRequest)).thenReturn(false);
 
         // Act & Assert
@@ -128,16 +127,16 @@ class TransactionServiceTest {
     @Test
     void testWithdrawSuccess() {
         // Arrange
-        WithdrawRequest request = new WithdrawRequest(testAccountId, BigDecimal.valueOf(100.00), "Test withdrawal");
+        WithdrawRequest request = new WithdrawRequest(testAccountId, 100.00, "Test withdrawal");
         when(accountsServiceClient.validateAccountOwnership(testAccountId, httpServletRequest)).thenReturn(true);
-        when(accountsServiceClient.getAccountBalance(testAccountId, httpServletRequest)).thenReturn(BigDecimal.valueOf(500.00));
-        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), eq(BigDecimal.valueOf(400.00)), eq(httpServletRequest))).thenReturn(true);
+        when(accountsServiceClient.getAccountBalance(testAccountId, httpServletRequest)).thenReturn(500.00);
+        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), eq(400.00), eq(httpServletRequest))).thenReturn(true);
         
         Transaction withdrawalTransaction = new Transaction();
         withdrawalTransaction.setId(2L);
         withdrawalTransaction.setUserId(testUserId);
         withdrawalTransaction.setFromAccountId(testAccountId);
-        withdrawalTransaction.setAmount(BigDecimal.valueOf(100.00));
+        withdrawalTransaction.setAmount(100.00);
         withdrawalTransaction.setType(Transaction.TransactionType.WITHDRAWAL);
         withdrawalTransaction.setStatus(Transaction.TransactionStatus.COMPLETED);
         withdrawalTransaction.setCreatedAt(LocalDateTime.now());
@@ -156,16 +155,16 @@ class TransactionServiceTest {
         
         verify(accountsServiceClient, times(1)).validateAccountOwnership(testAccountId, httpServletRequest);
         verify(accountsServiceClient, times(1)).getAccountBalance(testAccountId, httpServletRequest);
-        verify(accountsServiceClient, times(1)).updateAccountBalance(testAccountId, BigDecimal.valueOf(400.00), httpServletRequest);
+        verify(accountsServiceClient, times(1)).updateAccountBalance(testAccountId, 400.00, httpServletRequest);
         verify(transactionRepository, times(1)).save(any(Transaction.class));
     }
 
     @Test
     void testWithdrawInsufficientBalance() {
         // Arrange
-        WithdrawRequest request = new WithdrawRequest(testAccountId, BigDecimal.valueOf(600.00), "Test withdrawal");
+        WithdrawRequest request = new WithdrawRequest(testAccountId, 600.00, "Test withdrawal");
         when(accountsServiceClient.validateAccountOwnership(testAccountId, httpServletRequest)).thenReturn(true);
-        when(accountsServiceClient.getAccountBalance(testAccountId, httpServletRequest)).thenReturn(BigDecimal.valueOf(500.00));
+        when(accountsServiceClient.getAccountBalance(testAccountId, httpServletRequest)).thenReturn(500.00);
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> {
@@ -174,7 +173,7 @@ class TransactionServiceTest {
         
         verify(accountsServiceClient, times(1)).validateAccountOwnership(testAccountId, httpServletRequest);
         verify(accountsServiceClient, times(1)).getAccountBalance(testAccountId, httpServletRequest);
-        verify(accountsServiceClient, never()).updateAccountBalance(anyLong(), any(BigDecimal.class), any(HttpServletRequest.class));
+        verify(accountsServiceClient, never()).updateAccountBalance(anyLong(), any(Double.class), any(HttpServletRequest.class));
     }
 
     @Test
@@ -182,20 +181,20 @@ class TransactionServiceTest {
         // Arrange
         Long fromAccountId = 1L;
         Long toAccountId = 2L;
-        TransferRequest request = new TransferRequest(fromAccountId, toAccountId, BigDecimal.valueOf(100.00), "Test transfer");
+        TransferRequest request = new TransferRequest(fromAccountId, toAccountId, 100.00, "Test transfer");
         
         when(accountsServiceClient.validateAccountOwnership(fromAccountId, httpServletRequest)).thenReturn(true);
-        when(accountsServiceClient.getAccountBalance(fromAccountId, httpServletRequest)).thenReturn(BigDecimal.valueOf(500.00));
-        when(accountsServiceClient.getAccountBalance(toAccountId, httpServletRequest)).thenReturn(BigDecimal.valueOf(200.00));
-        when(accountsServiceClient.updateAccountBalance(eq(fromAccountId), eq(BigDecimal.valueOf(400.00)), eq(httpServletRequest))).thenReturn(true);
-        when(accountsServiceClient.updateAccountBalance(eq(toAccountId), eq(BigDecimal.valueOf(300.00)), eq(httpServletRequest))).thenReturn(true);
+        when(accountsServiceClient.getAccountBalance(fromAccountId, httpServletRequest)).thenReturn(500.00);
+        when(accountsServiceClient.getAccountBalance(toAccountId, httpServletRequest)).thenReturn(200.00);
+        when(accountsServiceClient.updateAccountBalance(eq(fromAccountId), eq(400.00), eq(httpServletRequest))).thenReturn(true);
+        when(accountsServiceClient.updateAccountBalance(eq(toAccountId), eq(300.00), eq(httpServletRequest))).thenReturn(true);
         
         Transaction transferTransaction = new Transaction();
         transferTransaction.setId(3L);
         transferTransaction.setUserId(testUserId);
         transferTransaction.setFromAccountId(fromAccountId);
         transferTransaction.setToAccountId(toAccountId);
-        transferTransaction.setAmount(BigDecimal.valueOf(100.00));
+        transferTransaction.setAmount(100.00);
         transferTransaction.setType(Transaction.TransactionType.TRANSFER);
         transferTransaction.setStatus(Transaction.TransactionStatus.COMPLETED);
         transferTransaction.setCreatedAt(LocalDateTime.now());
@@ -215,8 +214,8 @@ class TransactionServiceTest {
         verify(accountsServiceClient, times(1)).validateAccountOwnership(fromAccountId, httpServletRequest);
         verify(accountsServiceClient, times(1)).getAccountBalance(fromAccountId, httpServletRequest);
         verify(accountsServiceClient, times(1)).getAccountBalance(toAccountId, httpServletRequest);
-        verify(accountsServiceClient, times(1)).updateAccountBalance(fromAccountId, BigDecimal.valueOf(400.00), httpServletRequest);
-        verify(accountsServiceClient, times(1)).updateAccountBalance(toAccountId, BigDecimal.valueOf(300.00), httpServletRequest);
+        verify(accountsServiceClient, times(1)).updateAccountBalance(fromAccountId, 400.00, httpServletRequest);
+        verify(accountsServiceClient, times(1)).updateAccountBalance(toAccountId, 300.00, httpServletRequest);
         verify(transactionRepository, times(1)).save(any(Transaction.class));
     }
 
@@ -225,10 +224,10 @@ class TransactionServiceTest {
         // Arrange
         Long fromAccountId = 1L;
         Long toAccountId = 2L;
-        TransferRequest request = new TransferRequest(fromAccountId, toAccountId, BigDecimal.valueOf(600.00), "Test transfer");
+        TransferRequest request = new TransferRequest(fromAccountId, toAccountId, 600.00, "Test transfer");
         
         when(accountsServiceClient.validateAccountOwnership(fromAccountId, httpServletRequest)).thenReturn(true);
-        when(accountsServiceClient.getAccountBalance(fromAccountId, httpServletRequest)).thenReturn(BigDecimal.valueOf(500.00));
+        when(accountsServiceClient.getAccountBalance(fromAccountId, httpServletRequest)).thenReturn(500.00);
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> {
@@ -237,6 +236,6 @@ class TransactionServiceTest {
         
         verify(accountsServiceClient, times(1)).validateAccountOwnership(fromAccountId, httpServletRequest);
         verify(accountsServiceClient, times(1)).getAccountBalance(fromAccountId, httpServletRequest);
-        verify(accountsServiceClient, never()).updateAccountBalance(anyLong(), any(BigDecimal.class), any(HttpServletRequest.class));
+        verify(accountsServiceClient, never()).updateAccountBalance(anyLong(), any(Double.class), any(HttpServletRequest.class));
     }
 }

@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -56,25 +55,24 @@ public class TransactionService {
         }
         
         // Get current balance
-        BigDecimal currentBalance = accountsServiceClient.getAccountBalance(request.getAccountId(), httpRequest);
+        Double currentBalance = accountsServiceClient.getAccountBalance(request.getAccountId(), httpRequest);
         if (currentBalance == null) {
             throw new RuntimeException("Unable to retrieve account balance");
         }
         
         // Create transaction record
-        BigDecimal amount = BigDecimal.valueOf(request.getAmount());
         Transaction transaction = new Transaction(
             userId, 
             null, 
             request.getAccountId(), 
-            amount,
+            request.getAmount(),
             Transaction.TransactionType.DEPOSIT,
             request.getDescription()
         );
         
         try {
             // Calculate new balance
-            BigDecimal newBalance = currentBalance.add(amount);
+            Double newBalance = currentBalance + request.getAmount();
             
             // Update account balance
             if (!accountsServiceClient.updateAccountBalance(request.getAccountId(), newBalance, httpRequest)) {
@@ -112,16 +110,13 @@ public class TransactionService {
         }
         
         // Get current balance
-        BigDecimal currentBalance = accountsServiceClient.getAccountBalance(request.getAccountId(), httpRequest);
+        Double currentBalance = accountsServiceClient.getAccountBalance(request.getAccountId(), httpRequest);
         if (currentBalance == null) {
             throw new RuntimeException("Unable to retrieve account balance");
         }
         
-        // Convert amount to BigDecimal for calculations
-        BigDecimal amount = BigDecimal.valueOf(request.getAmount());
-        
         // Check sufficient balance
-        if (currentBalance.compareTo(amount) < 0) {
+        if (currentBalance < request.getAmount()) {
             throw new RuntimeException("Insufficient balance for withdrawal");
         }
         
@@ -130,14 +125,14 @@ public class TransactionService {
             userId, 
             request.getAccountId(), 
             null, 
-            amount,
+            request.getAmount(),
             Transaction.TransactionType.WITHDRAWAL,
             request.getDescription()
         );
         
         try {
             // Calculate new balance
-            BigDecimal newBalance = currentBalance.subtract(amount);
+            Double newBalance = currentBalance - request.getAmount();
             
             // Update account balance
             if (!accountsServiceClient.updateAccountBalance(request.getAccountId(), newBalance, httpRequest)) {
@@ -175,21 +170,18 @@ public class TransactionService {
         }
         
         // Get current balance of from account
-        BigDecimal fromBalance = accountsServiceClient.getAccountBalance(request.getFromAccountId(), httpRequest);
+        Double fromBalance = accountsServiceClient.getAccountBalance(request.getFromAccountId(), httpRequest);
         if (fromBalance == null) {
             throw new RuntimeException("Unable to retrieve from account balance");
         }
         
-        // Convert amount to BigDecimal for calculations
-        BigDecimal amount = BigDecimal.valueOf(request.getAmount());
-        
         // Check sufficient balance
-        if (fromBalance.compareTo(amount) < 0) {
+        if (fromBalance < request.getAmount()) {
             throw new RuntimeException("Insufficient balance for transfer");
         }
         
         // Get current balance of to account (validate it exists)
-        BigDecimal toBalance = accountsServiceClient.getAccountBalance(request.getToAccountId(), httpRequest);
+        Double toBalance = accountsServiceClient.getAccountBalance(request.getToAccountId(), httpRequest);
         if (toBalance == null) {
             throw new RuntimeException("To account not found or inaccessible");
         }
@@ -199,15 +191,15 @@ public class TransactionService {
             userId, 
             request.getFromAccountId(), 
             request.getToAccountId(), 
-            amount,
+            request.getAmount(),
             Transaction.TransactionType.TRANSFER,
             request.getDescription()
         );
         
         try {
             // Calculate new balances
-            BigDecimal newFromBalance = fromBalance.subtract(amount);
-            BigDecimal newToBalance = toBalance.add(amount);
+            Double newFromBalance = fromBalance - request.getAmount();
+            Double newToBalance = toBalance + request.getAmount();
             
             // Update from account balance
             if (!accountsServiceClient.updateAccountBalance(request.getFromAccountId(), newFromBalance, httpRequest)) {

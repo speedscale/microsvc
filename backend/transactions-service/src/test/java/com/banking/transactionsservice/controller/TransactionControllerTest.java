@@ -29,7 +29,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import jakarta.servlet.http.HttpServletRequest;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -73,16 +72,16 @@ class TransactionControllerTest {
         testTransactionResponse.setId(1L);
         testTransactionResponse.setUserId(testUserId);
         testTransactionResponse.setToAccountId(testAccountId);
-        testTransactionResponse.setAmount(BigDecimal.valueOf(100.00));
+        testTransactionResponse.setAmount(100.00);
         testTransactionResponse.setType(Transaction.TransactionType.DEPOSIT);
         testTransactionResponse.setDescription("Test deposit");
         testTransactionResponse.setStatus(Transaction.TransactionStatus.COMPLETED);
         testTransactionResponse.setCreatedAt(LocalDateTime.now());
         testTransactionResponse.setProcessedAt(LocalDateTime.now());
 
-        depositRequest = new DepositRequest(testAccountId, BigDecimal.valueOf(100.00), "Test deposit");
-        withdrawRequest = new WithdrawRequest(testAccountId, BigDecimal.valueOf(50.00), "Test withdrawal");
-        transferRequest = new TransferRequest(testAccountId, 2L, BigDecimal.valueOf(75.00), "Test transfer");
+        depositRequest = new DepositRequest(testAccountId, 100.00, "Test deposit");
+        withdrawRequest = new WithdrawRequest(testAccountId, 50.00, "Test withdrawal");
+        transferRequest = new TransferRequest(testAccountId, 2L, 75.00, "Test transfer");
         
         // Manually set up the SecurityContext
         HttpServletRequest mockRequest = mock(HttpServletRequest.class);
@@ -132,7 +131,7 @@ class TransactionControllerTest {
     @Test
     void deposit_InvalidInput() throws Exception {
         // Arrange
-        depositRequest.setAmount(BigDecimal.valueOf(-10.00)); // Invalid negative amount
+        depositRequest.setAmount(-10.00); // Invalid negative amount
 
         // Act & Assert
         mockMvc.perform(post("/api/transactions/deposit")
@@ -165,7 +164,7 @@ class TransactionControllerTest {
         withdrawResponse.setId(2L);
         withdrawResponse.setUserId(testUserId);
         withdrawResponse.setFromAccountId(testAccountId);
-        withdrawResponse.setAmount(BigDecimal.valueOf(50.00));
+        withdrawResponse.setAmount(50.00);
         withdrawResponse.setType(Transaction.TransactionType.WITHDRAWAL);
         withdrawResponse.setDescription("Test withdrawal");
         withdrawResponse.setStatus(Transaction.TransactionStatus.COMPLETED);
@@ -211,7 +210,7 @@ class TransactionControllerTest {
         transferResponse.setUserId(testUserId);
         transferResponse.setFromAccountId(testAccountId);
         transferResponse.setToAccountId(2L);
-        transferResponse.setAmount(BigDecimal.valueOf(75.00));
+        transferResponse.setAmount(75.00);
         transferResponse.setType(Transaction.TransactionType.TRANSFER);
         transferResponse.setDescription("Test transfer");
         transferResponse.setStatus(Transaction.TransactionStatus.COMPLETED);

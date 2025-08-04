@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -28,8 +27,8 @@ public class Transaction {
     
     @NotNull
     @Positive
-    @Column(name = "amount", nullable = false, precision = 19, scale = 2)
-    private BigDecimal amount;
+    @Column(name = "amount", nullable = false)
+    private Double amount;
     
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -52,7 +51,7 @@ public class Transaction {
     
     public Transaction() {}
     
-    public Transaction(Long userId, Long fromAccountId, Long toAccountId, BigDecimal amount, 
+    public Transaction(Long userId, Long fromAccountId, Long toAccountId, Double amount, 
                       TransactionType type, String description) {
         this.userId = userId;
         this.fromAccountId = fromAccountId;
@@ -96,11 +95,11 @@ public class Transaction {
         this.toAccountId = toAccountId;
     }
     
-    public BigDecimal getAmount() {
+    public Double getAmount() {
         return amount;
     }
     
-    public void setAmount(BigDecimal amount) {
+    public void setAmount(Double amount) {
         this.amount = amount;
     }
     

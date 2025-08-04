@@ -2,7 +2,6 @@ package com.banking.transactionsservice.dto;
 
 import com.banking.transactionsservice.entity.Transaction;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class TransactionResponse {
@@ -11,7 +10,7 @@ public class TransactionResponse {
     private Long userId;
     private Long fromAccountId;
     private Long toAccountId;
-    private BigDecimal amount;
+    private Double amount;
     private Transaction.TransactionType type;
     private String description;
     private Transaction.TransactionStatus status;
@@ -20,7 +19,7 @@ public class TransactionResponse {
     
     public TransactionResponse() {}
     
-    public TransactionResponse(Long id, Long userId, Long fromAccountId, Long toAccountId, BigDecimal amount,
+    public TransactionResponse(Long id, Long userId, Long fromAccountId, Long toAccountId, Double amount,
                               Transaction.TransactionType type, String description, 
                               Transaction.TransactionStatus status, LocalDateTime createdAt, 
                               LocalDateTime processedAt) {
@@ -60,11 +59,11 @@ public class TransactionResponse {
         this.toAccountId = toAccountId;
     }
     
-    public BigDecimal getAmount() {
+    public Double getAmount() {
         return amount;
     }
     
-    public void setAmount(BigDecimal amount) {
+    public void setAmount(Double amount) {
         this.amount = amount;
     }
     

@@ -48,7 +48,7 @@ public class AccountsServiceClient {
         }
     }
     
-    public BigDecimal getAccountBalance(Long accountId, HttpServletRequest request) {
+    public Double getAccountBalance(Long accountId, HttpServletRequest request) {
         try {
             String url = accountsServiceUrl + "/" + accountId + "/balance";
             
@@ -62,7 +62,7 @@ public class AccountsServiceClient {
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 Object balanceObj = response.getBody().get("balance");
                 if (balanceObj instanceof Number) {
-                    return new BigDecimal(balanceObj.toString());
+                    return ((Number) balanceObj).doubleValue();
                 }
             }
             return null;
@@ -72,7 +72,7 @@ public class AccountsServiceClient {
         }
     }
     
-    public boolean updateAccountBalance(Long accountId, BigDecimal newBalance, HttpServletRequest request) {
+    public boolean updateAccountBalance(Long accountId, Double newBalance, HttpServletRequest request) {
         try {
             String url = accountsServiceUrl + "/" + accountId + "/balance";
             
