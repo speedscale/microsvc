@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: banking-app
+
+resources:
+- ../../base
+
+images:
+- name: ghcr.io/speedscale/microsvc/frontend
+  newName: localhost:5000/frontend
+- name: ghcr.io/speedscale/microsvc/api-gateway
+  newName: localhost:5000/api-gateway
+- name: ghcr.io/speedscale/microsvc/user-service
+  newName: localhost:5000/user-service
+- name: ghcr.io/speedscale/microsvc/accounts-service
+  newName: localhost:5000/accounts-service
+- name: ghcr.io/speedscale/microsvc/transactions-service
+  newName: localhost:5000/transactions-service 

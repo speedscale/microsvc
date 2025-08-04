@@ -45,12 +45,20 @@
 ## Phase 9: Security Hardening & Architecture Review
 - [x] API calls to transactions service not showing up in api-gateway logs
 - [x] OTEL should be able to ignore the actuator and prometheus endpoints
+    - [x] Implemented server-side filtering using an OpenTelemetry Collector to drop actuator spans.
 - [x] **Version Management & Tagging**
     - [x] Implement semantic versioning starting with v1.1.0 for all services
     - [x] Update Docker images to use proper version tags instead of 'latest'
     - [x] Configure CI/CD pipeline to automatically tag releases
     - [x] Update Kubernetes manifests to reference specific versions
     - [x] Create version tracking documentation for all components
+- [x] **OpenTelemetry Tracing Fixes**
+    - [x] Fixed frontend OpenTelemetry instrumentation using correct trace-specific exporter (`@opentelemetry/exporter-trace-otlp-http`)
+    - [x] Resolved version compatibility issues between OpenTelemetry packages
+    - [x] Updated Dockerfile to properly include instrumentation.ts in runtime container
+    - [x] Fixed Kubernetes configuration to use HTTP protocol on port 4318 for frontend
+    - [x] Verified traces are now appearing in Jaeger from frontend (3+ traces visible)
+    - [x] Implemented proper local testing setup using local registry instead of `imagePullPolicy: Never`
 - [ ] **Speedscale Implementation**
     - [ ] Add DLP setting to redact the authentication
     - [ ] Record a snapshot of api-gateway traffic
@@ -62,7 +70,10 @@
 - [ ] **Service-to-Service Authentication**: Add authentication between microservices to prevent direct access bypass
     - [ ] **Inter-Service Identity Propagation**: Implement a mechanism to securely propagate the original user's identity (JWT) from one service to another. This is critical for operations like transaction creation where the `transactions-service` needs to call the `accounts-service` on behalf of the user.
         - [x] **Fix 401 Unauthorized Error**: Resolve the immediate authentication failure where `transactions-service` calls to `accounts-service` are rejected.
-- [ ] **Security Configuration Cleanup**: Remove redundant security rules and consolidate authentication patterns
+- [x] **Security Configuration Cleanup**: Remove redundant security rules and consolidate authentication patterns
+    - [x] **Fixed Registration Authentication**: Resolved 401 Unauthorized errors in user registration by updating API Gateway RouterValidator and user-service JWT filter
+    - [x] **Added API Gateway Security**: Implemented proper CSRF configuration for Spring Cloud Gateway
+    - [x] **Updated JWT Filter**: Extended public endpoints list to include API Gateway paths
 - [ ] **CORS Configuration Review**: Tighten CORS policies from allowing all origins to specific allowed origins
 - [ ] **Rate Limiting**: Implement rate limiting at API Gateway level to prevent abuse
 - [ ] **Network Security**: Configure proper network isolation and access controls for backend services
@@ -103,6 +114,7 @@
 - [x] Kubernetes manifests created and tested on minikube
 - [x] CI/CD pipeline operational with image registry
 - [x] System ready for production deployment
+- [x] **OpenTelemetry tracing fully functional** across all services including frontend
 
 ### Production Deployment (Phases 9-12)
 - [ ] Application deployed and accessible via production Kubernetes

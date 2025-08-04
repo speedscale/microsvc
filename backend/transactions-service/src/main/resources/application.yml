@@ -74,6 +74,8 @@ management:
     export:
       prometheus:
         enabled: true
+  tracing:
+    enabled: false  # Disable Spring Boot's built-in tracing, use OpenTelemetry instead
 
 # OpenTelemetry Configuration
 otel:
@@ -92,11 +94,13 @@ otel:
     exporter: otlp
   propagation:
     type: tracecontext
-  # Filter out actuator and prometheus endpoints from tracing
-  filter:
-    exclude:
-      - "/actuator/**"
-      - "/actuator/health"
-      - "/actuator/info"
-      - "/actuator/metrics"
-      - "/actuator/prometheus"
+  # HTTP instrumentation configuration
+  instrumentation:
+    http:
+      enabled: true
+    jdbc:
+      enabled: true
+  # Span naming configuration
+  span:
+    name:
+      pattern: "{http.method} {http.route}"

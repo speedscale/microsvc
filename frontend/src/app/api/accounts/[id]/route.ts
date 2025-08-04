@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Force Node.js runtime for OpenTelemetry compatibility
+export const runtime = 'nodejs';
+
 const API_GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:8080';
 
 export async function GET(

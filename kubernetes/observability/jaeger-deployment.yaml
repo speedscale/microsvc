@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -33,6 +34,8 @@ spec:
           name: otlp-http
         - containerPort: 4317
           name: otlp-grpc
+        - containerPort: 5778 # For sampling strategies
+          name: sampling
         env:
         - name: COLLECTOR_OTLP_ENABLED
           value: "true"
@@ -83,5 +86,8 @@ spec:
   - port: 4317
     targetPort: 4317
     name: otlp-grpc
+  - port: 5778
+    targetPort: 5778
+    name: sampling
   selector:
     app: jaeger
