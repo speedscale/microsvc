@@ -3,7 +3,6 @@ package com.banking.transactionsservice.dto;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
-import java.math.BigDecimal;
 
 public class TransferRequest {
     
@@ -15,13 +14,13 @@ public class TransferRequest {
     
     @NotNull(message = "Amount is required")
     @Positive(message = "Amount must be positive")
-    private BigDecimal amount;
+    private Double amount;
     
     private String description;
     
     public TransferRequest() {}
     
-    public TransferRequest(Long fromAccountId, Long toAccountId, BigDecimal amount, String description) {
+    public TransferRequest(Long fromAccountId, Long toAccountId, Double amount, String description) {
         this.fromAccountId = fromAccountId;
         this.toAccountId = toAccountId;
         this.amount = amount;
@@ -44,11 +43,11 @@ public class TransferRequest {
         this.toAccountId = toAccountId;
     }
     
-    public BigDecimal getAmount() {
+    public Double getAmount() {
         return amount;
     }
     
-    public void setAmount(BigDecimal amount) {
+    public void setAmount(Double amount) {
         this.amount = amount;
     }
     

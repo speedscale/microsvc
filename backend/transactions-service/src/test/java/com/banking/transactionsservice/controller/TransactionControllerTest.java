@@ -37,7 +37,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -66,7 +66,6 @@ class TransactionControllerTest {
     private TransferRequest transferRequest;
     private Long testUserId = 1L;
     private Long testAccountId = 1L;
-    private String testJwtToken = "Bearer test-token";
 
     @BeforeEach
     void setUp() {
@@ -114,12 +113,11 @@ class TransactionControllerTest {
     @Test
     void deposit_Success() throws Exception {
         // Arrange
-        when(transactionService.deposit(any(DepositRequest.class), anyLong(), anyString()))
+        when(transactionService.deposit(any(DepositRequest.class), anyLong(), any(HttpServletRequest.class)))
                 .thenReturn(testTransactionResponse);
 
         // Act & Assert
         mockMvc.perform(post("/api/transactions/deposit")
-                .header("Authorization", testJwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(depositRequest)))
                 .andExpect(status().isCreated())
@@ -128,7 +126,7 @@ class TransactionControllerTest {
                 .andExpect(jsonPath("$.type").value("DEPOSIT"))
                 .andExpect(jsonPath("$.status").value("COMPLETED"));
 
-        verify(transactionService, times(1)).deposit(any(DepositRequest.class), eq(testUserId), eq(testJwtToken));
+        verify(transactionService, times(1)).deposit(any(DepositRequest.class), eq(testUserId), any(HttpServletRequest.class));
     }
 
     @Test
@@ -138,28 +136,26 @@ class TransactionControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/api/transactions/deposit")
-                .header("Authorization", testJwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(depositRequest)))
                 .andExpect(status().isBadRequest());
 
-        verify(transactionService, never()).deposit(any(DepositRequest.class), anyLong(), anyString());
+        verify(transactionService, never()).deposit(any(DepositRequest.class), anyLong(), any(HttpServletRequest.class));
     }
 
     @Test
     void deposit_AccountNotOwned() throws Exception {
         // Arrange
-        when(transactionService.deposit(any(DepositRequest.class), anyLong(), anyString()))
+        when(transactionService.deposit(any(DepositRequest.class), anyLong(), any(HttpServletRequest.class)))
                 .thenThrow(new RuntimeException("Account not owned by user"));
 
         // Act & Assert
         mockMvc.perform(post("/api/transactions/deposit")
-                .header("Authorization", testJwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(depositRequest)))
                 .andExpect(status().isBadRequest());
 
-        verify(transactionService, times(1)).deposit(any(DepositRequest.class), eq(testUserId), eq(testJwtToken));
+        verify(transactionService, times(1)).deposit(any(DepositRequest.class), eq(testUserId), any(HttpServletRequest.class));
     }
 
     @Test
@@ -176,12 +172,11 @@ class TransactionControllerTest {
         withdrawResponse.setCreatedAt(LocalDateTime.now());
         withdrawResponse.setProcessedAt(LocalDateTime.now());
 
-        when(transactionService.withdraw(any(WithdrawRequest.class), anyLong(), anyString()))
+        when(transactionService.withdraw(any(WithdrawRequest.class), anyLong(), any(HttpServletRequest.class)))
                 .thenReturn(withdrawResponse);
 
         // Act & Assert
         mockMvc.perform(post("/api/transactions/withdraw")
-                .header("Authorization", testJwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(withdrawRequest)))
                 .andExpect(status().isCreated())
@@ -190,23 +185,22 @@ class TransactionControllerTest {
                 .andExpect(jsonPath("$.type").value("WITHDRAWAL"))
                 .andExpect(jsonPath("$.status").value("COMPLETED"));
 
-        verify(transactionService, times(1)).withdraw(any(WithdrawRequest.class), eq(testUserId), eq(testJwtToken));
+        verify(transactionService, times(1)).withdraw(any(WithdrawRequest.class), eq(testUserId), any(HttpServletRequest.class));
     }
 
     @Test
     void withdraw_InsufficientBalance() throws Exception {
         // Arrange
-        when(transactionService.withdraw(any(WithdrawRequest.class), anyLong(), anyString()))
+        when(transactionService.withdraw(any(WithdrawRequest.class), anyLong(), any(HttpServletRequest.class)))
                 .thenThrow(new RuntimeException("Insufficient balance"));
 
         // Act & Assert
         mockMvc.perform(post("/api/transactions/withdraw")
-                .header("Authorization", testJwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(withdrawRequest)))
                 .andExpect(status().isBadRequest());
 
-        verify(transactionService, times(1)).withdraw(any(WithdrawRequest.class), eq(testUserId), eq(testJwtToken));
+        verify(transactionService, times(1)).withdraw(any(WithdrawRequest.class), eq(testUserId), any(HttpServletRequest.class));
     }
 
     @Test
@@ -224,12 +218,11 @@ class TransactionControllerTest {
         transferResponse.setCreatedAt(LocalDateTime.now());
         transferResponse.setProcessedAt(LocalDateTime.now());
 
-        when(transactionService.transfer(any(TransferRequest.class), anyLong(), anyString()))
+        when(transactionService.transfer(any(TransferRequest.class), anyLong(), any(HttpServletRequest.class)))
                 .thenReturn(transferResponse);
 
         // Act & Assert
         mockMvc.perform(post("/api/transactions/transfer")
-                .header("Authorization", testJwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(transferRequest)))
                 .andExpect(status().isCreated())
@@ -238,7 +231,7 @@ class TransactionControllerTest {
                 .andExpect(jsonPath("$.type").value("TRANSFER"))
                 .andExpect(jsonPath("$.status").value("COMPLETED"));
 
-        verify(transactionService, times(1)).transfer(any(TransferRequest.class), eq(testUserId), eq(testJwtToken));
+        verify(transactionService, times(1)).transfer(any(TransferRequest.class), eq(testUserId), any(HttpServletRequest.class));
     }
 
     @Test
@@ -248,28 +241,26 @@ class TransactionControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/api/transactions/transfer")
-                .header("Authorization", testJwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(transferRequest)))
                 .andExpect(status().isBadRequest());
 
-        verify(transactionService, never()).transfer(any(TransferRequest.class), anyLong(), anyString());
+        verify(transactionService, never()).transfer(any(TransferRequest.class), anyLong(), any(HttpServletRequest.class));
     }
 
     @Test
     void transfer_InsufficientBalance() throws Exception {
         // Arrange
-        when(transactionService.transfer(any(TransferRequest.class), anyLong(), anyString()))
+        when(transactionService.transfer(any(TransferRequest.class), anyLong(), any(HttpServletRequest.class)))
                 .thenThrow(new RuntimeException("Insufficient balance"));
 
         // Act & Assert
         mockMvc.perform(post("/api/transactions/transfer")
-                .header("Authorization", testJwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(transferRequest)))
                 .andExpect(status().isBadRequest());
 
-        verify(transactionService, times(1)).transfer(any(TransferRequest.class), eq(testUserId), eq(testJwtToken));
+        verify(transactionService, times(1)).transfer(any(TransferRequest.class), eq(testUserId), any(HttpServletRequest.class));
     }
 
 
@@ -309,4 +300,3 @@ class TransactionControllerTest {
         }
     }
 }
-

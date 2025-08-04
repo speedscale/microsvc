@@ -7,6 +7,7 @@ import com.banking.transactionsservice.dto.WithdrawRequest;
 import com.banking.transactionsservice.entity.Transaction;
 import com.banking.transactionsservice.repository.TransactionRepository;
 import com.banking.transactionsservice.service.TransactionService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,10 +40,12 @@ class TransactionRollbackTest {
     @MockBean
     private AccountsServiceClient accountsServiceClient;
 
+    @MockBean
+    private HttpServletRequest httpServletRequest;
+
     private Long testUserId = 1L;
     private Long testAccountId = 1L;
     private Long toAccountId = 2L;
-    private String testJwtToken = "Bearer test-token";
 
     @BeforeEach
     void setUp() {
@@ -55,16 +58,16 @@ class TransactionRollbackTest {
         // Arrange
         DepositRequest request = new DepositRequest(testAccountId, BigDecimal.valueOf(100.00), "Test deposit");
         
-        when(accountsServiceClient.validateAccountOwnership(testAccountId, testUserId, testJwtToken))
+        when(accountsServiceClient.validateAccountOwnership(testAccountId, httpServletRequest))
                 .thenReturn(true);
-        when(accountsServiceClient.getAccountBalance(testAccountId, testJwtToken))
+        when(accountsServiceClient.getAccountBalance(testAccountId, httpServletRequest))
                 .thenReturn(BigDecimal.valueOf(500.00));
-        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(testJwtToken)))
+        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(httpServletRequest)))
                 .thenReturn(false); // Simulate balance update failure
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            transactionService.deposit(request, testUserId, testJwtToken);
+            transactionService.deposit(request, testUserId, httpServletRequest);
         });
 
         assertTrue(exception.getMessage().contains("Failed to update account balance"));
@@ -74,9 +77,9 @@ class TransactionRollbackTest {
         assertEquals(1, transactions.size());
         assertEquals(Transaction.TransactionStatus.FAILED, transactions.get(0).getStatus());
 
-        verify(accountsServiceClient, times(1)).validateAccountOwnership(testAccountId, testUserId, testJwtToken);
-        verify(accountsServiceClient, times(1)).getAccountBalance(testAccountId, testJwtToken);
-        verify(accountsServiceClient, times(1)).updateAccountBalance(testAccountId, BigDecimal.valueOf(600.00), testJwtToken);
+        verify(accountsServiceClient, times(1)).validateAccountOwnership(testAccountId, httpServletRequest);
+        verify(accountsServiceClient, times(1)).getAccountBalance(testAccountId, httpServletRequest);
+        verify(accountsServiceClient, times(1)).updateAccountBalance(testAccountId, BigDecimal.valueOf(600.00), httpServletRequest);
     }
 
     @Test
@@ -84,16 +87,16 @@ class TransactionRollbackTest {
         // Arrange
         WithdrawRequest request = new WithdrawRequest(testAccountId, BigDecimal.valueOf(100.00), "Test withdrawal");
         
-        when(accountsServiceClient.validateAccountOwnership(testAccountId, testUserId, testJwtToken))
+        when(accountsServiceClient.validateAccountOwnership(testAccountId, httpServletRequest))
                 .thenReturn(true);
-        when(accountsServiceClient.getAccountBalance(testAccountId, testJwtToken))
+        when(accountsServiceClient.getAccountBalance(testAccountId, httpServletRequest))
                 .thenReturn(BigDecimal.valueOf(500.00));
-        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(testJwtToken)))
+        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(httpServletRequest)))
                 .thenReturn(false); // Simulate balance update failure
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            transactionService.withdraw(request, testUserId, testJwtToken);
+            transactionService.withdraw(request, testUserId, httpServletRequest);
         });
 
         assertTrue(exception.getMessage().contains("Failed to update account balance"));
@@ -103,9 +106,9 @@ class TransactionRollbackTest {
         assertEquals(1, transactions.size());
         assertEquals(Transaction.TransactionStatus.FAILED, transactions.get(0).getStatus());
 
-        verify(accountsServiceClient, times(1)).validateAccountOwnership(testAccountId, testUserId, testJwtToken);
-        verify(accountsServiceClient, times(1)).getAccountBalance(testAccountId, testJwtToken);
-        verify(accountsServiceClient, times(1)).updateAccountBalance(testAccountId, BigDecimal.valueOf(400.00), testJwtToken);
+        verify(accountsServiceClient, times(1)).validateAccountOwnership(testAccountId, httpServletRequest);
+        verify(accountsServiceClient, times(1)).getAccountBalance(testAccountId, httpServletRequest);
+        verify(accountsServiceClient, times(1)).updateAccountBalance(testAccountId, BigDecimal.valueOf(400.00), httpServletRequest);
     }
 
     @Test
@@ -113,18 +116,18 @@ class TransactionRollbackTest {
         // Arrange
         TransferRequest request = new TransferRequest(testAccountId, toAccountId, BigDecimal.valueOf(100.00), "Test transfer");
         
-        when(accountsServiceClient.validateAccountOwnership(testAccountId, testUserId, testJwtToken))
+        when(accountsServiceClient.validateAccountOwnership(testAccountId, httpServletRequest))
                 .thenReturn(true);
-        when(accountsServiceClient.getAccountBalance(testAccountId, testJwtToken))
+        when(accountsServiceClient.getAccountBalance(testAccountId, httpServletRequest))
                 .thenReturn(BigDecimal.valueOf(500.00));
-        when(accountsServiceClient.getAccountBalance(toAccountId, testJwtToken))
+        when(accountsServiceClient.getAccountBalance(toAccountId, httpServletRequest))
                 .thenReturn(BigDecimal.valueOf(200.00));
-        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(testJwtToken)))
+        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(httpServletRequest)))
                 .thenReturn(false); // Simulate from account update failure
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            transactionService.transfer(request, testUserId, testJwtToken);
+            transactionService.transfer(request, testUserId, httpServletRequest);
         });
 
         assertTrue(exception.getMessage().contains("Failed to update from account balance"));
@@ -134,11 +137,11 @@ class TransactionRollbackTest {
         assertEquals(1, transactions.size());
         assertEquals(Transaction.TransactionStatus.FAILED, transactions.get(0).getStatus());
 
-        verify(accountsServiceClient, times(1)).validateAccountOwnership(testAccountId, testUserId, testJwtToken);
-        verify(accountsServiceClient, times(1)).getAccountBalance(testAccountId, testJwtToken);
-        verify(accountsServiceClient, times(1)).getAccountBalance(toAccountId, testJwtToken);
-        verify(accountsServiceClient, times(1)).updateAccountBalance(testAccountId, BigDecimal.valueOf(400.00), testJwtToken);
-        verify(accountsServiceClient, never()).updateAccountBalance(eq(toAccountId), any(BigDecimal.class), eq(testJwtToken));
+        verify(accountsServiceClient, times(1)).validateAccountOwnership(testAccountId, httpServletRequest);
+        verify(accountsServiceClient, times(1)).getAccountBalance(testAccountId, httpServletRequest);
+        verify(accountsServiceClient, times(1)).getAccountBalance(toAccountId, httpServletRequest);
+        verify(accountsServiceClient, times(1)).updateAccountBalance(testAccountId, BigDecimal.valueOf(400.00), httpServletRequest);
+        verify(accountsServiceClient, never()).updateAccountBalance(eq(toAccountId), any(BigDecimal.class), eq(httpServletRequest));
     }
 
     @Test
@@ -146,20 +149,20 @@ class TransactionRollbackTest {
         // Arrange
         TransferRequest request = new TransferRequest(testAccountId, toAccountId, BigDecimal.valueOf(100.00), "Test transfer");
         
-        when(accountsServiceClient.validateAccountOwnership(testAccountId, testUserId, testJwtToken))
+        when(accountsServiceClient.validateAccountOwnership(testAccountId, httpServletRequest))
                 .thenReturn(true);
-        when(accountsServiceClient.getAccountBalance(testAccountId, testJwtToken))
+        when(accountsServiceClient.getAccountBalance(testAccountId, httpServletRequest))
                 .thenReturn(BigDecimal.valueOf(500.00));
-        when(accountsServiceClient.getAccountBalance(toAccountId, testJwtToken))
+        when(accountsServiceClient.getAccountBalance(toAccountId, httpServletRequest))
                 .thenReturn(BigDecimal.valueOf(200.00));
-        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(testJwtToken)))
+        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(httpServletRequest)))
                 .thenReturn(true); // From account update succeeds
-        when(accountsServiceClient.updateAccountBalance(eq(toAccountId), any(BigDecimal.class), eq(testJwtToken)))
+        when(accountsServiceClient.updateAccountBalance(eq(toAccountId), any(BigDecimal.class), eq(httpServletRequest)))
                 .thenReturn(false); // To account update fails
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            transactionService.transfer(request, testUserId, testJwtToken);
+            transactionService.transfer(request, testUserId, httpServletRequest);
         });
 
         assertTrue(exception.getMessage().contains("Failed to update to account balance"));
@@ -169,11 +172,11 @@ class TransactionRollbackTest {
         assertEquals(1, transactions.size());
         assertEquals(Transaction.TransactionStatus.FAILED, transactions.get(0).getStatus());
 
-        verify(accountsServiceClient, times(1)).validateAccountOwnership(testAccountId, testUserId, testJwtToken);
-        verify(accountsServiceClient, times(1)).getAccountBalance(testAccountId, testJwtToken);
-        verify(accountsServiceClient, times(1)).getAccountBalance(toAccountId, testJwtToken);
-        verify(accountsServiceClient, times(1)).updateAccountBalance(testAccountId, BigDecimal.valueOf(400.00), testJwtToken);
-        verify(accountsServiceClient, times(1)).updateAccountBalance(toAccountId, BigDecimal.valueOf(300.00), testJwtToken);
+        verify(accountsServiceClient, times(1)).validateAccountOwnership(testAccountId, httpServletRequest);
+        verify(accountsServiceClient, times(1)).getAccountBalance(testAccountId, httpServletRequest);
+        verify(accountsServiceClient, times(1)).getAccountBalance(toAccountId, httpServletRequest);
+        verify(accountsServiceClient, times(1)).updateAccountBalance(testAccountId, BigDecimal.valueOf(400.00), httpServletRequest);
+        verify(accountsServiceClient, times(1)).updateAccountBalance(toAccountId, BigDecimal.valueOf(300.00), httpServletRequest);
     }
 
     @Test
@@ -184,25 +187,25 @@ class TransactionRollbackTest {
         // Arrange
         TransferRequest request = new TransferRequest(testAccountId, toAccountId, BigDecimal.valueOf(100.00), "Test transfer");
         
-        when(accountsServiceClient.validateAccountOwnership(testAccountId, testUserId, testJwtToken))
+        when(accountsServiceClient.validateAccountOwnership(testAccountId, httpServletRequest))
                 .thenReturn(true);
-        when(accountsServiceClient.getAccountBalance(testAccountId, testJwtToken))
+        when(accountsServiceClient.getAccountBalance(testAccountId, httpServletRequest))
                 .thenReturn(BigDecimal.valueOf(500.00));
-        when(accountsServiceClient.getAccountBalance(toAccountId, testJwtToken))
+        when(accountsServiceClient.getAccountBalance(toAccountId, httpServletRequest))
                 .thenReturn(BigDecimal.valueOf(200.00));
         
         // First call to update from account succeeds
         // Second call to update to account fails
         // Third call to compensate from account succeeds
-        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(testJwtToken)))
+        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(httpServletRequest)))
                 .thenReturn(true)  // Initial debit succeeds
                 .thenReturn(true); // Compensation credit succeeds
-        when(accountsServiceClient.updateAccountBalance(eq(toAccountId), any(BigDecimal.class), eq(testJwtToken)))
+        when(accountsServiceClient.updateAccountBalance(eq(toAccountId), any(BigDecimal.class), eq(httpServletRequest)))
                 .thenReturn(false); // Credit fails
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            transactionService.transfer(request, testUserId, testJwtToken);
+            transactionService.transfer(request, testUserId, httpServletRequest);
         });
 
         assertTrue(exception.getMessage().contains("Failed to update to account balance"));
@@ -213,8 +216,8 @@ class TransactionRollbackTest {
         assertEquals(Transaction.TransactionStatus.FAILED, transactions.get(0).getStatus());
 
         // Verify compensation occurred
-        verify(accountsServiceClient, times(2)).updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(testJwtToken));
-        verify(accountsServiceClient, times(1)).updateAccountBalance(eq(toAccountId), any(BigDecimal.class), eq(testJwtToken));
+        verify(accountsServiceClient, times(2)).updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(httpServletRequest));
+        verify(accountsServiceClient, times(1)).updateAccountBalance(eq(toAccountId), any(BigDecimal.class), eq(httpServletRequest));
     }
 
     @Test
@@ -224,11 +227,11 @@ class TransactionRollbackTest {
         // Arrange
         DepositRequest request = new DepositRequest(testAccountId, BigDecimal.valueOf(100.00), "Test deposit");
         
-        when(accountsServiceClient.validateAccountOwnership(testAccountId, testUserId, testJwtToken))
+        when(accountsServiceClient.validateAccountOwnership(testAccountId, httpServletRequest))
                 .thenReturn(true);
-        when(accountsServiceClient.getAccountBalance(testAccountId, testJwtToken))
+        when(accountsServiceClient.getAccountBalance(testAccountId, httpServletRequest))
                 .thenReturn(BigDecimal.valueOf(500.00));
-        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(testJwtToken)))
+        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(httpServletRequest)))
                 .thenReturn(true);
 
         // Mock repository to throw exception on save
@@ -250,28 +253,28 @@ class TransactionRollbackTest {
         DepositRequest request1 = new DepositRequest(testAccountId, BigDecimal.valueOf(100.00), "Concurrent deposit 1");
         DepositRequest request2 = new DepositRequest(testAccountId, BigDecimal.valueOf(200.00), "Concurrent deposit 2");
         
-        when(accountsServiceClient.validateAccountOwnership(testAccountId, testUserId, testJwtToken))
+        when(accountsServiceClient.validateAccountOwnership(testAccountId, httpServletRequest))
                 .thenReturn(true);
-        when(accountsServiceClient.getAccountBalance(testAccountId, testJwtToken))
+        when(accountsServiceClient.getAccountBalance(testAccountId, httpServletRequest))
                 .thenReturn(BigDecimal.valueOf(500.00));
         
         // First transaction succeeds
-        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), eq(BigDecimal.valueOf(600.00)), eq(testJwtToken)))
+        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), eq(BigDecimal.valueOf(600.00)), eq(httpServletRequest)))
                 .thenReturn(true);
         
         // Second transaction fails
-        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), eq(BigDecimal.valueOf(700.00)), eq(testJwtToken)))
+        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), eq(BigDecimal.valueOf(700.00)), eq(httpServletRequest)))
                 .thenReturn(false);
 
         // Act
         // Execute first transaction (should succeed)
         assertDoesNotThrow(() -> {
-            transactionService.deposit(request1, testUserId, testJwtToken);
+            transactionService.deposit(request1, testUserId, httpServletRequest);
         });
         
         // Execute second transaction (should fail and rollback)
         assertThrows(RuntimeException.class, () -> {
-            transactionService.deposit(request2, testUserId, testJwtToken);
+            transactionService.deposit(request2, testUserId, httpServletRequest);
         });
 
         // Assert
@@ -300,16 +303,16 @@ class TransactionRollbackTest {
         // Arrange
         DepositRequest request = new DepositRequest(testAccountId, BigDecimal.valueOf(100.00), "Test deposit");
         
-        when(accountsServiceClient.validateAccountOwnership(testAccountId, testUserId, testJwtToken))
+        when(accountsServiceClient.validateAccountOwnership(testAccountId, httpServletRequest))
                 .thenReturn(true);
-        when(accountsServiceClient.getAccountBalance(testAccountId, testJwtToken))
+        when(accountsServiceClient.getAccountBalance(testAccountId, httpServletRequest))
                 .thenReturn(BigDecimal.valueOf(500.00));
-        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(testJwtToken)))
+        when(accountsServiceClient.updateAccountBalance(eq(testAccountId), any(BigDecimal.class), eq(httpServletRequest)))
                 .thenThrow(new RuntimeException("Network timeout"));
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            transactionService.deposit(request, testUserId, testJwtToken);
+            transactionService.deposit(request, testUserId, httpServletRequest);
         });
 
         assertTrue(exception.getMessage().contains("Network timeout"));
@@ -327,16 +330,16 @@ class TransactionRollbackTest {
         // Arrange
         TransferRequest request = new TransferRequest(testAccountId, toAccountId, BigDecimal.valueOf(1000.00), "Large transfer");
         
-        when(accountsServiceClient.validateAccountOwnership(testAccountId, testUserId, testJwtToken))
+        when(accountsServiceClient.validateAccountOwnership(testAccountId, httpServletRequest))
                 .thenReturn(true);
-        when(accountsServiceClient.getAccountBalance(testAccountId, testJwtToken))
+        when(accountsServiceClient.getAccountBalance(testAccountId, httpServletRequest))
                 .thenReturn(BigDecimal.valueOf(500.00)); // Insufficient balance
-        when(accountsServiceClient.getAccountBalance(toAccountId, testJwtToken))
+        when(accountsServiceClient.getAccountBalance(toAccountId, httpServletRequest))
                 .thenReturn(BigDecimal.valueOf(200.00));
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            transactionService.transfer(request, testUserId, testJwtToken);
+            transactionService.transfer(request, testUserId, httpServletRequest);
         });
 
         assertTrue(exception.getMessage().contains("Insufficient balance"));
@@ -346,6 +349,6 @@ class TransactionRollbackTest {
         assertEquals(0, transactions.size());
 
         // Verify that no account balances were updated
-        verify(accountsServiceClient, never()).updateAccountBalance(anyLong(), any(BigDecimal.class), anyString());
+        verify(accountsServiceClient, never()).updateAccountBalance(anyLong(), any(BigDecimal.class), any(HttpServletRequest.class));
     }
 }

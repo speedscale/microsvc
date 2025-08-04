@@ -16,6 +16,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 
 import java.util.HashMap;
 import java.util.List;
@@ -56,18 +60,27 @@ public class TransactionController {
     }
     
     @PostMapping("/create")
-    public ResponseEntity<TransactionResponse> createTransaction(
-            @Valid @RequestBody CreateTransactionRequest request,
-            HttpServletRequest httpRequest) {
+    public ResponseEntity<?> createTransaction(
+            @Valid @RequestBody CreateTransactionRequest request, BindingResult bindingResult) {
         Span span = tracer.spanBuilder("create-transaction").startSpan();
         try {
+            // Check for validation errors
+            if (bindingResult.hasErrors()) {
+                Map<String, String> errors = new HashMap<>();
+                for (FieldError error : bindingResult.getFieldErrors()) {
+                    errors.put(error.getField(), error.getDefaultMessage());
+                }
+                logger.warn("Validation failed for transaction creation: {}", errors);
+                span.setAttribute("validation.failed", true);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+            }
+            
             Long userId = getUserIdFromAuthentication();
-            String jwtToken = httpRequest.getHeader("Authorization");
             
             logger.info("Creating transaction for user: {}, account: {}, type: {}, amount: {}", 
                        userId, request.getAccountId(), request.getType(), request.getAmount());
             
-            TransactionResponse transaction = transactionService.createTransaction(request, userId, jwtToken);
+            TransactionResponse transaction = transactionService.createTransaction(request, userId, getCurrentRequest());
             span.setAttribute("user.id", userId);
             span.setAttribute("account.id", request.getAccountId());
             span.setAttribute("transaction.type", request.getType());
@@ -90,17 +103,15 @@ public class TransactionController {
     
     @PostMapping("/deposit")
     public ResponseEntity<TransactionResponse> deposit(
-            @Valid @RequestBody DepositRequest request,
-            HttpServletRequest httpRequest) {
+            @Valid @RequestBody DepositRequest request) {
         Span span = tracer.spanBuilder("process-deposit").startSpan();
         try {
             Long userId = getUserIdFromAuthentication();
-            String jwtToken = httpRequest.getHeader("Authorization");
             
             logger.info("Processing deposit for user: {}, account: {}, amount: {}", 
                        userId, request.getAccountId(), request.getAmount());
             
-            TransactionResponse transaction = transactionService.deposit(request, userId, jwtToken);
+            TransactionResponse transaction = transactionService.deposit(request, userId, getCurrentRequest());
             span.setAttribute("user.id", userId);
             span.setAttribute("account.id", request.getAccountId());
             span.setAttribute("transaction.amount", request.getAmount().toString());
@@ -122,17 +133,15 @@ public class TransactionController {
     
     @PostMapping("/withdraw")
     public ResponseEntity<TransactionResponse> withdraw(
-            @Valid @RequestBody WithdrawRequest request,
-            HttpServletRequest httpRequest) {
+            @Valid @RequestBody WithdrawRequest request) {
         Span span = tracer.spanBuilder("process-withdrawal").startSpan();
         try {
             Long userId = getUserIdFromAuthentication();
-            String jwtToken = httpRequest.getHeader("Authorization");
             
             logger.info("Processing withdrawal for user: {}, account: {}, amount: {}", 
                        userId, request.getAccountId(), request.getAmount());
             
-            TransactionResponse transaction = transactionService.withdraw(request, userId, jwtToken);
+            TransactionResponse transaction = transactionService.withdraw(request, userId, getCurrentRequest());
             span.setAttribute("user.id", userId);
             span.setAttribute("account.id", request.getAccountId());
             span.setAttribute("transaction.amount", request.getAmount().toString());
@@ -154,8 +163,7 @@ public class TransactionController {
     
     @PostMapping("/transfer")
     public ResponseEntity<TransactionResponse> transfer(
-            @Valid @RequestBody TransferRequest request,
-            HttpServletRequest httpRequest) {
+            @Valid @RequestBody TransferRequest request) {
         Span span = tracer.spanBuilder("process-transfer").startSpan();
         try {
             // Validate same account transfer
@@ -165,12 +173,11 @@ public class TransactionController {
             }
             
             Long userId = getUserIdFromAuthentication();
-            String jwtToken = httpRequest.getHeader("Authorization");
             
             logger.info("Processing transfer for user: {}, from: {}, to: {}, amount: {}", 
                        userId, request.getFromAccountId(), request.getToAccountId(), request.getAmount());
             
-            TransactionResponse transaction = transactionService.transfer(request, userId, jwtToken);
+            TransactionResponse transaction = transactionService.transfer(request, userId, getCurrentRequest());
             span.setAttribute("user.id", userId);
             span.setAttribute("from.account.id", request.getFromAccountId());
             span.setAttribute("to.account.id", request.getToAccountId());
@@ -198,5 +205,9 @@ public class TransactionController {
         }
         UserAuthenticationDetails details = (UserAuthenticationDetails) authentication.getDetails();
         return details.getUserId();
+    }
+
+    private HttpServletRequest getCurrentRequest() {
+        return ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
     }
 }

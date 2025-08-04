@@ -5,6 +5,7 @@ import com.banking.transactionsservice.dto.*;
 import com.banking.transactionsservice.entity.Transaction;
 import com.banking.transactionsservice.repository.TransactionRepository;
 import io.opentelemetry.api.metrics.DoubleHistogram;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,37 +46,38 @@ public class TransactionService {
                 .collect(Collectors.toList());
     }
     
-    public TransactionResponse deposit(DepositRequest request, Long userId, String jwtToken) {
+    public synchronized TransactionResponse deposit(DepositRequest request, Long userId, HttpServletRequest httpRequest) {
         logger.info("Processing deposit for user: {}, account: {}, amount: {}", 
                    userId, request.getAccountId(), request.getAmount());
         
         // Validate account ownership
-        if (!accountsServiceClient.validateAccountOwnership(request.getAccountId(), userId, jwtToken)) {
+        if (!accountsServiceClient.validateAccountOwnership(request.getAccountId(), httpRequest)) {
             throw new RuntimeException("Account not found or access denied");
         }
         
         // Get current balance
-        BigDecimal currentBalance = accountsServiceClient.getAccountBalance(request.getAccountId(), jwtToken);
+        BigDecimal currentBalance = accountsServiceClient.getAccountBalance(request.getAccountId(), httpRequest);
         if (currentBalance == null) {
             throw new RuntimeException("Unable to retrieve account balance");
         }
         
         // Create transaction record
+        BigDecimal amount = BigDecimal.valueOf(request.getAmount());
         Transaction transaction = new Transaction(
             userId, 
             null, 
             request.getAccountId(), 
-            request.getAmount(),
+            amount,
             Transaction.TransactionType.DEPOSIT,
             request.getDescription()
         );
         
         try {
             // Calculate new balance
-            BigDecimal newBalance = currentBalance.add(request.getAmount());
+            BigDecimal newBalance = currentBalance.add(amount);
             
             // Update account balance
-            if (!accountsServiceClient.updateAccountBalance(request.getAccountId(), newBalance, jwtToken)) {
+            if (!accountsServiceClient.updateAccountBalance(request.getAccountId(), newBalance, httpRequest)) {
                 throw new RuntimeException("Failed to update account balance");
             }
             
@@ -100,23 +102,26 @@ public class TransactionService {
         }
     }
     
-    public TransactionResponse withdraw(WithdrawRequest request, Long userId, String jwtToken) {
+    public synchronized TransactionResponse withdraw(WithdrawRequest request, Long userId, HttpServletRequest httpRequest) {
         logger.info("Processing withdrawal for user: {}, account: {}, amount: {}", 
                    userId, request.getAccountId(), request.getAmount());
         
         // Validate account ownership
-        if (!accountsServiceClient.validateAccountOwnership(request.getAccountId(), userId, jwtToken)) {
+        if (!accountsServiceClient.validateAccountOwnership(request.getAccountId(), httpRequest)) {
             throw new RuntimeException("Account not found or access denied");
         }
         
         // Get current balance
-        BigDecimal currentBalance = accountsServiceClient.getAccountBalance(request.getAccountId(), jwtToken);
+        BigDecimal currentBalance = accountsServiceClient.getAccountBalance(request.getAccountId(), httpRequest);
         if (currentBalance == null) {
             throw new RuntimeException("Unable to retrieve account balance");
         }
         
+        // Convert amount to BigDecimal for calculations
+        BigDecimal amount = BigDecimal.valueOf(request.getAmount());
+        
         // Check sufficient balance
-        if (currentBalance.compareTo(request.getAmount()) < 0) {
+        if (currentBalance.compareTo(amount) < 0) {
             throw new RuntimeException("Insufficient balance for withdrawal");
         }
         
@@ -125,17 +130,17 @@ public class TransactionService {
             userId, 
             request.getAccountId(), 
             null, 
-            request.getAmount(),
+            amount,
             Transaction.TransactionType.WITHDRAWAL,
             request.getDescription()
         );
         
         try {
             // Calculate new balance
-            BigDecimal newBalance = currentBalance.subtract(request.getAmount());
+            BigDecimal newBalance = currentBalance.subtract(amount);
             
             // Update account balance
-            if (!accountsServiceClient.updateAccountBalance(request.getAccountId(), newBalance, jwtToken)) {
+            if (!accountsServiceClient.updateAccountBalance(request.getAccountId(), newBalance, httpRequest)) {
                 throw new RuntimeException("Failed to update account balance");
             }
             
@@ -160,28 +165,31 @@ public class TransactionService {
         }
     }
     
-    public TransactionResponse transfer(TransferRequest request, Long userId, String jwtToken) {
+    public synchronized TransactionResponse transfer(TransferRequest request, Long userId, HttpServletRequest httpRequest) {
         logger.info("Processing transfer for user: {}, from: {}, to: {}, amount: {}", 
                    userId, request.getFromAccountId(), request.getToAccountId(), request.getAmount());
         
         // Validate from account ownership
-        if (!accountsServiceClient.validateAccountOwnership(request.getFromAccountId(), userId, jwtToken)) {
+        if (!accountsServiceClient.validateAccountOwnership(request.getFromAccountId(), httpRequest)) {
             throw new RuntimeException("From account not found or access denied");
         }
         
         // Get current balance of from account
-        BigDecimal fromBalance = accountsServiceClient.getAccountBalance(request.getFromAccountId(), jwtToken);
+        BigDecimal fromBalance = accountsServiceClient.getAccountBalance(request.getFromAccountId(), httpRequest);
         if (fromBalance == null) {
             throw new RuntimeException("Unable to retrieve from account balance");
         }
         
+        // Convert amount to BigDecimal for calculations
+        BigDecimal amount = BigDecimal.valueOf(request.getAmount());
+        
         // Check sufficient balance
-        if (fromBalance.compareTo(request.getAmount()) < 0) {
+        if (fromBalance.compareTo(amount) < 0) {
             throw new RuntimeException("Insufficient balance for transfer");
         }
         
         // Get current balance of to account (validate it exists)
-        BigDecimal toBalance = accountsServiceClient.getAccountBalance(request.getToAccountId(), jwtToken);
+        BigDecimal toBalance = accountsServiceClient.getAccountBalance(request.getToAccountId(), httpRequest);
         if (toBalance == null) {
             throw new RuntimeException("To account not found or inaccessible");
         }
@@ -191,25 +199,25 @@ public class TransactionService {
             userId, 
             request.getFromAccountId(), 
             request.getToAccountId(), 
-            request.getAmount(),
+            amount,
             Transaction.TransactionType.TRANSFER,
             request.getDescription()
         );
         
         try {
             // Calculate new balances
-            BigDecimal newFromBalance = fromBalance.subtract(request.getAmount());
-            BigDecimal newToBalance = toBalance.add(request.getAmount());
+            BigDecimal newFromBalance = fromBalance.subtract(amount);
+            BigDecimal newToBalance = toBalance.add(amount);
             
             // Update from account balance
-            if (!accountsServiceClient.updateAccountBalance(request.getFromAccountId(), newFromBalance, jwtToken)) {
+            if (!accountsServiceClient.updateAccountBalance(request.getFromAccountId(), newFromBalance, httpRequest)) {
                 throw new RuntimeException("Failed to update from account balance");
             }
             
             // Update to account balance
-            if (!accountsServiceClient.updateAccountBalance(request.getToAccountId(), newToBalance, jwtToken)) {
+            if (!accountsServiceClient.updateAccountBalance(request.getToAccountId(), newToBalance, httpRequest)) {
                 // Rollback from account balance
-                accountsServiceClient.updateAccountBalance(request.getFromAccountId(), fromBalance, jwtToken);
+                accountsServiceClient.updateAccountBalance(request.getFromAccountId(), fromBalance, httpRequest);
                 throw new RuntimeException("Failed to update to account balance");
             }
             
@@ -235,7 +243,7 @@ public class TransactionService {
         }
     }
     
-    public TransactionResponse createTransaction(CreateTransactionRequest request, Long userId, String jwtToken) {
+    public synchronized TransactionResponse createTransaction(CreateTransactionRequest request, Long userId, HttpServletRequest httpRequest) {
         logger.info("Creating transaction for user: {}, account: {}, type: {}, amount: {}", 
                    userId, request.getAccountId(), request.getType(), request.getAmount());
         
@@ -245,14 +253,14 @@ public class TransactionService {
                 depositRequest.setAccountId(request.getAccountId());
                 depositRequest.setAmount(request.getAmount());
                 depositRequest.setDescription(request.getDescription());
-                return deposit(depositRequest, userId, jwtToken);
+                return deposit(depositRequest, userId, httpRequest);
                 
             case "WITHDRAWAL":
                 WithdrawRequest withdrawRequest = new WithdrawRequest();
                 withdrawRequest.setAccountId(request.getAccountId());
                 withdrawRequest.setAmount(request.getAmount());
                 withdrawRequest.setDescription(request.getDescription());
-                return withdraw(withdrawRequest, userId, jwtToken);
+                return withdraw(withdrawRequest, userId, httpRequest);
                 
             case "TRANSFER":
                 if (request.getToAccountId() == null) {
@@ -263,7 +271,7 @@ public class TransactionService {
                 transferRequest.setToAccountId(request.getToAccountId());
                 transferRequest.setAmount(request.getAmount());
                 transferRequest.setDescription(request.getDescription());
-                return transfer(transferRequest, userId, jwtToken);
+                return transfer(transferRequest, userId, httpRequest);
                 
             default:
                 throw new RuntimeException("Invalid transaction type: " + request.getType());

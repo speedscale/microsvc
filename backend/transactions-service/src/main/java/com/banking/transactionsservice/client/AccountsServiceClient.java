@@ -1,5 +1,6 @@
 package com.banking.transactionsservice.client;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,12 +27,14 @@ public class AccountsServiceClient {
         this.restTemplate = new RestTemplate();
     }
     
-    public boolean validateAccountOwnership(Long accountId, Long userId, String jwtToken) {
+    public boolean validateAccountOwnership(Long accountId, HttpServletRequest request) {
         try {
             String url = accountsServiceUrl + "/" + accountId;
             
             HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(jwtToken.replace("Bearer ", ""));
+            String authHeader = request.getHeader("Authorization");
+            logger.info("Authorization header: {}", authHeader);
+            headers.set("Authorization", authHeader);
             HttpEntity<String> entity = new HttpEntity<>(headers);
             
             ResponseEntity<Map> response = restTemplate.exchange(
@@ -39,18 +42,18 @@ public class AccountsServiceClient {
             
             return response.getStatusCode() == HttpStatus.OK;
         } catch (RestClientException e) {
-            logger.error("Error validating account ownership for account {} and user {}: {}", 
-                        accountId, userId, e.getMessage());
+            logger.error("Error validating account ownership for account {}: {}", 
+                        accountId, e.getMessage());
             return false;
         }
     }
     
-    public BigDecimal getAccountBalance(Long accountId, String jwtToken) {
+    public BigDecimal getAccountBalance(Long accountId, HttpServletRequest request) {
         try {
             String url = accountsServiceUrl + "/" + accountId + "/balance";
             
             HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(jwtToken.replace("Bearer ", ""));
+            headers.set("Authorization", request.getHeader("Authorization"));
             HttpEntity<String> entity = new HttpEntity<>(headers);
             
             ResponseEntity<Map> response = restTemplate.exchange(
@@ -69,12 +72,12 @@ public class AccountsServiceClient {
         }
     }
     
-    public boolean updateAccountBalance(Long accountId, BigDecimal newBalance, String jwtToken) {
+    public boolean updateAccountBalance(Long accountId, BigDecimal newBalance, HttpServletRequest request) {
         try {
             String url = accountsServiceUrl + "/" + accountId + "/balance";
             
             HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(jwtToken.replace("Bearer ", ""));
+            headers.set("Authorization", request.getHeader("Authorization"));
             headers.setContentType(MediaType.APPLICATION_JSON);
             
             Map<String, Object> requestBody = new HashMap<>();
