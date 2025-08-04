@@ -45,6 +45,14 @@ public class TransactionService {
                 .collect(Collectors.toList());
     }
     
+    public List<TransactionResponse> getUserTransactionsByAccount(Long userId, Long accountId) {
+        logger.info("Fetching transactions for user: {} and account: {}", userId, accountId);
+        List<Transaction> transactions = transactionRepository.findByUserIdAndAccountIdOrderByCreatedAtDesc(userId, accountId);
+        return transactions.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+    
     public synchronized TransactionResponse deposit(DepositRequest request, Long userId, HttpServletRequest httpRequest) {
         logger.info("Processing deposit for user: {}, account: {}, amount: {}", 
                    userId, request.getAccountId(), request.getAmount());

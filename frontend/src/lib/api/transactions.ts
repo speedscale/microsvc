@@ -115,12 +115,13 @@ export class TransactionsAPI {
     sort: string = 'createdAt,desc'
   ): Promise<ApiResponse<PaginatedResponse<Transaction>>> {
     const params = new URLSearchParams({
+      accountId: accountId.toString(),
       page: page.toString(),
       size: size.toString(),
       sort,
     });
 
-    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/accounts/${accountId}/transactions?${params}`);
+    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/transactions?${params}`);
   }
 
   // Create new transaction

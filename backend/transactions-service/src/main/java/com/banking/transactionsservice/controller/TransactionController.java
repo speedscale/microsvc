@@ -39,13 +39,21 @@ public class TransactionController {
     
     
     @GetMapping
-    public ResponseEntity<List<TransactionResponse>> getUserTransactions() {
+    public ResponseEntity<List<TransactionResponse>> getUserTransactions(
+            @RequestParam(required = false) Long accountId) {
         Span span = tracer.spanBuilder("get-user-transactions").startSpan();
         try {
             Long userId = getUserIdFromAuthentication();
-            logger.info("Fetching transactions for user: {}", userId);
+            logger.info("Fetching transactions for user: {}, account filter: {}", userId, accountId);
             
-            List<TransactionResponse> transactions = transactionService.getUserTransactions(userId);
+            List<TransactionResponse> transactions;
+            if (accountId != null) {
+                transactions = transactionService.getUserTransactionsByAccount(userId, accountId);
+                span.setAttribute("account.id", accountId);
+            } else {
+                transactions = transactionService.getUserTransactions(userId);
+            }
+            
             span.setAttribute("user.id", userId);
             span.setAttribute("transactions.count", transactions.size());
             
