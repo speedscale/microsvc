@@ -5,18 +5,12 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useAuth } from '@/lib/auth/context';
 import Button from '@/components/ui/Button';
+import { TransactionsAPI, Transaction as ApiTransaction } from '@/lib/api/transactions';
 
-interface Transaction {
-  id: number;
-  accountId: number;
-  accountNumber: string;
-  type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER';
-  amount: number;
-  currency: string;
-  description: string;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED';
-  createdAt: string;
-  updatedAt: string;
+// Use the API Transaction type and extend it with accountNumber for display
+interface Transaction extends Omit<ApiTransaction, 'status'> {
+  accountNumber?: string;
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
 }
 
 const TransactionsPage: React.FC = () => {
@@ -30,63 +24,23 @@ const TransactionsPage: React.FC = () => {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        // TODO: Replace with actual API call
-        // Simulate API call with mock data
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        setIsLoading(true);
+        setError(null);
         
-        const mockTransactions: Transaction[] = [
-          {
-            id: 1,
-            accountId: 1,
-            accountNumber: '1234567890',
-            type: 'DEPOSIT',
-            amount: 1000.00,
-            currency: 'USD',
-            description: 'Salary deposit',
-            status: 'COMPLETED',
-            createdAt: '2024-01-20T09:00:00Z',
-            updatedAt: '2024-01-20T09:00:00Z',
-          },
-          {
-            id: 2,
-            accountId: 1,
-            accountNumber: '1234567890',
-            type: 'WITHDRAWAL',
-            amount: 150.00,
-            currency: 'USD',
-            description: 'ATM withdrawal',
-            status: 'COMPLETED',
-            createdAt: '2024-01-19T14:30:00Z',
-            updatedAt: '2024-01-19T14:30:00Z',
-          },
-          {
-            id: 3,
-            accountId: 2,
-            accountNumber: '0987654321',
-            type: 'TRANSFER',
-            amount: 500.00,
-            currency: 'USD',
-            description: 'Transfer to savings',
-            status: 'COMPLETED',
-            createdAt: '2024-01-18T11:15:00Z',
-            updatedAt: '2024-01-18T11:15:00Z',
-          },
-          {
-            id: 4,
-            accountId: 1,
-            accountNumber: '1234567890',
-            type: 'DEPOSIT',
-            amount: 250.00,
-            currency: 'USD',
-            description: 'Check deposit',
-            status: 'PENDING',
-            createdAt: '2024-01-17T16:45:00Z',
-            updatedAt: '2024-01-17T16:45:00Z',
-          },
-        ];
+        const response = await TransactionsAPI.getTransactions();
         
-        setTransactions(mockTransactions);
-      } catch {
+        if (response.success && response.data) {
+          // Map API transactions to display format
+          const mappedTransactions: Transaction[] = response.data.map(transaction => ({
+            ...transaction,
+            accountNumber: `****${transaction.accountId}`, // Generate display account number
+          }));
+          setTransactions(mappedTransactions);
+        } else {
+          setError(response.message || 'Failed to load transactions');
+        }
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
         setError('Failed to load transactions');
       } finally {
         setIsLoading(false);
@@ -158,6 +112,8 @@ const TransactionsPage: React.FC = () => {
         return <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">Pending</span>;
       case 'FAILED':
         return <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">Failed</span>;
+      case 'CANCELLED':
+        return <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">Cancelled</span>;
       default:
         return <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">Unknown</span>;
     }
@@ -224,6 +180,7 @@ const TransactionsPage: React.FC = () => {
                     <option value="COMPLETED">Completed</option>
                     <option value="PENDING">Pending</option>
                     <option value="FAILED">Failed</option>
+                    <option value="CANCELLED">Cancelled</option>
                   </select>
                 </div>
               </div>
