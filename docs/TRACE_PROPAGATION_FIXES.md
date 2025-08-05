@@ -93,6 +93,14 @@ spring:
 **Changes**:
 - Created custom filter to log and verify trace header propagation
 - Added debugging capabilities for trace context
+- Automatically registered as Spring component (no manual bean definition needed)
+
+**File**: `backend/api-gateway/src/main/java/com/banking/apigateway/config/OtelConfig.java`
+
+**Changes**:
+- Removed duplicate `tracePropagationFilter` bean definition to avoid conflicts
+- Simplified WebClient configuration (trace propagation handled by Spring Cloud Gateway)
+- Kept OpenTelemetry metrics and tracing configuration
 
 ### 3. Backend Services RestTemplate Configuration
 **Files**: 
@@ -254,6 +262,7 @@ otel:
 2. **Disconnected traces**: Verify trace header propagation in service logs
 3. **Missing spans**: Ensure all services have OpenTelemetry properly configured
 4. **Wrong trace IDs**: Check that trace context is being properly propagated between services
+5. **Bean definition conflicts**: If you see "BeanDefinitionOverrideException" for tracePropagationFilter, ensure you don't have duplicate bean definitions
 
 ### Debug Commands
 ```bash
@@ -265,7 +274,19 @@ kubectl logs -n banking-app -l app=api-gateway | grep -i trace
 
 # Verify service configuration
 kubectl get configmap -n banking-app app-config -o yaml
+
+# Check for bean conflicts in API Gateway
+kubectl logs -n banking-app -l app=api-gateway | grep -i "bean.*conflict\|BeanDefinitionOverrideException"
 ```
+
+### Known Issues and Fixes
+
+#### Bean Definition Conflict in API Gateway
+**Error**: `BeanDefinitionOverrideException: Invalid bean definition with name 'tracePropagationFilter'`
+
+**Cause**: Duplicate bean definitions - one from `@Component` annotation on `TracePropagationFilter` class and another from `@Bean` method in `OtelConfig`
+
+**Solution**: Remove the duplicate `@Bean` definition from `OtelConfig` since the `@Component` annotation automatically registers the filter
 
 ## Results
 
@@ -274,4 +295,5 @@ After implementing these fixes:
 - ✅ Complete end-to-end traces visible in Jaeger UI
 - ✅ Service-to-service calls maintain trace context
 - ✅ Consistent trace correlation across all services
-- ✅ Proper parent-child span relationships established 
+- ✅ Proper parent-child span relationships established
+- ✅ API Gateway starts successfully without bean conflicts 

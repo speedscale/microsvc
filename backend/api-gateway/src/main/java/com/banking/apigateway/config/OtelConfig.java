@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 
 @Configuration
 @ConditionalOnProperty(name = "otel.traces.exporter", havingValue = "otlp", matchIfMissing = false)
@@ -73,16 +72,6 @@ public class OtelConfig {
 
     @Bean
     public WebClient.Builder webClientBuilder() {
-        return WebClient.builder()
-                .filter(tracePropagationFilter());
-    }
-
-    @Bean
-    public ExchangeFilterFunction tracePropagationFilter() {
-        return (request, next) -> {
-            // This filter ensures trace context is propagated to downstream services
-            // Spring Cloud Gateway automatically handles trace propagation when configured
-            return next.exchange(request);
-        };
+        return WebClient.builder();
     }
 } 
