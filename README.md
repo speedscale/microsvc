@@ -110,6 +110,8 @@ npm run test:e2e
 
 ## Architecture
 
+![Architecture](./images/microsvc-architecture.png)
+
 ### System Components
 - **Frontend**: Next.js application with TypeScript
 - **Backend**: Java Spring Boot microservices
@@ -241,6 +243,8 @@ kubectl logs -n banking-app deployment/frontend -c speedscale-sidecar
 **Performance impact**: The Speedscale sidecars add minimal overhead but monitor resource usage during high-traffic scenarios.
 
 ### Observability Deployment
+
+![OTEL](./images/microsvc-otel-traces.png)
 
 **Deploy Observability Stack**:
 ```bash
