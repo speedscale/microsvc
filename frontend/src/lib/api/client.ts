@@ -4,14 +4,28 @@ import { logApiRequest, logApiResponse, logError } from '../logger';
 
 // Trace propagation utilities
 const getCurrentTraceContext = (): string | null => {
-  // Use the global OpenTelemetry utilities if available (server-side)
-  if (typeof global !== 'undefined' && (global as any).__OTEL_TRACE_UTILS__) {
-    return (global as any).__OTEL_TRACE_UTILS__.getCurrentTraceContext();
+  // Use the process OpenTelemetry utilities if available (server-side)
+  if (typeof process !== 'undefined') {
+    interface ProcessWithOtelUtils extends NodeJS.Process {
+      __OTEL_TRACE_UTILS__?: {
+        getCurrentTraceContext: () => string | null;
+      };
+    }
+    const processWithUtils = process as ProcessWithOtelUtils;
+    if (processWithUtils.__OTEL_TRACE_UTILS__) {
+      return processWithUtils.__OTEL_TRACE_UTILS__.getCurrentTraceContext();
+    }
   }
   
   // Fallback for client-side (though this shouldn't be used in SSR context)
-  if (typeof window !== 'undefined' && (window as any).__OTEL_TRACE_CONTEXT__) {
-    return (window as any).__OTEL_TRACE_CONTEXT__;
+  if (typeof window !== 'undefined') {
+    interface WindowWithOtelContext extends Window {
+      __OTEL_TRACE_CONTEXT__?: string;
+    }
+    const windowWithContext = window as WindowWithOtelContext;
+    if (windowWithContext.__OTEL_TRACE_CONTEXT__) {
+      return windowWithContext.__OTEL_TRACE_CONTEXT__;
+    }
   }
   
   return null;

@@ -35,7 +35,7 @@ The OpenTelemetry traces were not working properly for cross-application tracing
 - Removed custom `window.__OTEL_TRACE_CONTEXT__` mechanism
 - Added proper W3C Trace Context propagation using OpenTelemetry API
 - Created utility functions for trace context generation
-- Exposed trace utilities to global scope for API client access
+- Exposed trace utilities to process scope for API client access (avoiding `global` for browser compatibility)
 
 **Code**:
 ```typescript
@@ -46,6 +46,30 @@ const getCurrentTraceContext = () => {
   propagation.inject(currentContext, carrier);
   return carrier['traceparent'] || null;
 };
+
+// Expose trace context utilities to process scope for API client access
+// This is a safer approach than using global in browser environments
+if (typeof process !== 'undefined') {
+  interface ProcessWithOtelUtils extends NodeJS.Process {
+    __OTEL_TRACE_UTILS__?: {
+      getCurrentTraceContext: () => string | null;
+      createSpan: (name: string, attributes?: Record<string, string | number | boolean>) => unknown;
+    };
+  }
+  (process as ProcessWithOtelUtils).__OTEL_TRACE_UTILS__ = {
+    getCurrentTraceContext,
+    createSpan: (name: string, attributes?: Record<string, string | number | boolean>) => {
+      const tracer = trace.getTracer('frontend-api');
+      const span = tracer.startSpan(name);
+      if (attributes) {
+        Object.entries(attributes).forEach(([key, value]) => {
+          span.setAttribute(key, value);
+        });
+      }
+      return span;
+    }
+  };
+}
 ```
 
 ### 2. API Gateway Trace Propagation
@@ -113,11 +137,41 @@ OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318/v1/traces"
 **File**: `frontend/src/lib/api/client.ts`
 
 **Changes**:
-- Updated to use proper trace context from global OpenTelemetry utilities
+- Updated to use proper trace context from process OpenTelemetry utilities
+- Added proper TypeScript interfaces for type safety
 - Ensures trace headers are included in all API requests
 
 **Code**:
 ```typescript
+// Trace propagation utilities
+const getCurrentTraceContext = (): string | null => {
+  // Use the process OpenTelemetry utilities if available (server-side)
+  if (typeof process !== 'undefined') {
+    interface ProcessWithOtelUtils extends NodeJS.Process {
+      __OTEL_TRACE_UTILS__?: {
+        getCurrentTraceContext: () => string | null;
+      };
+    }
+    const processWithUtils = process as ProcessWithOtelUtils;
+    if (processWithUtils.__OTEL_TRACE_UTILS__) {
+      return processWithUtils.__OTEL_TRACE_UTILS__.getCurrentTraceContext();
+    }
+  }
+  
+  // Fallback for client-side (though this shouldn't be used in SSR context)
+  if (typeof window !== 'undefined') {
+    interface WindowWithOtelContext extends Window {
+      __OTEL_TRACE_CONTEXT__?: string;
+    }
+    const windowWithContext = window as WindowWithOtelContext;
+    if (windowWithContext.__OTEL_TRACE_CONTEXT__) {
+      return windowWithContext.__OTEL_TRACE_CONTEXT__;
+    }
+  }
+  
+  return null;
+};
+
 // Add trace context header for distributed tracing
 const traceContext = getCurrentTraceContext();
 if (traceContext) {

@@ -138,12 +138,19 @@ export async function register() {
       return carrier['traceparent'] || null;
     };
 
-    // Expose trace context utilities to global scope for API client
-    if (typeof global !== 'undefined') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global as any).__OTEL_TRACE_UTILS__ = {
+    // Expose trace context utilities to process.env for API client access
+    // This is a safer approach than using global in browser environments
+    if (typeof process !== 'undefined') {
+      // Extend process with our trace utilities
+      interface ProcessWithOtelUtils extends NodeJS.Process {
+        __OTEL_TRACE_UTILS__?: {
+          getCurrentTraceContext: () => string | null;
+          createSpan: (name: string, attributes?: Record<string, string | number | boolean>) => unknown;
+        };
+      }
+      (process as ProcessWithOtelUtils).__OTEL_TRACE_UTILS__ = {
         getCurrentTraceContext,
-        createSpan: (name: string, attributes?: Record<string, any>) => {
+        createSpan: (name: string, attributes?: Record<string, string | number | boolean>) => {
           const tracer = trace.getTracer('frontend-api');
           const span = tracer.startSpan(name);
           if (attributes) {
