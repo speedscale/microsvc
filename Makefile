@@ -84,8 +84,24 @@ test-frontend:
 	cd frontend && npm ci && npm test -- --coverage --watchAll=false
 
 test-e2e:
-	@echo "Running E2E tests..."
-	./scripts/validate-e2e.sh
+	@echo "🎭 Running Playwright E2E tests..."
+	@cd frontend && ./run-e2e.sh
+
+test-e2e-ui:
+	@echo "🎭 Running Playwright E2E tests with UI..."
+	@cd frontend && npm run test:e2e:ui
+
+test-e2e-debug:
+	@echo "🎭 Running Playwright E2E tests in debug mode..."
+	@cd frontend && npm run test:e2e:headed
+
+test-e2e-k8s:
+	@echo "🎭 Running Playwright E2E tests against Kubernetes..."
+	@echo "📡 Setting up port-forward to frontend service..."
+	@kubectl port-forward -n banking-app service/frontend-nodeport 30080:80 &
+	@sleep 3
+	@BASE_URL=http://localhost:30080 cd frontend && ./run-e2e.sh
+	@pkill -f "kubectl port-forward.*frontend-nodeport" || true
 
 validate-e2e: test-e2e
 
@@ -222,7 +238,10 @@ help:
 	@echo "  docker-clean-versioned - Remove versioned Docker images"
 	@echo "  test-backend       - Run backend tests"
 	@echo "  test-frontend      - Run frontend tests"
-	@echo "  test-e2e           - Run E2E tests with CI configuration"
+	@echo "  test-e2e           - Run Playwright E2E tests (automated user journey)"
+	@echo "  test-e2e-ui        - Run E2E tests with Playwright UI"
+	@echo "  test-e2e-debug     - Run E2E tests in headed browser mode"
+	@echo "  test-e2e-k8s       - Run E2E tests against Kubernetes deployment"
 	@echo "  validate-e2e       - Validate E2E tests (alias for test-e2e)"
 	@echo "  test-all           - Run all tests (backend, frontend, e2e)"
 	@echo ""

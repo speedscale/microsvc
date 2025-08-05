@@ -1,5 +1,27 @@
 # System Architecture & Traffic Flow
 
+## Local Development with Colima
+
+When using Colima for local Kubernetes development, use the local overlay which references local Docker images:
+
+```bash
+# Build local images (without pushing to registry)
+make docker-build-versioned
+
+# Deploy using local overlay (uses localhost:5000 registry)
+kubectl apply -k kubernetes/overlays/local/
+
+# Or if running a local registry
+docker run -d -p 5000:5000 --name registry registry:2
+docker tag ghcr.io/speedscale/microsvc/frontend:v1.1.11 localhost:5000/frontend:v1.1.11
+docker push localhost:5000/frontend:v1.1.11
+```
+
+The local overlay:
+- Uses `imagePullPolicy: IfNotPresent` instead of `Always`
+- References images from `localhost:5000` registry
+- Avoids pulling from remote registries
+
 ## Traffic Flow Design
 All external traffic flows through the frontend service, which acts as the single entry point:
 

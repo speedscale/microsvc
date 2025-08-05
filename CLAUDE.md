@@ -6,7 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Before working on this codebase, read:
 - `README.md` - Complete project overview, architecture, and development commands
-- `plan.md` - Detailed implementation plan with 8 phases and testing criteria for each sub-phase
+- `PLAN.md` - Detailed implementation plan with multiple phases and testing criteria for each sub-phase
+- `ARCHITECTURE.md` - Project architecture specifically
 
 ## Development Workflow
 

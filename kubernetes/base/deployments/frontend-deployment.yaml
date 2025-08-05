@@ -26,7 +26,7 @@ spec:
       serviceAccountName: banking-app-sa
       containers:
       - name: frontend
-        image: ghcr.io/speedscale/microsvc/frontend:v1.1.11
+        image: ghcr.io/speedscale/microsvc/frontend:v1.1.12
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
@@ -43,7 +43,7 @@ spec:
             cpu: "250m"
         livenessProbe:
           httpGet:
-            path: /
+            path: /api/healthz
             port: 3000
           initialDelaySeconds: 30
           periodSeconds: 30
@@ -51,7 +51,7 @@ spec:
           failureThreshold: 3
         readinessProbe:
           httpGet:
-            path: /
+            path: /api/healthz
             port: 3000
           initialDelaySeconds: 15
           periodSeconds: 10

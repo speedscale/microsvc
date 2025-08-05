@@ -18,14 +18,25 @@ data:
       filter:
         spans:
           exclude:
-            match_type: regexp
+            match_type: strict
+            span_names:
+              - "security filterchain before"
+              - "security filterchain after" 
+              - "authorize exchange"
+              - "secured request"
             attributes:
-              - key: url.path
-                value: ".*actuator.*"
+              - key: http.target
+                value: "/actuator/health"
+              - key: http.target
+                value: "/actuator/prometheus"
+              - key: http.url
+                value: "/actuator/health"
+              - key: http.url
+                value: "/actuator/prometheus"
 
     exporters:
       otlp:
-        endpoint: "jaeger:4317"
+        endpoint: "jaeger.banking-app.svc.cluster.local:4317"
         tls:
           insecure: true
 
