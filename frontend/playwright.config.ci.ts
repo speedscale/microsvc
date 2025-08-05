@@ -60,21 +60,21 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'NODE_ENV=test BACKEND_API_URL=http://localhost:8080 npm run dev',
+    command: 'npm run build && npm run start',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     env: {
-      NODE_ENV: 'test',
-      BACKEND_API_URL: 'http://localhost:8080',
+      NODE_ENV: 'production',
+      PORT: '3000',
     },
-    timeout: 60000, // 1 minute timeout for server startup
+    timeout: 30000, // 30 second timeout for server startup
   },
   
   /* Global timeout for the entire test run */
-  globalTimeout: 15 * 60 * 1000, // 15 minutes
+  globalTimeout: 5 * 60 * 1000, // 5 minutes
   
   /* Expect timeout for individual assertions */
   expect: {
-    timeout: 10000,
+    timeout: 5000,
   },
 }); 
