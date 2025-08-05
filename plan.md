@@ -42,62 +42,31 @@
 - [x] Configure Docker image registry with proper tagging, versioning, and optimize Spring Boot startup times
 - [x] Simplify API Gateway routing architecture by eliminating complex path rewriting and implementing transparent proxy pattern
 
-## Phase 9: Security Hardening & Production Readiness ✅ COMPLETED
+## Phase 9: Observability & CI/CD Finalization ✅ COMPLETED
+- [x] OpenTelemetry pure implementation (disabled Speedscale dependency)
+- [x] Clean trace filtering removing health check noise
+- [x] Fixed frontend CI test failures (Jest/Playwright separation)
+- [x] Standardized OTel configuration across all services
+- [x] E2E testing framework with Playwright
 
-### ✅ Completed
-- [x] Version management with semantic versioning (v1.1.0+)
-- [x] OpenTelemetry tracing fixed across all services including frontend
-- [x] API Gateway security with proper authentication
-- [x] Actuator/prometheus endpoint filtering in OTEL
-- [x] Fixed 401 errors in registration and transaction flows
-- [x] **OpenTelemetry Pure Implementation**: Disabled Speedscale injection and confirmed pure OpenTelemetry HTTP/DB instrumentation working across all services
-- [x] **Trace Filtering**: Configured OTel collector to filter health check spans (/actuator/health, /actuator/prometheus) and security filter chain noise
-- [x] **Service Configuration**: Standardized OTel configuration across user-service, accounts-service, and transactions-service
-- [x] **Clean Observability**: Achieved clean traces showing only business transactions with proper HTTP and database spans
+## Phase 10: Production Enhancement & Security
+- [ ] **Production Kubernetes Deployment**
+  - [ ] Deploy to production cluster with SSL/TLS and ingress
+  - [ ] Production monitoring, backup, and disaster recovery
+- [ ] **Security Hardening**
+  - [ ] Service-to-service authentication
+  - [ ] Rate limiting and CORS hardening
+  - [ ] JWT improvements (refresh tokens, rotation)
+  - [ ] Security headers and input validation
+- [ ] **Observability Fine-tuning**
+  - [ ] Custom business metrics and Grafana dashboards
+  - [ ] Performance monitoring and alerting
 
-### 🔧 Optional Enhancements (Not Critical for Demo)
-
-#### Testing & Validation
-- [x] **Create Playwright E2E test script** - Automated user journey testing
-  - [x] Write `tests/e2e/user-journey.spec.ts` to visit all frontend pages
-  - [x] Add npm script: `npm run test:e2e` to run Playwright tests
-  - [x] Add Makefile targets: `make test-e2e`, `make test-e2e-ui`, `make test-e2e-debug`
-  - [ ] Include in CI/CD pipeline for automated regression testing
-
-#### Observability Fine-Tuning (Optional)
-- [ ] Fine-tune remaining health check span filtering for accounts-service
-- [ ] Add custom business metrics (login success rate, transaction volume)
-- [ ] Configure Grafana dashboards for business KPIs
-
-#### Security Enhancements (Production-Ready Features)
-- [ ] **Service-to-Service Authentication** - Secure inter-service communication
-- [ ] **CORS Hardening** - Replace wildcard origins with allowed domain list
-- [ ] **Rate Limiting** - Implement at API Gateway (e.g., 100 req/min per user)
-- [ ] **JWT Improvements** - Add refresh tokens, rotation, secure storage
-- [ ] **Security Headers** - HSTS, CSP, X-Frame-Options, etc.
-- [ ] **Input Validation** - Comprehensive sanitization on all endpoints
-- [ ] **Audit Logging** - Track security events and access patterns
-
-## Phase 10: Production Kubernetes Deployment
-- [ ] Deploy application to production Kubernetes cluster with registry images
-- [ ] Configure SSL/TLS, load balancing, and ingress controllers
-- [ ] Set up production monitoring, backup, and disaster recovery
-
-## Phase 11: Documentation & Security Audit
-- [ ] Create comprehensive API documentation and developer guides
-- [ ] Complete security audit and penetration testing
-- [ ] Finalize code quality standards and coverage analysis
-- [ ] Clean up any unused scripts
-
-## Phase 12: Advanced Features & Optimization
-- [ ] Implement enhanced banking features (account types, transaction categories)
-- [ ] Add performance optimizations (caching, database tuning)
-- [ ] Create advanced reporting and analytics capabilities
-
-## Phase 13: Comprehensive System Testing
-- [ ] End-to-end testing with complete user workflows
-- [ ] Performance and load testing under concurrent usage
-- [ ] Production environment validation and stress testing
+## Phase 11: Advanced Features & Documentation
+- [ ] Enhanced banking features (account types, transaction categories)
+- [ ] Performance optimizations (caching, database tuning)
+- [ ] API documentation and security audit
+- [ ] Load testing and production validation
 
 ## Success Criteria
 
@@ -113,9 +82,7 @@
 - [x] **OpenTelemetry tracing fully functional** with pure implementation (no Speedscale dependency)
 - [x] **Clean trace filtering** removing health check noise while preserving business transaction visibility
 
-### Production Deployment (Phases 9-12)
-- [ ] Application deployed and accessible via production Kubernetes
-- [ ] Production environment secure and monitored
-- [ ] Performance benchmarks met
-- [ ] Security audit completed
-- [ ] Advanced features implemented and tested
+### Production Deployment (Phases 10-11)
+- [ ] Application deployed to production Kubernetes with security hardening
+- [ ] Production monitoring, performance optimization, and security audit complete
+- [ ] Advanced features and load testing validated
