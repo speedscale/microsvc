@@ -4,8 +4,8 @@ spring:
   cloud:
     gateway:
       # Routes are configured programmatically in GatewayConfig.java
-
-
+      default-filters:
+        - TraceIdInjectionFilter
       globalcors:
         cors-configurations:
           '[/**]':

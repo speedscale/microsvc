@@ -36,7 +36,13 @@ npx playwright install --with-deps chromium
 
 # Run the tests (Chromium only)
 echo "🚀 Running E2E tests (Chromium only)..."
-npx playwright test
+if [[ -n "$BASE_URL" ]]; then
+    echo "🔗 Using external server - no webServer startup"
+    npx playwright test --config=playwright.config.headless.ts
+else
+    echo "🏠 Using local server - will start dev server"
+    npx playwright test
+fi
 
 echo "✅ E2E tests complete!"
 echo ""

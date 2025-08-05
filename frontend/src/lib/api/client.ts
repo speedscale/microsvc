@@ -4,11 +4,16 @@ import { logApiRequest, logApiResponse, logError } from '../logger';
 
 // Trace propagation utilities
 const getCurrentTraceContext = (): string | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Use the global OpenTelemetry utilities if available (server-side)
+  if (typeof global !== 'undefined' && (global as any).__OTEL_TRACE_UTILS__) {
+    return (global as any).__OTEL_TRACE_UTILS__.getCurrentTraceContext();
+  }
+  
+  // Fallback for client-side (though this shouldn't be used in SSR context)
   if (typeof window !== 'undefined' && (window as any).__OTEL_TRACE_CONTEXT__) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (window as any).__OTEL_TRACE_CONTEXT__;
   }
+  
   return null;
 };
 

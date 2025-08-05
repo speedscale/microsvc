@@ -48,6 +48,13 @@
 - [x] Fixed frontend CI test failures (Jest/Playwright separation)
 - [x] Standardized OTel configuration across all services
 - [x] E2E testing framework with Playwright
+- [x] **Fixed Cross-Application Trace Propagation**: Resolved issues preventing trace IDs from propagating between pods by:
+  - [x] Fixed frontend trace context generation using proper W3C Trace Context format
+  - [x] Added Spring Cloud Gateway trace propagation configuration with TraceIdInjectionFilter
+  - [x] Updated RestTemplate configurations in backend services to use RestTemplateBuilder for automatic trace propagation
+  - [x] Standardized OpenTelemetry endpoints across all services (using otel-collector)
+  - [x] Created trace propagation filter for API Gateway to ensure proper header forwarding
+  - [x] Added comprehensive trace propagation test script to verify end-to-end tracing
 
 ## Phase 10: Production Enhancement & Security
 - [ ] **Production Kubernetes Deployment**

@@ -48,9 +48,12 @@ export async function register() {
     const { OTLPTraceExporter } = await import('@opentelemetry/exporter-trace-otlp-http');
     const { Resource } = await import('@opentelemetry/resources');
     const { SemanticResourceAttributes } = await import('@opentelemetry/semantic-conventions');
-    const { trace } = await import('@opentelemetry/api');
+    const { trace, context, propagation } = await import('@opentelemetry/api');
     
     console.log('🔧 OpenTelemetry packages loaded successfully');
+    
+    // Note: W3C Trace Context propagator is set by default in OpenTelemetry
+    // No need to explicitly set it as it's the default propagator
     
     // Create a custom tracer provider for Next.js
     const tracerProvider = new NodeTracerProvider({
@@ -127,21 +130,29 @@ export async function register() {
     testSpan.end();
     console.log('🔧 Test span created and ended');
 
-    // Expose trace context to window for API client
-    if (typeof window !== 'undefined') {
+    // Create a utility function to get current trace context for API calls
+    const getCurrentTraceContext = () => {
+      const currentContext = context.active();
+      const carrier: Record<string, string> = {};
+      propagation.inject(currentContext, carrier);
+      return carrier['traceparent'] || null;
+    };
+
+    // Expose trace context utilities to global scope for API client
+    if (typeof global !== 'undefined') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).__OTEL_TRACE_CONTEXT__ = null;
-      
-      // Update trace context when new spans are created
-      const originalStartSpan = testTracer.startSpan;
-      testTracer.startSpan = function(name: string, options?: Parameters<typeof originalStartSpan>[1]) {
-        const span = originalStartSpan.call(this, name, options);
-        const context = span.spanContext();
-        if (context.traceId && context.spanId) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (window as any).__OTEL_TRACE_CONTEXT__ = `00-${context.traceId}-${context.spanId}-01`;
+      (global as any).__OTEL_TRACE_UTILS__ = {
+        getCurrentTraceContext,
+        createSpan: (name: string, attributes?: Record<string, any>) => {
+          const tracer = trace.getTracer('frontend-api');
+          const span = tracer.startSpan(name);
+          if (attributes) {
+            Object.entries(attributes).forEach(([key, value]) => {
+              span.setAttribute(key, value);
+            });
+          }
+          return span;
         }
-        return span;
       };
     }
   } catch (error) {
