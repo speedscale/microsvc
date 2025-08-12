@@ -17,7 +17,7 @@ services:
 
   # Backend Services
   user-service:
-    build: 
+    build:
       context: ./backend/user-service
       dockerfile: Dockerfile
     container_name: banking-user-service
@@ -50,7 +50,7 @@ services:
       - banking-network
 
   accounts-service:
-    build: 
+    build:
       context: ./backend/accounts-service
       dockerfile: Dockerfile
     container_name: banking-accounts-service
@@ -83,7 +83,7 @@ services:
       - banking-network
 
   transactions-service:
-    build: 
+    build:
       context: ./backend/transactions-service
       dockerfile: Dockerfile
     container_name: banking-transactions-service
@@ -129,7 +129,7 @@ services:
       - banking-network
 
   api-gateway:
-    build: 
+    build:
       context: ./backend/api-gateway
       dockerfile: Dockerfile
     container_name: banking-api-gateway
@@ -167,7 +167,7 @@ services:
 
   # Frontend
   frontend:
-    build: 
+    build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: banking-frontend
