@@ -1,0 +1,183 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-08-13T17:28:18.935250Z",
+  "l7protocol": "postgres",
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.707",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "284",
+    "source": "goproxy"
+  },
+  "uuid": "m+hY47LtR/eVyMh+frCmKg==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "Mac.lan:5432",
+  "command": "Startup",
+  "location": "N/A",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "startup": {
+        "messages": [
+          {
+            "startup": {
+              "protocolVersion": 196608,
+              "parameters": {
+                "DateStyle": "ISO",
+                "TimeZone": "America/New_York",
+                "client_encoding": "UTF8",
+                "database": "banking_app",
+                "extra_float_digits": "2",
+                "user": "user_service_user"
+              }
+            }
+          },
+          {
+            "sasl": {
+              "mechanism": "SCRAM-SHA-256",
+              "data": "biwsbj0qLHI9a0VFUTd0altCJSRlek0tbjMzZ3tWUCF5"
+            }
+          },
+          {
+            "sasl": {
+              "data": "Yz1iaXdzLHI9a0VFUTd0altCJSRlek0tbjMzZ3tWUCF5U2ZmTWhnZHdvSE5YbjVxR0hvV2cvaVdHLHA9Q0VLa2NHcitWQzZHWVZmaHRObGxOa3ZWNUdQVzFYVGt4eVJMangwMlF5QT0="
+            }
+          }
+        ]
+      }
+    },
+    "response": {
+      "startup": {
+        "messages": [
+          {
+            "sasl": {
+              "mechanisms": [
+                "SCRAM-SHA-256"
+              ]
+            }
+          },
+          {
+            "saslContinue": {
+              "data": "cj1rRUVRN3RqW0IlJGV6TS1uMzNne1ZQIXlTZmZNaGdkd29ITlhuNXFHSG9XZy9pV0cscz1rYkVxQklUNC8wSlpWb0xnbXpERzZBPT0saT00MDk2"
+            }
+          },
+          {
+            "saslFinal": {
+              "data": "dj1teGtpNFZhUzRaUEt5SVNFTzR3Ry9DQTdGK0FPS2hsQzlza3FGTnB2RGVrPQ=="
+            }
+          },
+          {
+            "authOk": {}
+          },
+          {
+            "parameterStatus": {
+              "name": "application_name"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "client_encoding",
+              "value": "UTF8"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "DateStyle",
+              "value": "ISO, MDY"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "default_transaction_read_only",
+              "value": "off"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "in_hot_standby",
+              "value": "off"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "integer_datetimes",
+              "value": "on"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "IntervalStyle",
+              "value": "postgres"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "is_superuser",
+              "value": "off"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "server_encoding",
+              "value": "UTF8"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "server_version",
+              "value": "15.13 (Debian 15.13-1.pgdg120+1)"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "session_authorization",
+              "value": "user_service_user"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "standard_conforming_strings",
+              "value": "on"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "TimeZone",
+              "value": "America/New_York"
+            }
+          },
+          {
+            "backendKeyData": {
+              "processId": 95,
+              "secretKey": 1849455281
+            }
+          }
+        ]
+      }
+    }
+  },
+  "netinfo": {
+    "id": "2",
+    "startTime": "2025-08-13T17:28:18.939820Z",
+    "downstream": {
+      "established": "2025-08-13T17:28:18.927075Z",
+      "ipAddress": "127.0.0.1",
+      "port": 54792
+    },
+    "upstream": {
+      "established": "2025-08-13T17:28:18.929684Z",
+      "ipAddress": "192.168.1.216",
+      "port": 5432,
+      "hostname": "Mac.lan"
+    }
+  }
+}
