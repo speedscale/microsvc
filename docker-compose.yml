@@ -181,19 +181,12 @@ services:
       - OTEL_SERVICE_NAME=frontend
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
       - OTEL_TRACES_EXPORTER=otlp
-      - OTEL_METRICS_EXPORTER=otlp
-      - OTEL_LOGS_EXPORTER=otlp
       - OTEL_TRACES_SAMPLER=always_on
       - OTEL_PROPAGATORS=tracecontext
       - OTEL_RESOURCE_ATTRIBUTES=service.namespace=banking-app
-      # Debug logging for OpenTelemetry
-      - OTEL_LOG_LEVEL=DEBUG
-      - OTEL_TRACES_SAMPLER_ARG=1.0
-      - OTEL_EXPORTER_OTLP_TIMEOUT=10000
-      - OTEL_EXPORTER_OTLP_COMPRESSION=none
-      # Node.js debug logging
-      - DEBUG=*
-      - NODE_OPTIONS=--trace-warnings
+      # Only enable debug logging when needed
+      # - OTEL_LOG_LEVEL=DEBUG
+      # - DEBUG=*
     ports:
       - "3000:3000"
     networks:

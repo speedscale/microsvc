@@ -35,13 +35,21 @@ echo "📦 Ensuring Playwright browsers are installed..."
 npx playwright install --with-deps chromium
 
 # Run the tests (Chromium only)
-echo "🚀 Running E2E tests (Chromium only)..."
+echo "🚀 Running Complete E2E tests (Chromium only)..."
+echo "📋 This will test ALL pages including:"
+echo "   - Registration and Login flow"
+echo "   - Dashboard, Accounts, Transactions, Profile pages"
+echo "   - Account-specific pages (deposit, withdraw, transfer)"
+echo "   - Form validation and authentication protection"
+echo "   - Performance and accessibility checks"
+echo ""
+
 if [[ -n "$BASE_URL" ]]; then
     echo "🔗 Using external server - no webServer startup"
-    npx playwright test --config=playwright.config.headless.ts
+    npx playwright test e2e/complete-journey.spec.ts --config=playwright.config.headless.ts
 else
     echo "🏠 Using local server - will start dev server"
-    npx playwright test
+    npx playwright test e2e/complete-journey.spec.ts
 fi
 
 echo "✅ E2E tests complete!"

@@ -72,6 +72,41 @@ A comprehensive banking application demonstrating microservices architecture wit
 ./mvnw spring-boot:run
 ```
 
+### Debugging Services
+
+**Option 1: Mixed Local + Docker (Recommended)**
+```bash
+# Start infrastructure only
+docker-compose up postgres jaeger redis -d
+
+# Run service locally for debugging
+cd backend/user-service
+make run  # Uses service Makefile
+
+# Run other services in Docker
+docker-compose up accounts-service transactions-service api-gateway frontend -d
+
+# Connect debugger to localhost:5005
+```
+
+**Option 2: Service Isolation with Proxymock**
+```bash
+# Start infrastructure
+docker-compose up postgres jaeger redis -d
+
+# Use service Makefile for isolated testing
+cd backend/user-service
+make proxymock-record    # Record traffic
+make proxymock-mock      # Mock dependencies  
+make run-mocked          # Run with mocked deps
+
+# Each service has unique ports to avoid conflicts
+# See individual service Makefiles for details
+```
+
+**Option 3: Debug in Docker**
+Some services have debugging pre-configured (see docker-compose.yml). Connect IDE to `localhost:5005`.
+
 ### Frontend Development
 ```bash
 # Start Next.js development server
@@ -142,117 +177,37 @@ kubectl apply -k kubernetes/overlays/speedscale/
 
 **Note**: For production, edit `kubernetes/overlays/speedscale/frontend-config-patch.yaml` to set your actual API domain instead of `https://your-api-domain.com`.
 
-### Speedscale Overlay Deployment
+### Speedscale Overlay (Optional)
 
-The Speedscale overlay adds traffic recording and replay capabilities to all services in the banking application. This overlay is useful for:
+Adds traffic recording and replay capabilities:
 
-- **Traffic Recording**: Capturing real API traffic for testing and analysis
-- **Traffic Replay**: Replaying recorded traffic for load testing and regression testing
-- **Performance Testing**: Analyzing service performance under realistic load conditions
-
-#### What the Speedscale Overlay Does
-
-The Speedscale overlay adds the following annotations to all service deployments:
-
-- `sidecar.speedscale.com/inject: "true"` - Injects Speedscale sidecar containers
-- `sidecar.speedscale.com/tls-out: "true"` - Enables TLS termination for outbound traffic
-- `sidecar.speedscale.com/tls-java-tool-options: "true"` - Configures Java applications for TLS interception
-
-#### Prerequisites
-
-Before deploying the Speedscale overlay, ensure you have:
-
-1. **Speedscale CLI installed**: Download from [Speedscale documentation](https://docs.speedscale.com/)
-2. **Speedscale account**: Sign up at [Speedscale](https://speedscale.com/)
-3. **Kubernetes cluster**: The overlay works with any Kubernetes cluster
-
-#### Deployment Steps
-
-1. **Install Speedscale components** (if not already installed):
-   ```bash
-   # Install Speedscale operator and components
-   speedscale install
-   ```
-
-2. **Deploy the Speedscale overlay**:
-   ```bash
-   # Deploy with Speedscale annotations
-   kubectl apply -k kubernetes/overlays/speedscale/
-   ```
-
-3. **Verify deployment**:
-   ```bash
-   # Check that pods have Speedscale sidecars
-   kubectl get pods -n banking-app
-   
-   # Verify Speedscale annotations are applied
-   kubectl describe deployment frontend -n banking-app
-   ```
-
-#### Using Speedscale Features
-
-Once deployed, you can use Speedscale features:
-
-**Record Traffic**:
 ```bash
-# Start recording traffic to a service
+# Install Speedscale (requires account)
+speedscale install
+
+# Deploy with Speedscale annotations  
+kubectl apply -k kubernetes/overlays/speedscale/
+
+# Record and replay traffic
 speedscale record --service frontend --duration 5m
+speedscale replay --recording-id <id> --target http://localhost:3000
 ```
 
-**Replay Traffic**:
-```bash
-# Replay recorded traffic for load testing
-speedscale replay --recording-id <recording-id> --target http://localhost:3000
-```
+See [Speedscale documentation](https://docs.speedscale.com/) for setup details.
 
-**View Recordings**:
-```bash
-# List all recordings
-speedscale recordings list
-```
-
-#### Removing Speedscale Overlay
-
-To remove Speedscale annotations and return to standard deployment:
+### Observability
 
 ```bash
-# Delete Speedscale overlay
-kubectl delete -k kubernetes/overlays/speedscale/
-
-# Redeploy without Speedscale
-kubectl apply -k kubernetes/base/
-```
-
-#### Troubleshooting Speedscale
-
-**Sidecar not injected**:
-```bash
-# Check Speedscale operator status
-kubectl get pods -n speedscale-system
-
-# Verify annotations are applied
-kubectl describe deployment frontend -n banking-app | grep speedscale
-```
-
-**Traffic recording issues**:
-```bash
-# Check Speedscale sidecar logs
-kubectl logs -n banking-app deployment/frontend -c speedscale-sidecar
-```
-
-**Performance impact**: The Speedscale sidecars add minimal overhead but monitor resource usage during high-traffic scenarios.
-
-### Observability Deployment
-
-![OTEL](./images/microsvc-otel-traces.png)
-
-**Deploy Observability Stack**:
-```bash
-# Deploy all observability components (Grafana, Prometheus, Jaeger)
+# Deploy monitoring stack (Grafana, Prometheus, Jaeger)
 kubectl apply -k kubernetes/observability/
+
+# Access tools
+kubectl port-forward -n banking-app svc/grafana 3001:3000      # Grafana (admin/admin)
+kubectl port-forward -n banking-app svc/prometheus 9090:9090   # Prometheus  
+kubectl port-forward -n banking-app svc/jaeger 16686:16686     # Jaeger
 ```
 
-**Note**: The observability stack is configured to collect metrics and traces from all banking application services. Make sure your services have OpenTelemetry instrumentation enabled.
+See [OBSERVABILITY.md](OBSERVABILITY.md) for detailed monitoring setup and troubleshooting.
 
 ## Implementation Status
 
@@ -285,187 +240,11 @@ Currently in Phase 1.1 (Repository Structure) - see `plan.md` for detailed phase
 
 ## Troubleshooting
 
-### Common Issues
+For detailed troubleshooting information, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
-#### Frontend Issues
-**Port 3000 already in use**
-```bash
-# Check what's using port 3000
-lsof -i :3000
-# Kill the process or use a different port
-npm run dev -- -p 3001
-```
-
-**Build errors**
-```bash
-# Clear Next.js cache
-rm -rf frontend/.next
-npm run build
-```
-
-**API connection errors**
-- Verify backend services are running
-- Check API gateway configuration
-- Ensure CORS settings are correct
-
-#### Backend Issues
-**Database connection failures**
-```bash
-# Check PostgreSQL status
-docker ps | grep postgres
-# Restart database
-docker-compose restart postgres
-```
-
-**Service startup failures**
-```bash
-# Check service logs
-docker-compose logs [service-name]
-# Verify environment variables
-docker-compose config
-```
-
-**JWT token issues**
-- Check user-service is running
-- Verify JWT secret configuration
-- Clear browser cookies/localStorage
-
-#### Kubernetes Issues
-**Pod startup failures**
-```bash
-# Check pod status
-kubectl get pods -n banking-app
-# View pod logs
-kubectl logs -n banking-app [pod-name]
-# Describe pod for events
-kubectl describe pod -n banking-app [pod-name]
-```
-
-**Service not accessible**
-```bash
-# Check service endpoints
-kubectl get endpoints -n banking-app
-# Verify service configuration
-kubectl describe svc -n banking-app [service-name]
-```
-
-**Port forwarding issues**
-```bash
-# Check if port is already in use
-lsof -i :3000
-# Use different local port
-kubectl port-forward -n banking-app svc/frontend 3001:3000
-```
-
-#### Observability Issues
-**Grafana not loading dashboards**
-- Check Prometheus data source configuration
-- Verify metrics are being collected
-- Check Grafana logs: `kubectl logs -n banking-app deployment/grafana`
-
-**Prometheus targets down**
-```bash
-# Check target status
-kubectl port-forward -n banking-app svc/prometheus 9090:9090
-# Visit http://localhost:9090/targets
-```
-
-**Jaeger not showing traces**
-- Verify OpenTelemetry configuration in services
-- Check Jaeger collector logs
-- Ensure services are sending traces to correct endpoint
-
-### Debug Commands
-
-#### Docker Compose
-```bash
-# View all logs
-docker-compose logs -f
-
-# View specific service logs
-docker-compose logs -f [service-name]
-
-# Check service health
-docker-compose ps
-
-# Restart specific service
-docker-compose restart [service-name]
-```
-
-#### Kubernetes
-```bash
-# Check all resources
-kubectl get all -n banking-app
-
-# View events
-kubectl get events -n banking-app --sort-by='.lastTimestamp'
-
-# Check resource usage
-kubectl top pods -n banking-app
-
-# Debug pod with interactive shell
-kubectl exec -it -n banking-app [pod-name] -- /bin/bash
-```
-
-#### Database
-```bash
-# Connect to database
-docker exec -it [postgres-container] psql -U postgres -d banking_app
-
-# Check database schemas
-\dn
-
-# Check table data
-SELECT * FROM user_service.users LIMIT 5;
-```
-
-### Performance Issues
-
-#### High Memory Usage
-- Check JVM heap settings in application.yml
-- Monitor with: `kubectl top pods -n banking-app`
-- Consider increasing resource limits
-
-#### Slow Response Times
-- Check database connection pool settings
-- Monitor with Grafana dashboards
-- Verify network latency between services
-
-#### Database Performance
-```bash
-# Check slow queries
-docker exec -it [postgres-container] psql -U postgres -d banking_app -c "SELECT * FROM pg_stat_activity WHERE state = 'active';"
-```
-
-### Reset Everything
-
-#### Local Development
-```bash
-# Stop and remove all containers
-docker-compose down -v
-
-# Remove all images
-docker-compose down --rmi all
-
-# Clean start
-docker-compose up -d
-```
-
-#### Kubernetes
-```bash
-# Delete all resources
-kubectl delete namespace banking-app
-
-# Redeploy everything
-kubectl apply -k kubernetes/base/
-kubectl apply -k kubernetes/observability/
-```
-
-### Getting Help
-
-1. **Check logs first**: Most issues can be diagnosed from service logs
-2. **Verify prerequisites**: Ensure all required software is installed and up to date
-3. **Check network connectivity**: Verify services can communicate with each other
-4. **Review configuration**: Ensure all environment variables and configs are correct
-5. **Search issues**: Check if the problem has been reported before
+Common quick fixes:
+- **Port conflicts**: Check `lsof -i :3000` and use different ports
+- **Service not starting**: Check logs with `docker-compose logs [service-name]`
+- **Database issues**: Restart with `docker-compose restart postgres`
+- **JWT issues**: Clear browser cookies and verify user-service is running
 
