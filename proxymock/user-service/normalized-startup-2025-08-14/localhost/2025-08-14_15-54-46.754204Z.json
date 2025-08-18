@@ -1,0 +1,82 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-08-14T15:54:46.754204Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.710-1-g0aeb1b6fe",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "200",
+    "source": "goproxy"
+  },
+  "uuid": "vlx4/tBiR9qI/spsZtRnFg==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "Execute Prepared Statement",
+  "location": "SELECT pg_try_advisory_xact_lock(77433341017749)",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "execute": {
+        "bindRequest": {
+          "parseRequest": {
+            "query": "SELECT pg_try_advisory_xact_lock(77433341017749)"
+          }
+        }
+      }
+    },
+    "response": {
+      "execute": {
+        "messages": [
+          {
+            "dataRow": {
+              "values": [
+                {
+                  "asString": "t"
+                }
+              ]
+            }
+          },
+          {
+            "complete": {
+              "tag": "SELECT 1"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "instance":"MA==","postgres:msg_type": "RXhlY3V0ZSBQcmVwYXJlZCBTdGF0ZW1lbnQ=",
+    "postgres:portal": "",
+    "postgres:query": "U0VMRUNUIHBnX3RyeV9hZHZpc29yeV94YWN0X2xvY2sgKCA3NzQzMzM0MTAxNzc0OSAp",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-08-14T15:54:46.647725Z",
+    "downstream": {
+      "established": "2025-08-14T15:54:46.594083Z",
+      "ipAddress": "127.0.0.1",
+      "port": 60241,
+      "bytesSent": "2895"
+    },
+    "upstream": {
+      "established": "2025-08-14T15:54:46.595257Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "1552"
+    }
+  }
+}

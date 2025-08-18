@@ -1,0 +1,52 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-08-14T15:54:46.772014Z",
+  "l7protocol": "postgres",
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.710-1-g0aeb1b6fe",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "283",
+    "source": "goproxy"
+  },
+  "uuid": "hfmtEH4GRbSR++9HycZWiw==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "SSL Request",
+  "location": "N/A",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "ssl": {}
+    },
+    "response": {
+      "ssl": {
+        "willingToEncrypt": false
+      }
+    }
+  },
+  "netinfo": {
+    "id": "2",
+    "startTime": "2025-08-14T15:54:46.790890Z",
+    "downstream": {
+      "established": "2025-08-14T15:54:46.771030Z",
+      "ipAddress": "127.0.0.1",
+      "port": 60243
+    },
+    "upstream": {
+      "established": "2025-08-14T15:54:46.771971Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost"
+    }
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-08-14T15:54:49.346948Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.710-1-g0aeb1b6fe",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "905",
+    "source": "goproxy"
+  },
+  "uuid": "XgFgUQn8QoKYFujBkY40HA==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "Describe Portal",
+  "location": "INSERT INTO user_service.users (created_at, email, password_hash, roles, updated_at, username) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "describe": {
+        "objectType": "OBJECT_TYPE_PORTAL",
+        "parseRequest": {
+          "query": "insert into user_service.users (created_at,email,password_hash,roles,updated_at,username) values ($1,$2,$3,$4,$5,$6)\nRETURNING *",
+          "parameterOids": [
+            0,
+            1043,
+            1043,
+            1043,
+            0,
+            1043
+          ]
+        }
+      }
+    },
+    "response": {
+      "describe": {
+        "messages": [
+          {
+            "rowDescription": {
+              "fields": [
+                {
+                  "name": "id",
+                  "tableOid": 16407,
+                  "tableAttributeNumber": 1,
+                  "dataTypeOid": 20,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "username",
+                  "tableOid": 16407,
+                  "tableAttributeNumber": 2,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 54
+                },
+                {
+                  "name": "email",
+                  "tableOid": 16407,
+                  "tableAttributeNumber": 3,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 104
+                },
+                {
+                  "name": "password_hash",
+                  "tableOid": 16407,
+                  "tableAttributeNumber": 4,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 259
+                },
+                {
+                  "name": "roles",
+                  "tableOid": 16407,
+                  "tableAttributeNumber": 5,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 104
+                },
+                {
+                  "name": "created_at",
+                  "tableOid": 16407,
+                  "tableAttributeNumber": 6,
+                  "dataTypeOid": 1114,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "updated_at",
+                  "tableOid": 16407,
+                  "tableAttributeNumber": 7,
+                  "dataTypeOid": 1114,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "instance":"MA==","postgres:msg_type": "RGVzY3JpYmUgUG9ydGFs",
+    "postgres:query": "aW5zZXJ0IGludG8gdXNlcl9zZXJ2aWNlLnVzZXJzICggY3JlYXRlZF9hdCwgZW1haWwsIHBhc3N3b3JkX2hhc2gsIHJvbGVzLCB1cGRhdGVkX2F0LCB1c2VybmFtZSApIHZhbHVlcyAoICQxLCAkMiwgJDMsICQ0LCAkNSwgJDYgKSBSRVRVUk5JTkcgKg==",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-08-14T15:54:46.647725Z",
+    "downstream": {
+      "established": "2025-08-14T15:54:46.594083Z",
+      "ipAddress": "127.0.0.1",
+      "port": 60241,
+      "bytesSent": "19213"
+    },
+    "upstream": {
+      "established": "2025-08-14T15:54:46.595257Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "12963"
+    }
+  }
+}

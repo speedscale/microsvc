@@ -1,0 +1,183 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-08-18T15:03:06.474861Z",
+  "l7protocol": "postgres",
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.719",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "423",
+    "source": "goproxy"
+  },
+  "uuid": "uk+dNmJ3TFmJPZjrdjj9ag==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "Startup",
+  "location": "N/A",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "startup": {
+        "messages": [
+          {
+            "startup": {
+              "protocolVersion": 196608,
+              "parameters": {
+                "DateStyle": "ISO",
+                "TimeZone": "America/New_York",
+                "client_encoding": "UTF8",
+                "database": "banking_app",
+                "extra_float_digits": "2",
+                "user": "user_service_user"
+              }
+            }
+          },
+          {
+            "sasl": {
+              "mechanism": "SCRAM-SHA-256",
+              "data": "biwsbj0qLHI9UkJSdUtUJXhTaCshIk1UbHM/MiYzV0p4"
+            }
+          },
+          {
+            "sasl": {
+              "data": "Yz1iaXdzLHI9UkJSdUtUJXhTaCshIk1UbHM/MiYzV0p4SmluZStPd2NGR1hBV2hUdjZLdDhRYzh6LHA9a3kvbFY5ajlsSDhWVkYyK1NPSmNOckRlZXBGenBKdFlvU2xoajQ0TnZsRT0="
+            }
+          }
+        ]
+      }
+    },
+    "response": {
+      "startup": {
+        "messages": [
+          {
+            "sasl": {
+              "mechanisms": [
+                "SCRAM-SHA-256"
+              ]
+            }
+          },
+          {
+            "saslContinue": {
+              "data": "cj1SQlJ1S1QleFNoKyEiTVRscz8yJjNXSnhKaW5lK093Y0ZHWEFXaFR2Nkt0OFFjOHoscz00YThBUXRBQ0RUQ1dvNEN5Vmx3ZXB3PT0saT00MDk2"
+            }
+          },
+          {
+            "saslFinal": {
+              "data": "dj1pZ0ZqdDBudzIwb01SQjF3WFBXT0duUHhUR3E5bExiRHhHRFR5RkhzWFUwPQ=="
+            }
+          },
+          {
+            "authOk": {}
+          },
+          {
+            "parameterStatus": {
+              "name": "application_name"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "client_encoding",
+              "value": "UTF8"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "DateStyle",
+              "value": "ISO, MDY"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "default_transaction_read_only",
+              "value": "off"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "in_hot_standby",
+              "value": "off"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "integer_datetimes",
+              "value": "on"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "IntervalStyle",
+              "value": "postgres"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "is_superuser",
+              "value": "off"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "server_encoding",
+              "value": "UTF8"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "server_version",
+              "value": "15.13"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "session_authorization",
+              "value": "user_service_user"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "standard_conforming_strings",
+              "value": "on"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "TimeZone",
+              "value": "America/New_York"
+            }
+          },
+          {
+            "backendKeyData": {
+              "processId": 65,
+              "secretKey": 2654517789
+            }
+          }
+        ]
+      }
+    }
+  },
+  "netinfo": {
+    "id": "8",
+    "startTime": "2025-08-18T15:03:06.480760Z",
+    "downstream": {
+      "established": "2025-08-18T15:03:06.472382Z",
+      "ipAddress": "127.0.0.1",
+      "port": 56492
+    },
+    "upstream": {
+      "established": "2025-08-18T15:03:06.472825Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost"
+    }
+  }
+}

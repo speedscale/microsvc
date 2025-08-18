@@ -1,0 +1,82 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-08-14T15:54:46.742905Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.710-1-g0aeb1b6fe",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "121",
+    "source": "goproxy"
+  },
+  "uuid": "w/08/+A6QgCoJEBcewwV2g==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "Describe Portal",
+  "location": "SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = $1 AND c.relname = $2 AND c.relkind = 'r')",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "describe": {
+        "objectType": "OBJECT_TYPE_PORTAL",
+        "parseRequest": {
+          "query": "SELECT EXISTS (\n  SELECT 1\n  FROM   pg_catalog.pg_class c\n  JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n  WHERE  n.nspname = $1\n  AND    c.relname = $2\n  AND    c.relkind = 'r'\n)",
+          "parameterOids": [
+            1043,
+            1043
+          ]
+        }
+      }
+    },
+    "response": {
+      "describe": {
+        "messages": [
+          {
+            "rowDescription": {
+              "fields": [
+                {
+                  "name": "exists",
+                  "dataTypeOid": 16,
+                  "dataTypeSize": 1,
+                  "typeModifier": -1
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "instance":"MA==","postgres:msg_type": "RGVzY3JpYmUgUG9ydGFs",
+    "postgres:query": "U0VMRUNUIEVYSVNUUyAoIFNFTEVDVCAxIEZST00gcGdfY2F0YWxvZy5wZ19jbGFzcyBjIEpPSU4gcGdfY2F0YWxvZy5wZ19uYW1lc3BhY2UgbiBPTiBuLm9pZCA9IGMucmVsbmFtZXNwYWNlIFdIRVJFIG4ubnNwbmFtZSA9ICQxIEFORCBjLnJlbG5hbWUgPSAkMiBBTkQgYy5yZWxraW5kID0gJ3InICk=",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-08-14T15:54:46.647725Z",
+    "downstream": {
+      "established": "2025-08-14T15:54:46.594083Z",
+      "ipAddress": "127.0.0.1",
+      "port": 60241,
+      "bytesSent": "1153"
+    },
+    "upstream": {
+      "established": "2025-08-14T15:54:46.595257Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "1042"
+    }
+  }
+}

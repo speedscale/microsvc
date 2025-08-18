@@ -1,0 +1,168 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-08-18T15:03:06.992923Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.719",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "507",
+    "source": "goproxy"
+  },
+  "uuid": "VF4FbFtOTHW4MRwjILiJDQ==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "Describe Portal",
+  "location": "SELECT * FROM information_schema.sequences",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "describe": {
+        "objectType": "OBJECT_TYPE_PORTAL",
+        "parseRequest": {
+          "query": "select * from information_schema.sequences"
+        }
+      }
+    },
+    "response": {
+      "describe": {
+        "messages": [
+          {
+            "rowDescription": {
+              "fields": [
+                {
+                  "name": "sequence_catalog",
+                  "tableOid": 13449,
+                  "tableAttributeNumber": 1,
+                  "dataTypeOid": 19,
+                  "dataTypeSize": 64,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "sequence_schema",
+                  "tableOid": 13449,
+                  "tableAttributeNumber": 2,
+                  "dataTypeOid": 19,
+                  "dataTypeSize": 64,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "sequence_name",
+                  "tableOid": 13449,
+                  "tableAttributeNumber": 3,
+                  "dataTypeOid": 19,
+                  "dataTypeSize": 64,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "data_type",
+                  "tableOid": 13449,
+                  "tableAttributeNumber": 4,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "numeric_precision",
+                  "tableOid": 13449,
+                  "tableAttributeNumber": 5,
+                  "dataTypeOid": 23,
+                  "dataTypeSize": 4,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "numeric_precision_radix",
+                  "tableOid": 13449,
+                  "tableAttributeNumber": 6,
+                  "dataTypeOid": 23,
+                  "dataTypeSize": 4,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "numeric_scale",
+                  "tableOid": 13449,
+                  "tableAttributeNumber": 7,
+                  "dataTypeOid": 23,
+                  "dataTypeSize": 4,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "start_value",
+                  "tableOid": 13449,
+                  "tableAttributeNumber": 8,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "minimum_value",
+                  "tableOid": 13449,
+                  "tableAttributeNumber": 9,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "maximum_value",
+                  "tableOid": 13449,
+                  "tableAttributeNumber": 10,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "increment",
+                  "tableOid": 13449,
+                  "tableAttributeNumber": 11,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "cycle_option",
+                  "tableOid": 13449,
+                  "tableAttributeNumber": 12,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 7
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RGVzY3JpYmUgUG9ydGFs",
+    "postgres:query": "c2VsZWN0ICogZnJvbSBpbmZvcm1hdGlvbl9zY2hlbWEuc2VxdWVuY2Vz",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-08-18T15:03:06.199766Z",
+    "downstream": {
+      "established": "2025-08-18T15:03:06.159705Z",
+      "ipAddress": "127.0.0.1",
+      "port": 56478,
+      "bytesSent": "8012"
+    },
+    "upstream": {
+      "established": "2025-08-18T15:03:06.160197Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "4758"
+    }
+  }
+}

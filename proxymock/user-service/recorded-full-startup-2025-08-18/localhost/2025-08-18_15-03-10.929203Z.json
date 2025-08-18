@@ -1,0 +1,66 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-08-18T15:03:10.929203Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.719",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "580",
+    "source": "goproxy"
+  },
+  "uuid": "nuKM2fOyQ6SEwkzq+FYzCw==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "Prepare Statement",
+  "location": "SELECT u1_0.id FROM user_service.users u1_0 WHERE u1_0.username = $1 fetch first $2 rows only",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "parse": {
+        "query": "select u1_0.id from user_service.users u1_0 where u1_0.username=$1 fetch first $2 rows only",
+        "parameterOids": [
+          1043,
+          23
+        ]
+      }
+    },
+    "response": {
+      "parse": {
+        "complete": {}
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "UHJlcGFyZSBTdGF0ZW1lbnQ=",
+    "postgres:query": "c2VsZWN0IHUxXzAuaWQgZnJvbSB1c2VyX3NlcnZpY2UudXNlcnMgdTFfMCB3aGVyZSB1MV8wLnVzZXJuYW1lID0gJDEgZmV0Y2ggZmlyc3QgJDIgcm93cyBvbmx5",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-08-18T15:03:06.199766Z",
+    "downstream": {
+      "established": "2025-08-18T15:03:06.159705Z",
+      "ipAddress": "127.0.0.1",
+      "port": 56478,
+      "bytesSent": "14411"
+    },
+    "upstream": {
+      "established": "2025-08-18T15:03:06.160197Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "10961"
+    }
+  }
+}

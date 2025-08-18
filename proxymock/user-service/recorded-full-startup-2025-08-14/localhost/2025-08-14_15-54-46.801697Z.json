@@ -1,0 +1,82 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-08-14T15:54:46.801697Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.710-1-g0aeb1b6fe",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "404",
+    "source": "goproxy"
+  },
+  "uuid": "xOEowz13SF+oq66R31M//g==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "Execute Prepared Statement",
+  "location": "SELECT version()",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "execute": {
+        "bindRequest": {
+          "parseRequest": {
+            "query": "SELECT version()"
+          }
+        }
+      }
+    },
+    "response": {
+      "execute": {
+        "messages": [
+          {
+            "dataRow": {
+              "values": [
+                {
+                  "asString": "PostgreSQL 15.13 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit"
+                }
+              ]
+            }
+          },
+          {
+            "complete": {
+              "tag": "SELECT 1"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RXhlY3V0ZSBQcmVwYXJlZCBTdGF0ZW1lbnQ=",
+    "postgres:portal": "",
+    "postgres:query": "U0VMRUNUIHZlcnNpb24gKCAp",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "2",
+    "startTime": "2025-08-14T15:54:46.790890Z",
+    "downstream": {
+      "established": "2025-08-14T15:54:46.771030Z",
+      "ipAddress": "127.0.0.1",
+      "port": 60243,
+      "bytesSent": "566"
+    },
+    "upstream": {
+      "established": "2025-08-14T15:54:46.771971Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "606"
+    }
+  }
+}
