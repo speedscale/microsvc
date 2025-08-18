@@ -1,0 +1,132 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-08-13T17:28:23.070995Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.707",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "964",
+    "source": "goproxy"
+  },
+  "uuid": "RmdxHfdNQzO8hefaC0pUYg==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "Mac.lan:5432",
+  "command": "Describe Portal",
+  "location": "SELECT u1_0.id, u1_0.created_at, u1_0.email, u1_0.password_hash, u1_0.roles, u1_0.updated_at, u1_0.username FROM user_service.users u1_0 WHERE u1_0.username = $1 OR u1_0.email = $2",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "describe": {
+        "objectType": "OBJECT_TYPE_PORTAL",
+        "parseRequest": {
+          "query": "select u1_0.id,u1_0.created_at,u1_0.email,u1_0.password_hash,u1_0.roles,u1_0.updated_at,u1_0.username from user_service.users u1_0 where u1_0.username=$1 or u1_0.email=$2",
+          "parameterOids": [
+            1043,
+            1043
+          ]
+        }
+      }
+    },
+    "response": {
+      "describe": {
+        "messages": [
+          {
+            "rowDescription": {
+              "fields": [
+                {
+                  "name": "id",
+                  "tableOid": 16397,
+                  "tableAttributeNumber": 1,
+                  "dataTypeOid": 20,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "created_at",
+                  "tableOid": 16397,
+                  "tableAttributeNumber": 6,
+                  "dataTypeOid": 1114,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "email",
+                  "tableOid": 16397,
+                  "tableAttributeNumber": 3,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 104
+                },
+                {
+                  "name": "password_hash",
+                  "tableOid": 16397,
+                  "tableAttributeNumber": 4,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 259
+                },
+                {
+                  "name": "roles",
+                  "tableOid": 16397,
+                  "tableAttributeNumber": 5,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 104
+                },
+                {
+                  "name": "updated_at",
+                  "tableOid": 16397,
+                  "tableAttributeNumber": 7,
+                  "dataTypeOid": 1114,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "username",
+                  "tableOid": 16397,
+                  "tableAttributeNumber": 2,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 54
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RGVzY3JpYmUgUG9ydGFs",
+    "postgres:query": "c2VsZWN0IHUxXzAuaWQsIHUxXzAuY3JlYXRlZF9hdCwgdTFfMC5lbWFpbCwgdTFfMC5wYXNzd29yZF9oYXNoLCB1MV8wLnJvbGVzLCB1MV8wLnVwZGF0ZWRfYXQsIHUxXzAudXNlcm5hbWUgZnJvbSB1c2VyX3NlcnZpY2UudXNlcnMgdTFfMCB3aGVyZSB1MV8wLnVzZXJuYW1lID0gJDEgb3IgdTFfMC5lbWFpbCA9ICQy",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-08-13T17:28:18.792097Z",
+    "downstream": {
+      "established": "2025-08-13T17:28:18.718431Z",
+      "ipAddress": "127.0.0.1",
+      "port": 54790,
+      "bytesSent": "20030"
+    },
+    "upstream": {
+      "established": "2025-08-13T17:28:18.726078Z",
+      "ipAddress": "192.168.1.216",
+      "port": 5432,
+      "hostname": "Mac.lan",
+      "bytesSent": "13653"
+    }
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-08-13T17:28:18.970636Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.707",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "570",
+    "source": "goproxy"
+  },
+  "uuid": "RmxR0/cxQ2i7gB6mh1jzlw==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "Mac.lan:5432",
+  "command": "Execute Prepared Statement",
+  "location": "SELECT installed_rank, version, description, type, script, checksum, installed_on, installed_by, execution_time, success FROM user_service.flyway_schema_history WHERE installed_rank > $1 ORDER BY installed_rank",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "execute": {
+        "bindRequest": {
+          "parameterFormatCodes": [
+            1
+          ],
+          "parameters": [
+            {
+              "asBytes": "/////w=="
+            }
+          ],
+          "parseRequest": {
+            "query": "/*NO LOAD BALANCE*/\nSELECT \"installed_rank\",\"version\",\"description\",\"type\",\"script\",\"checksum\",\"installed_on\",\"installed_by\",\"execution_time\",\"success\" FROM \"user_service\".\"flyway_schema_history\" WHERE \"installed_rank\" > $1 ORDER BY \"installed_rank\"",
+            "parameterOids": [
+              23
+            ]
+          }
+        }
+      }
+    },
+    "response": {
+      "execute": {
+        "messages": [
+          {
+            "dataRow": {
+              "values": [
+                {
+                  "asString": "1"
+                },
+                {
+                  "asString": "1"
+                },
+                {
+                  "asString": "Create users table"
+                },
+                {
+                  "asString": "SQL"
+                },
+                {
+                  "asString": "V1__Create_users_table.sql"
+                },
+                {
+                  "asString": "1895883737"
+                },
+                {
+                  "asString": "2025-08-13 13:28:18.943633"
+                },
+                {
+                  "asString": "user_service_user"
+                },
+                {
+                  "asString": "13"
+                },
+                {
+                  "asString": "t"
+                }
+              ]
+            }
+          },
+          {
+            "complete": {
+              "tag": "SELECT 1"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RXhlY3V0ZSBQcmVwYXJlZCBTdGF0ZW1lbnQ=",
+    "postgres:portal": "",
+    "postgres:query": "U0VMRUNUIGluc3RhbGxlZF9yYW5rLCB2ZXJzaW9uLCBkZXNjcmlwdGlvbiwgdHlwZSwgc2NyaXB0LCBjaGVja3N1bSwgaW5zdGFsbGVkX29uLCBpbnN0YWxsZWRfYnksIGV4ZWN1dGlvbl90aW1lLCBzdWNjZXNzIEZST00gdXNlcl9zZXJ2aWNlLmZseXdheV9zY2hlbWFfaGlzdG9yeSBXSEVSRSBpbnN0YWxsZWRfcmFuayA+ICQxIE9SREVSIEJZIGluc3RhbGxlZF9yYW5r",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-08-13T17:28:18.792097Z",
+    "downstream": {
+      "established": "2025-08-13T17:28:18.718431Z",
+      "ipAddress": "127.0.0.1",
+      "port": 54790,
+      "bytesSent": "6985"
+    },
+    "upstream": {
+      "established": "2025-08-13T17:28:18.726078Z",
+      "ipAddress": "192.168.1.216",
+      "port": 5432,
+      "hostname": "Mac.lan",
+      "bytesSent": "3825"
+    }
+  }
+}

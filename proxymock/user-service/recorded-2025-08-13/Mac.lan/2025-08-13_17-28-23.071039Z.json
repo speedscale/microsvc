@@ -1,0 +1,116 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-08-13T17:28:23.071039Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.707",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "967",
+    "source": "goproxy"
+  },
+  "uuid": "9rJu1GxDRqqAvcyE4gLjcA==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "Mac.lan:5432",
+  "command": "Execute Prepared Statement",
+  "location": "SELECT u1_0.id, u1_0.created_at, u1_0.email, u1_0.password_hash, u1_0.roles, u1_0.updated_at, u1_0.username FROM user_service.users u1_0 WHERE u1_0.username = $1 OR u1_0.email = $2",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "execute": {
+        "bindRequest": {
+          "parameterFormatCodes": [
+            0,
+            0
+          ],
+          "parameters": [
+            {
+              "asString": "testuser1"
+            },
+            {
+              "asString": "testuser1"
+            }
+          ],
+          "parseRequest": {
+            "query": "select u1_0.id,u1_0.created_at,u1_0.email,u1_0.password_hash,u1_0.roles,u1_0.updated_at,u1_0.username from user_service.users u1_0 where u1_0.username=$1 or u1_0.email=$2",
+            "parameterOids": [
+              1043,
+              1043
+            ]
+          }
+        }
+      }
+    },
+    "response": {
+      "execute": {
+        "messages": [
+          {
+            "dataRow": {
+              "values": [
+                {
+                  "asString": "1"
+                },
+                {
+                  "asString": "2025-08-13 13:28:23.021256"
+                },
+                {
+                  "asString": "test1@example.com"
+                },
+                {
+                  "asString": "$2a$10$xSF85MClw6RN7i.AuG0KIuKwtY49dp9bXVwHiW0CGcHZU6YpR8rKS"
+                },
+                {
+                  "asString": "USER"
+                },
+                {
+                  "asString": "2025-08-13 13:28:23.021301"
+                },
+                {
+                  "asString": "testuser1"
+                }
+              ]
+            }
+          },
+          {
+            "complete": {
+              "tag": "SELECT 1"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RXhlY3V0ZSBQcmVwYXJlZCBTdGF0ZW1lbnQ=",
+    "postgres:portal": "",
+    "postgres:query": "c2VsZWN0IHUxXzAuaWQsIHUxXzAuY3JlYXRlZF9hdCwgdTFfMC5lbWFpbCwgdTFfMC5wYXNzd29yZF9oYXNoLCB1MV8wLnJvbGVzLCB1MV8wLnVwZGF0ZWRfYXQsIHUxXzAudXNlcm5hbWUgZnJvbSB1c2VyX3NlcnZpY2UudXNlcnMgdTFfMCB3aGVyZSB1MV8wLnVzZXJuYW1lID0gJDEgb3IgdTFfMC5lbWFpbCA9ICQy",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-08-13T17:28:18.792097Z",
+    "downstream": {
+      "established": "2025-08-13T17:28:18.718431Z",
+      "ipAddress": "127.0.0.1",
+      "port": 54790,
+      "bytesSent": "20030"
+    },
+    "upstream": {
+      "established": "2025-08-13T17:28:18.726078Z",
+      "ipAddress": "192.168.1.216",
+      "port": 5432,
+      "hostname": "Mac.lan",
+      "bytesSent": "13653"
+    }
+  }
+}
