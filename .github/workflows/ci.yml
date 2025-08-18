@@ -65,23 +65,9 @@ jobs:
     - name: Test Frontend
       run: make test-frontend
 
-  proxymock-replay:
+  proxymock-test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: banking_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
     
     steps:
     - uses: actions/checkout@v4
@@ -93,59 +79,26 @@ jobs:
         distribution: 'temurin'
         cache: maven
     
-    - name: Setup database
+    - name: Build user-service
       run: |
-        PGPASSWORD=password psql -h localhost -U postgres -d banking_test -c "
-          CREATE SCHEMA IF NOT EXISTS accounts_service;
-        "
-    
-    - name: Build accounts-service
-      run: |
-        cd backend/accounts-service
+        cd backend/user-service
         ./mvnw clean package -DskipTests
-        docker build -t accounts-service:test .
-    
-    - name: Start accounts-service
-      run: |
-        docker run -d \
-          --name accounts-service \
-          --network host \
-          -e SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/banking_test \
-          -e SPRING_DATASOURCE_USERNAME=postgres \
-          -e SPRING_DATASOURCE_PASSWORD=password \
-          accounts-service:test
-    
-    - name: Wait for accounts-service
-      run: |
-        echo "Waiting for accounts-service to be ready..."
-        for i in {1..30}; do
-          if curl -f http://localhost:8081/actuator/health >/dev/null 2>&1; then
-            echo "accounts-service is ready!"
-            break
-          fi
-          echo "Waiting... ($i/30)"
-          sleep 2
-        done
-        if ! curl -f http://localhost:8081/actuator/health >/dev/null 2>&1; then
-          echo "accounts-service failed to start"
-          docker logs accounts-service
-          exit 1
-        fi
     
     - name: Setup proxymock
       env:
         PROXYMOCK_DEV_API_KEY: ${{ secrets.PROXYMOCK_DEV_API_KEY }}
       run: |
-        mkdir -p .speedscale
-        curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh
-        echo "$HOME/.speedscale" >> $GITHUB_PATH
-        $HOME/.speedscale/proxymock init --app-url dev.speedscale.com --api-key "$PROXYMOCK_DEV_API_KEY"
+        if ! which proxymock >/dev/null 2>&1; then
+          curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh
+          echo "$HOME/.speedscale" >> $GITHUB_PATH
+        fi
+        proxymock init --app-url dev.speedscale.com --api-key "$PROXYMOCK_DEV_API_KEY"
     
-    - name: Run proxymock replay tests
-      run: proxymock replay --in ./proxymock --fail-if requests.response-pct!=100
+    - name: Run proxymock database mocking and replay tests
+      run: ./scripts/test-postgres-mock.sh
 
   build-and-push:
-    needs: [test-backend, test-frontend]
+    needs: [test-backend, test-frontend, proxymock-test]
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     
