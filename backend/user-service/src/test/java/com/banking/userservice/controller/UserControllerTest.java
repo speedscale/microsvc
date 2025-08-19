@@ -194,7 +194,7 @@ class UserControllerTest {
         verify(userService, times(1)).usernameExists("existinguser");
     }
 
-    @Profile("!test")
+    @TestConfiguration
     static class TestConfig {
         
         @Bean
