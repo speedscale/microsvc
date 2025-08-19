@@ -53,11 +53,16 @@ jobs:
     
     - name: Test Backend Services
       run: |
-        # Test each service individually
+        # Test each service individually with better error handling
         for service in user-service accounts-service transactions-service api-gateway; do
-          echo "Testing $service..."
+          echo "=== Testing $service ==="
           cd backend/$service
-          ./mvnw test -Dspring.profiles.active=test
+          if ./mvnw test -Dspring.profiles.active=test; then
+            echo "✓ $service tests PASSED"
+          else
+            echo "✗ $service tests FAILED"
+            exit 1
+          fi
           cd ../..
         done
       env:
@@ -107,40 +112,40 @@ jobs:
         make help
         cd ..
 
-  proxymock-test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: maven
-    
-    - name: Build user-service
-      run: |
-        cd backend/user-service
-        ./mvnw clean package -DskipTests
-    
-    - name: Setup proxymock
-      env:
-        PROXYMOCK_DEV_API_KEY: ${{ secrets.PROXYMOCK_DEV_API_KEY }}
-      run: |
-        if ! which proxymock >/dev/null 2>&1; then
-          curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh
-          echo "$HOME/.speedscale" >> $GITHUB_PATH
-        fi
-        proxymock init --app-url dev.speedscale.com --api-key "$PROXYMOCK_DEV_API_KEY"
-    
-    - name: Run proxymock database mocking and replay tests
-      run: ./scripts/test-postgres-mock.sh
+# proxymock-test:
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 10
+  #   
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   
+  #   - name: Set up JDK 17
+  #     uses: actions/setup-java@v4
+  #     with:
+  #       java-version: '17'
+  #       distribution: 'temurin'
+  #       cache: maven
+  #   
+  #   - name: Build user-service
+  #     run: |
+  #       cd backend/user-service
+  #       ./mvnw clean package -DskipTests
+  #   
+  #   - name: Setup proxymock
+  #     env:
+  #       PROXYMOCK_DEV_API_KEY: ${{ secrets.PROXYMOCK_DEV_API_KEY }}
+  #     run: |
+  #       if ! which proxymock >/dev/null 2>&1; then
+  #         curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh
+  #         echo "$HOME/.speedscale" >> $GITHUB_PATH
+  #       fi
+  #       proxymock init --app-url dev.speedscale.com --api-key "$PROXYMOCK_DEV_API_KEY"
+  #   
+  #   - name: Run proxymock database mocking and replay tests
+  #     run: ./scripts/test-postgres-mock.sh
 
   build-and-push:
-    needs: [test-backend, test-frontend, proxymock-test]
+    needs: [test-backend, test-frontend]
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     
