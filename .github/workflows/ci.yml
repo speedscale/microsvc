@@ -40,12 +40,12 @@ jobs:
     
     - name: Setup proxymock
       env:
-        PROXYMOCK_API_KEY: ${{ secrets.PROXYMOCK_API_KEY }}
+        PROXYMOCK_DEV_API_KEY: ${{ secrets.PROXYMOCK_DEV_API_KEY }}
       run: |
         mkdir -p .speedscale
         curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh
         echo "$HOME/.speedscale" >> $GITHUB_PATH
-        $HOME/.speedscale/proxymock init --api-key "$PROXYMOCK_API_KEY"
+        $HOME/.speedscale/proxymock init --api-key "$PROXYMOCK_DEV_API_KEY"
     
     - name: Setup test database
       run: |
