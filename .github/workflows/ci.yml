@@ -38,15 +38,6 @@ jobs:
         distribution: 'temurin'
         cache: maven
     
-    - name: Setup proxymock
-      env:
-        PROXYMOCK_API_KEY: ${{ secrets.PROXYMOCK_API_KEY }}
-      run: |
-        mkdir -p .speedscale
-        curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh
-        echo "$HOME/.speedscale" >> $GITHUB_PATH
-        $HOME/.speedscale/proxymock init --api-key "$PROXYMOCK_API_KEY"
-    
     - name: Setup test database
       run: |
         PGPASSWORD=password psql -h localhost -U postgres -d banking_test -c "
@@ -116,7 +107,7 @@ jobs:
         make help
         cd ..
 
-# Proxymock test disabled until required configuration data is available
+# Proxymock integration is disabled until required configuration data is available
 
   build-and-push:
     needs: [test-backend, test-frontend]
