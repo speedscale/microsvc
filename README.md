@@ -12,7 +12,7 @@ docker-compose up -d
 # Access the application and tools
 open http://localhost:3000      # Frontend
 open http://localhost:3001      # Grafana (admin/admin)
-open http://localhost:9090      # Prometheus  
+open http://localhost:9090      # Prometheus
 open http://localhost:16686     # Jaeger
 ```
 
@@ -66,7 +66,7 @@ make run
 
 # Run with dependencies mocked using proxymock
 make proxymock-record  # Record traffic with real dependencies
-make proxymock-mock    # Run with mocked dependencies  
+make proxymock-mock    # Run with mocked dependencies
 make proxymock-replay  # Test with recorded traffic
 ```
 
@@ -84,7 +84,7 @@ npm test              # Run tests
 # Connect to PostgreSQL
 psql -h localhost -p 5432 -U postgres -d banking_app
 
-# Run migrations (from service directory)  
+# Run migrations (from service directory)
 ./mvnw flyway:migrate
 ```
 
@@ -137,7 +137,7 @@ make proxymock-stop    # Stop all proxymock processes
 |---------|-----------------|----------|
 | user-service | postgres, accounts-service, transactions-service | Auth and user management testing |
 | accounts-service | postgres, user-service | Account operations testing |
-| transactions-service | postgres, accounts-service, user-service | Transaction processing testing |  
+| transactions-service | postgres, accounts-service, user-service | Transaction processing testing |
 | api-gateway | All backend services | API routing and gateway testing |
 | frontend | api-gateway | UI testing with mocked backend |
 
@@ -187,7 +187,7 @@ make proxymock-mock  # No database or other services needed
 Verify all services are running:
 ```bash
 curl http://localhost:8080/actuator/health  # API Gateway
-curl http://localhost:8081/actuator/health  # User Service  
+curl http://localhost:8081/actuator/health  # User Service
 curl http://localhost:8082/actuator/health  # Accounts Service
 curl http://localhost:8083/actuator/health  # Transactions Service
 curl http://localhost:3000/api/health       # Frontend
