@@ -54,7 +54,7 @@ export JAVA_TOOL_OPTIONS="-Dspring.flyway.enabled=false -Dspring.jpa.hibernate.d
 
 echo "Starting user-service with proxymock database mocking..."
 cd backend/user-service
-export DB_HOST=Mac.lan
+export DB_HOST=$(hostname)
 export DB_PORT=65432
 export DB_NAME=banking_app
 
