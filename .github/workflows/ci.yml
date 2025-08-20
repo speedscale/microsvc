@@ -95,7 +95,7 @@ jobs:
     
     - name: proxymock replay with mocked Postgres
       run: ./scripts/test-postgres-mock.sh
-
+  
   build-and-push:
     needs: [test-backend, test-frontend]
     runs-on: ubuntu-latest
