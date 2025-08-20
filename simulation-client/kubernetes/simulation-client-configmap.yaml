@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: simulation-client-config
+  namespace: banking-app
+  labels:
+    app: simulation-client
+    component: config
+data:
+  # Application configuration
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "json"
+  
+  # Target application settings
+  TARGET_BASE_URL: "http://frontend:3000"
+  REQUEST_TIMEOUT: "10000"
+  
+  # Simulation settings
+  CONCURRENT_USERS: "5"
+  EXISTING_USER_PERCENTAGE: "80"
+  SESSION_DURATION_MS: "300000"  # 5 minutes
+  MIN_ACTION_DELAY: "1000"       # 1 second
+  MAX_ACTION_DELAY: "5000"       # 5 seconds
+  NEW_USER_DELAY: "2000"         # 2 seconds
+  MAX_RETRIES: "3"
+  RETRY_DELAY: "1000"
+  
+  # User pool configuration
+  USER_PREFIX: "sim_user_"
+  TOTAL_USERS: "1000"
+  
+  # Transaction simulation settings
+  DEPOSIT_PROBABILITY: "0.3"
+  WITHDRAWAL_PROBABILITY: "0.2"
+  TRANSFER_PROBABILITY: "0.1"
+  MIN_DEPOSIT: "10.00"
+  MAX_DEPOSIT: "1000.00"
+  MIN_WITHDRAWAL: "5.00"
+  MAX_WITHDRAWAL: "500.00"
+  MIN_TRANSFER: "10.00"
+  MAX_TRANSFER: "250.00"
+  
+  # OpenTelemetry configuration
+  OTEL_SERVICE_NAME: "simulation-client"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+  OTEL_TRACES_EXPORTER: "otlp"
+  OTEL_METRICS_EXPORTER: "otlp"
+  OTEL_LOGS_EXPORTER: "otlp"
+  OTEL_TRACES_SAMPLER: "always_on"
+  OTEL_PROPAGATORS: "tracecontext"
+  OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app"
+  
+  # Metrics reporting
+  METRICS_INTERVAL: "30000"      # 30 seconds
