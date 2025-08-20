@@ -79,6 +79,11 @@ jobs:
         distribution: 'temurin'
         cache: maven
     
+    - name: Build user-service
+      run: |
+        cd backend/user-service
+        ./mvnw clean package -DskipTests
+    
     - name: Setup proxymock
       env:
         PROXYMOCK_DEV_API_KEY: ${{ secrets.PROXYMOCK_DEV_API_KEY }}
