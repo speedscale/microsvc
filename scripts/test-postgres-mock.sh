@@ -2,12 +2,14 @@
 
 set -ex
 
-PROXYMOCK_DIR="proxymock/user-service/recorded-2025-08-13"
+PROXYMOCK_DIR="proxymock/recorded-2025-08-13"
 
 # Find the project root directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
+
+cd backend/user-service
 
 # Clean up any existing processes
 pkill -f user-service 2>/dev/null || true
@@ -20,8 +22,6 @@ cleanup() {
   pkill -f "proxymock mock" 2>/dev/null || true
 }
 
-cd backend/user-service
-
 # Start proxymock with user-service
 export JAVA_TOOL_OPTIONS="-Dspring.flyway.enabled=false -Dspring.jpa.hibernate.ddl-auto=none"
 export DB_HOST=$(hostname)
@@ -30,10 +30,11 @@ export DB_NAME=banking_app
 
 proxymock mock \
   --verbose \
-  --in ../../$PROXYMOCK_DIR/ \
+  --in $PROXYMOCK_DIR/ \
   --no-out \
   --service postgres=65432 \
   --log-to proxymock.log \
+  --log-app-to app.log \
   -- java -jar target/user-service-1.0.0.jar &
 
 PROXYMOCK_PID=$!
@@ -45,8 +46,6 @@ if ! kill -0 $PROXYMOCK_PID 2>/dev/null; then
   cleanup
   exit 1
 fi
-
-cd ../..
 
 # Wait for service to start
 for i in {1..20}; do
@@ -79,6 +78,9 @@ cleanup
 echo ""
 if [ "$REPLAY_SUCCESS" != true ]; then
   echo "❌ Replay failed"
+  echo ""
+  echo "=== App Logs ==="
+  tail -20 backend/user-service/app.log 2>/dev/null || echo "No app log file found"
   echo ""
   echo "=== Proxymock Logs ==="
   tail -20 backend/user-service/proxymock.log 2>/dev/null || echo "No proxymock log file found"
