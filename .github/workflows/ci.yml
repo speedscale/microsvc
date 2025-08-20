@@ -65,7 +65,7 @@ jobs:
     - name: Test Frontend
       run: make test-frontend
 
-  proxymock:
+  proxymock-validation:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     
