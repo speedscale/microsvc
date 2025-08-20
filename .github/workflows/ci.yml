@@ -65,7 +65,7 @@ jobs:
     - name: Test Frontend
       run: make test-frontend
 
-  proxymock:
+  proxymock validation:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     
@@ -84,7 +84,7 @@ jobs:
         cd backend/user-service
         ./mvnw clean package -DskipTests
     
-    - name: "proxymock: replay with mocks"
+    - name: Setup proxymock
       env:
         PROXYMOCK_DEV_API_KEY: ${{ secrets.PROXYMOCK_DEV_API_KEY }}
       run: |
@@ -92,8 +92,10 @@ jobs:
         curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh
         echo "$HOME/.speedscale" >> $GITHUB_PATH
         $HOME/.speedscale/proxymock init --app-url dev.speedscale.com --api-key "$PROXYMOCK_DEV_API_KEY"
-        ./scripts/test-postgres-mock.sh
     
+    - name: proxymock replay with mocked Postgres
+      run: ./scripts/test-postgres-mock.sh
+
   build-and-push:
     needs: [test-backend, test-frontend]
     runs-on: ubuntu-latest
