@@ -1,25 +1,15 @@
 #!/bin/bash
 
-set -e
+set -ex
 
-echo "=== Testing User Service Replay with Mocks ==="
+PROXYMOCK_DIR="proxymock/recorded-2025-08-13"
 
 # Find the project root directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
 
-# Check dependencies
-if ! which proxymock >/dev/null 2>&1; then
-  echo "Proxymock not found in PATH"
-  exit 1
-fi
-
-RECORDED_DIR="proxymock/user-service/recorded-2025-08-13"
-if [ ! -d "$RECORDED_DIR" ]; then
-  echo "ERROR: recorded dir ($RECORDED_DIR) not found"
-  exit 1
-fi
+cd backend/user-service
 
 # Clean up any existing processes
 pkill -f user-service 2>/dev/null || true
@@ -38,15 +28,15 @@ export DB_HOST=$(hostname)
 export DB_PORT=65432
 export DB_NAME=banking_app
 
-
-cd backend/user-service
 proxymock mock \
-	--verbose \
-  --in ../../$RECORDED_DIR/ \
+  --verbose \
+  --in $PROXYMOCK_DIR/ \
   --no-out \
   --service postgres=65432 \
   --log-to proxymock.log \
+  --log-app-to app.log \
   -- java -jar target/user-service-1.0.0.jar &
+
 PROXYMOCK_PID=$!
 
 sleep 15
@@ -56,8 +46,6 @@ if ! kill -0 $PROXYMOCK_PID 2>/dev/null; then
   cleanup
   exit 1
 fi
-
-cd ../..
 
 # Wait for service to start
 for i in {1..20}; do
@@ -76,7 +64,7 @@ fi
 # Run replay
 if proxymock replay \
   --test-against localhost:8080 \
-  --in "$RECORDED_DIR" \
+  --in "$PROXYMOCK_DIR" \
   --no-out \
   --log-to replay.log \
   --fail-if "latency.max > 1000"; then
@@ -90,6 +78,9 @@ cleanup
 echo ""
 if [ "$REPLAY_SUCCESS" != true ]; then
   echo "❌ Replay failed"
+  echo ""
+  echo "=== App Logs ==="
+  tail -20 backend/user-service/app.log 2>/dev/null || echo "No app log file found"
   echo ""
   echo "=== Proxymock Logs ==="
   tail -20 backend/user-service/proxymock.log 2>/dev/null || echo "No proxymock log file found"
