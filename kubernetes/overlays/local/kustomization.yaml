@@ -19,3 +19,7 @@ patches:
   target:
     kind: Deployment
     name: accounts-service
+- path: simulation-client-patch.yaml
+  target:
+    kind: Deployment
+    name: simulation-client

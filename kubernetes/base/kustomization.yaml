@@ -17,6 +17,8 @@ resources:
   # ConfigMaps and Secrets
   - configmaps/app-config.yaml
   - configmaps/app-secrets.yaml
+  - configmaps/simulation-client-configmap.yaml
+  - configmaps/simulation-client-secret.yaml
   
   # Microservice Deployments
   - deployments/user-service-deployment.yaml
@@ -24,6 +26,8 @@ resources:
   - deployments/transactions-service-deployment.yaml
   - deployments/api-gateway-deployment.yaml
   - deployments/frontend-deployment.yaml
+  - deployments/simulation-client-deployment.yaml
+  - deployments/simulation-client-hpa.yaml
   
   # Microservice Services
   - services/user-service-service.yaml

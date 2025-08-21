@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simulation-client
+  annotations:
+    speedscale.com/service-name: "simulation-client"
+spec:
+  template:
+    metadata:
+      annotations:
+        speedscale.com/service-name: "simulation-client"

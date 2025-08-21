@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simulation-client
+spec:
+  template:
+    spec:
+      containers:
+      - name: simulation-client
+        image: localhost:5000/simulation-client:latest
+        imagePullPolicy: IfNotPresent
