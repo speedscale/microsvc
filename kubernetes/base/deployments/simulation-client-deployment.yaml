@@ -25,6 +25,7 @@ spec:
         # Force restart when config changes
         configmap/checksum: "{{ configmap-checksum }}"
     spec:
+      terminationGracePeriodSeconds: 60
       serviceAccountName: banking-app-serviceaccount
       securityContext:
         runAsNonRoot: true
@@ -97,8 +98,6 @@ spec:
               - /bin/sh
               - -c
               - "sleep 10"
-        
-        terminationGracePeriodSeconds: 60
         
         # Temporary directories for writable filesystem
         volumeMounts:
