@@ -13,7 +13,7 @@ data:
   LOG_FORMAT: "json"
   
   # Target application settings
-  TARGET_BASE_URL: "http://frontend:3000"
+  TARGET_BASE_URL: "http://frontend:80"
   REQUEST_TIMEOUT: "10000"
   
   # Simulation settings

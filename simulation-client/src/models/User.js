@@ -19,7 +19,7 @@ class User {
     return new User({
       username,
       email,
-      password: 'SimUser123!',
+      password: 'NewUser123!',
       isPreExisting: true
     });
   }
