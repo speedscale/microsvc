@@ -13,7 +13,7 @@ PLATFORM = linux/amd64,linux/arm64
 
 # Kubernetes configuration
 NAMESPACE = banking-app
-KUSTOMIZE_DIR = kubernetes
+KUSTOMIZE_DIR = ../kubernetes/base
 
 .PHONY: help
 help: ## Show this help message
@@ -92,14 +92,17 @@ docker-shell: ## Run shell in Docker container
 
 # Kubernetes targets
 .PHONY: k8s-apply
-k8s-apply: ## Apply Kubernetes manifests
+k8s-apply: ## Apply Kubernetes manifests (deploys entire banking app including simulation client)
 	@echo "Applying Kubernetes manifests..."
 	kubectl apply -k $(KUSTOMIZE_DIR)
 
 .PHONY: k8s-delete
-k8s-delete: ## Delete Kubernetes resources
-	@echo "Deleting Kubernetes resources..."
-	kubectl delete -k $(KUSTOMIZE_DIR) --ignore-not-found=true
+k8s-delete: ## Delete Kubernetes resources (simulation client only)
+	@echo "Deleting simulation client resources..."
+	kubectl delete deployment simulation-client -n $(NAMESPACE) --ignore-not-found=true
+	kubectl delete configmap simulation-client-config -n $(NAMESPACE) --ignore-not-found=true
+	kubectl delete secret simulation-client-secret -n $(NAMESPACE) --ignore-not-found=true
+	kubectl delete hpa simulation-client-hpa -n $(NAMESPACE) --ignore-not-found=true
 
 .PHONY: k8s-restart
 k8s-restart: ## Restart Kubernetes deployment

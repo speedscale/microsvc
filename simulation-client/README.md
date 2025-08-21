@@ -83,8 +83,11 @@ make docker-run
 # Apply database migration first
 make migrate-simulation-users
 
-# Deploy to Kubernetes
-make k8s-apply
+# Deploy entire banking app (including simulation client)
+kubectl apply -k ../kubernetes/base/
+
+# Or deploy with local overlay for development
+kubectl apply -k ../kubernetes/overlays/local/
 
 # Check status
 make k8s-status
@@ -132,7 +135,7 @@ The simulation requires pre-existing users in the database:
 cd ../backend/user-service
 ./mvnw flyway:migrate
 
-# Or use the Makefile
+# Or use the Makefile from simulation-client directory
 make migrate-simulation-users
 ```
 

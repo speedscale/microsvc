@@ -10,3 +10,4 @@ patches:
 - path: transactions-service-annotations.yaml
 - path: api-gateway-annotations.yaml
 - path: frontend-annotations.yaml
+- path: simulation-client-annotations.yaml
