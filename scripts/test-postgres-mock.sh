@@ -60,13 +60,16 @@ fi
 
 echo "Using proxymock recordings from: $PROXYMOCK_DIR"
 
-# Check if JAR file exists
-if [ ! -f "target/user-service-1.0.0.jar" ]; then
+# Find the JAR file dynamically
+JAR_FILE=$(find target/ -name "user-service-*.jar" -not -name "*original*" | head -1)
+if [ -z "$JAR_FILE" ] || [ ! -f "$JAR_FILE" ]; then
   echo "Error: user-service JAR not found"
   echo "Available files in target:"
   ls -la target/ 2>/dev/null || echo "No target directory found"
   exit 1
 fi
+
+echo "Using JAR file: $JAR_FILE"
 
 # Check proxymock version
 echo "Proxymock version:"
@@ -80,7 +83,7 @@ proxymock mock \
   --service postgres=65432 \
   --log-to proxymock.log \
   --log-app-to app.log \
-  -- java -jar target/user-service-1.0.0.jar > proxymock-startup.log 2>&1 &
+  -- java -jar "$JAR_FILE" > proxymock-startup.log 2>&1 &
 
 PROXYMOCK_PID=$!
 
