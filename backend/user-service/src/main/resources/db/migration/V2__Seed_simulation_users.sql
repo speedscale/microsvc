@@ -3,7 +3,7 @@
 -- Note: Each service manages its own schema. This migration only creates users.
 -- Accounts and transactions will be created by their respective services.
 
--- Insert simulation users
+-- Insert simulation users (skip if they already exist)
 INSERT INTO users (username, email, password_hash, roles, created_at, updated_at)
 SELECT 
     'sim_user_' || LPAD(generate_series::text, 3, '0') as username,
@@ -13,7 +13,8 @@ SELECT
     ARRAY['USER'] as roles,
     NOW() - (RANDOM() * INTERVAL '365 days') as created_at,
     NOW() - (RANDOM() * INTERVAL '90 days') as updated_at
-FROM generate_series(1, 1000);
+FROM generate_series(1, 1000)
+ON CONFLICT (username) DO NOTHING;
 
 -- Create index for better performance during simulation
 CREATE INDEX IF NOT EXISTS idx_users_username_simulation ON users(username) WHERE username LIKE 'sim_user_%';
