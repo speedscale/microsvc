@@ -14,7 +14,7 @@
 
     <groupId>com.banking</groupId>
     <artifactId>transactions-service</artifactId>
-    <version>1.0.0</version>
+    <version>1.2.1</version>
     <packaging>jar</packaging>
 
     <name>transactions-service</name>

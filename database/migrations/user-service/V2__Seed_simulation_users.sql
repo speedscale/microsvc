@@ -10,12 +10,12 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Insert simulation users
-INSERT INTO users (username, email, password_hash, roles, created_at, updated_at)
+INSERT INTO user_service.users (username, email, password_hash, roles, created_at, updated_at)
 SELECT 
     'sim_user_' || LPAD(generate_series::text, 3, '0') as username,
     'sim_user_' || LPAD(generate_series::text, 3, '0') || '@simulation.local' as email,
-    -- BCrypt hash for 'SimUser123!' (using cost factor 10)
-    '$2a$10$8K1p/a0dqbCDEb1oK4dY4euWQeGpQm1l3F2N8H5Z6QvKbGcJeOw4S' as password_hash,
+    -- BCrypt hash for 'NewUser123!' - matches what simulation client expects
+    '$2a$10$7Gejer63hAKLgl/PEvESJ.CBuqHm5hvqFxU2Y4vmw1VJ6pdiEidmK' as password_hash,
     ARRAY['USER'] as roles,
     NOW() - (RANDOM() * INTERVAL '365 days') as created_at,
     NOW() - (RANDOM() * INTERVAL '90 days') as updated_at
@@ -25,7 +25,7 @@ FROM generate_series(1, 1000);
 DROP FUNCTION random_balance();
 
 -- Create accounts for simulation users with realistic balances
-INSERT INTO accounts_service.accounts (user_id, account_number, account_type, balance, status, created_at, updated_at)
+INSERT INTO accounts_service.accounts (user_id, account_number, account_type, balance, created_at, updated_at)
 SELECT 
     u.id as user_id,
     'ACC' || LPAD((u.id * 1000 + 1)::text, 10, '0') as account_number,
@@ -41,14 +41,13 @@ SELECT
         WHEN RANDOM() < 0.85 THEN (RANDOM() * 15000 + 5000)::DECIMAL(15,2) -- $5,000-$20,000 (25%)
         ELSE (RANDOM() * 30000 + 20000)::DECIMAL(15,2)                     -- $20,000-$50,000 (15%)
     END as balance,
-    'ACTIVE' as status,
     NOW() - (RANDOM() * INTERVAL '365 days') as created_at,
     NOW() - (RANDOM() * INTERVAL '90 days') as updated_at
-FROM users u 
+FROM user_service.users u 
 WHERE u.username LIKE 'sim_user_%';
 
 -- Create some users with multiple accounts (20% of users)
-INSERT INTO accounts_service.accounts (user_id, account_number, account_type, balance, status, created_at, updated_at)
+INSERT INTO accounts_service.accounts (user_id, account_number, account_type, balance, created_at, updated_at)
 SELECT 
     u.id as user_id,
     'ACC' || LPAD((u.id * 1000 + 2)::text, 10, '0') as account_number,
@@ -57,33 +56,36 @@ SELECT
         ELSE 'INVESTMENT'
     END as account_type,
     (RANDOM() * 10000 + 500)::DECIMAL(15,2) as balance,
-    'ACTIVE' as status,
     NOW() - (RANDOM() * INTERVAL '300 days') as created_at,
     NOW() - (RANDOM() * INTERVAL '60 days') as updated_at
-FROM users u 
+FROM user_service.users u 
 WHERE u.username LIKE 'sim_user_%' 
 AND RANDOM() < 0.2; -- 20% of users get a second account
 
 -- Create realistic transaction history for simulation users
 INSERT INTO transactions_service.transactions (
-    from_account_id, to_account_id, transaction_type, amount, description, 
-    status, created_at, updated_at
+    user_id, from_account_id, to_account_id, type, amount, description, 
+    status, created_at
 )
 SELECT 
-    a.id as from_account_id,
+    a.user_id,
+    CASE 
+        WHEN t.transaction_type IN ('WITHDRAWAL', 'TRANSFER') THEN a.id
+        ELSE NULL
+    END as from_account_id,
     CASE 
         WHEN t.transaction_type = 'TRANSFER' THEN 
             (SELECT id FROM accounts_service.accounts 
              WHERE user_id != a.user_id 
              ORDER BY RANDOM() LIMIT 1)
+        WHEN t.transaction_type = 'DEPOSIT' THEN a.id
         ELSE NULL
     END as to_account_id,
-    t.transaction_type,
+    t.transaction_type as type,
     t.amount,
     t.description,
     'COMPLETED' as status,
-    t.created_at,
-    t.created_at as updated_at
+    t.created_at
 FROM accounts_service.accounts a
 CROSS JOIN LATERAL (
     SELECT 
@@ -106,7 +108,7 @@ CROSS JOIN LATERAL (
         NOW() - (RANDOM() * INTERVAL '90 days') as created_at
     FROM generate_series(1, CASE WHEN RANDOM() < 0.3 THEN 1 WHEN RANDOM() < 0.7 THEN 2 ELSE 3 END)
 ) t
-WHERE a.user_id IN (SELECT id FROM users WHERE username LIKE 'sim_user_%')
+WHERE a.user_id IN (SELECT id FROM user_service.users WHERE username LIKE 'sim_user_%')
 AND RANDOM() < 0.8; -- 80% of accounts get transaction history
 
 -- Update account balances to reflect transaction history
@@ -117,10 +119,10 @@ SET balance = GREATEST(
     COALESCE((
         SELECT SUM(
             CASE 
-                WHEN t.transaction_type = 'DEPOSIT' THEN t.amount
-                WHEN t.transaction_type = 'WITHDRAWAL' THEN -t.amount
-                WHEN t.transaction_type = 'TRANSFER' AND t.from_account_id = accounts_service.accounts.id THEN -t.amount
-                WHEN t.transaction_type = 'TRANSFER' AND t.to_account_id = accounts_service.accounts.id THEN t.amount
+                WHEN t.type = 'DEPOSIT' THEN t.amount
+                WHEN t.type = 'WITHDRAWAL' THEN -t.amount
+                WHEN t.type = 'TRANSFER' AND t.from_account_id = accounts_service.accounts.id THEN -t.amount
+                WHEN t.type = 'TRANSFER' AND t.to_account_id = accounts_service.accounts.id THEN t.amount
                 ELSE 0
             END
         )
@@ -130,15 +132,15 @@ SET balance = GREATEST(
     ), 0),
     10.00 -- Minimum balance of $10
 )
-WHERE user_id IN (SELECT id FROM users WHERE username LIKE 'sim_user_%');
+WHERE user_id IN (SELECT id FROM user_service.users WHERE username LIKE 'sim_user_%');
 
 -- Create indexes for better performance during simulation
-CREATE INDEX IF NOT EXISTS idx_users_username_simulation ON users(username) WHERE username LIKE 'sim_user_%';
+CREATE INDEX IF NOT EXISTS idx_users_username_simulation ON user_service.users(username) WHERE username LIKE 'sim_user_%';
 CREATE INDEX IF NOT EXISTS idx_accounts_user_id_simulation ON accounts_service.accounts(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_account_simulation ON transactions_service.transactions(from_account_id, to_account_id);
 
 -- Add some constraints to ensure data quality
-ALTER TABLE users ADD CONSTRAINT chk_simulation_user_email 
+ALTER TABLE user_service.users ADD CONSTRAINT chk_simulation_user_email 
     CHECK (email ~ '^sim_user_[0-9]{3}@simulation\.local$' OR email NOT LIKE '%@simulation.local');
 
 -- Summary statistics
@@ -149,14 +151,14 @@ DECLARE
     transaction_count INTEGER;
     total_balance DECIMAL(15,2);
 BEGIN
-    SELECT COUNT(*) INTO user_count FROM users WHERE username LIKE 'sim_user_%';
+    SELECT COUNT(*) INTO user_count FROM user_service.users WHERE username LIKE 'sim_user_%';
     SELECT COUNT(*) INTO account_count FROM accounts_service.accounts a 
-        JOIN users u ON a.user_id = u.id WHERE u.username LIKE 'sim_user_%';
+        JOIN user_service.users u ON a.user_id = u.id WHERE u.username LIKE 'sim_user_%';
     SELECT COUNT(*) INTO transaction_count FROM transactions_service.transactions t
         JOIN accounts_service.accounts a ON t.from_account_id = a.id OR t.to_account_id = a.id
-        JOIN users u ON a.user_id = u.id WHERE u.username LIKE 'sim_user_%';
+        JOIN user_service.users u ON a.user_id = u.id WHERE u.username LIKE 'sim_user_%';
     SELECT SUM(balance) INTO total_balance FROM accounts_service.accounts a
-        JOIN users u ON a.user_id = u.id WHERE u.username LIKE 'sim_user_%';
+        JOIN user_service.users u ON a.user_id = u.id WHERE u.username LIKE 'sim_user_%';
     
     RAISE NOTICE 'Simulation data seeded successfully:';
     RAISE NOTICE '  Users created: %', user_count;

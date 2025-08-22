@@ -26,7 +26,7 @@ spec:
         configmap/checksum: "{{ configmap-checksum }}"
     spec:
       terminationGracePeriodSeconds: 60
-      serviceAccountName: banking-app-serviceaccount
+      serviceAccountName: banking-app-sa
       securityContext:
         runAsNonRoot: true
         runAsUser: 1001
@@ -35,7 +35,7 @@ spec:
       containers:
       - name: simulation-client
         image: ghcr.io/speedscale/microsvc/simulation-client:latest
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         
         ports:
         - name: health

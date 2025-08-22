@@ -26,6 +26,10 @@ public class GatewayConfig {
     @Bean
     public RouteLocator routes(RouteLocatorBuilder builder) {
         return builder.routes()
+                // API Gateway health check route
+                .route("api-gateway-health", r -> r.path("/api/healthz")
+                        .filters(f -> f.rewritePath("/api/healthz", "/health"))
+                        .uri("http://localhost:8080"))
                 // Health check routes (no authentication required)
                 .route("user-service-health", r -> r.path("/api/user-service/health")
                         .filters(f -> f.rewritePath("/api/user-service/health", "/actuator/health"))
