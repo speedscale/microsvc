@@ -189,6 +189,8 @@ update_k8s_manifests() {
         local deployment_file="$k8s_dir/${service}-deployment.yaml"
         if [ -f "$deployment_file" ]; then
             # Replace image references - handle latest, versioned tags, and old hash-based tags
+            # Also handle short image names without registry prefix
+            sed -i.bak "s|image: ${service}:latest|image: ${REGISTRY}/${service}:${tag}|g" "$deployment_file"
             sed -i.bak "s|${REGISTRY}/${service}:latest|${REGISTRY}/${service}:${tag}|g" "$deployment_file"
             sed -i.bak "s|${REGISTRY}/${service}:v[0-9]*\.[0-9]*\.[0-9]*-[a-f0-9]*|${REGISTRY}/${service}:${tag}|g" "$deployment_file"
             sed -i.bak "s|${REGISTRY}/${service}:v[0-9]*\.[0-9]*\.[0-9]*|${REGISTRY}/${service}:${tag}|g" "$deployment_file"

@@ -25,8 +25,8 @@ spec:
       serviceAccountName: banking-app-sa
       containers:
       - name: user-service
-        image: user-service:latest
-        imagePullPolicy: IfNotPresent
+        image: ghcr.io/speedscale/microsvc/user-service:v1.3.0
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
           name: http
