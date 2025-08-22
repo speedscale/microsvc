@@ -159,27 +159,75 @@ This setup allows for debugging and performance analysis by visualizing the enti
 
 The application uses semantic versioning (SemVer) with all services versioned together. When any service is updated, all services get the same version number.
 
+### Version Management Standard
+
+**Single Source of Truth**: Version management is handled exclusively through the Makefile commands, which internally use `scripts/version.sh`. This ensures consistency across all components.
+
 ### Version Format
-- **Format**: `MAJOR.MINOR.PATCH` (e.g., `1.1.1`)
-- **Image Tags**: `v{VERSION}-{GIT_SHA}` (e.g., `v1.1.1-c6c2bf6`)
+- **Format**: `MAJOR.MINOR.PATCH` (e.g., `1.2.2`)
 - **Storage**: Current version stored in `VERSION` file at repository root
+- **Image Tags**: 
+  - Simple tag for Kubernetes: `v{VERSION}` (e.g., `v1.2.2`)
+  - Development tag with SHA: `v{VERSION}-{GIT_SHA}` (e.g., `v1.2.2-c6c2bf6`)
 
-### Quick Commands
-```bash
-# Check version info
-make version-info
+### Version Management Process
 
-# Bump version
-make version-bump BUMP_TYPE=patch    # 1.1.1 -> 1.1.2
-make version-bump BUMP_TYPE=minor    # 1.1.1 -> 1.2.0
-make version-bump BUMP_TYPE=major    # 1.1.1 -> 2.0.0
+1. **Check Current Version**:
+   ```bash
+   make version         # Shows current version
+   make version-info    # Shows detailed version information
+   ```
 
-# Update Kubernetes manifests
-make update-k8s-version
-```
+2. **Bump Version**:
+   ```bash
+   make version-bump BUMP_TYPE=patch    # 1.2.2 -> 1.2.3
+   make version-bump BUMP_TYPE=minor    # 1.2.2 -> 1.3.0
+   make version-bump BUMP_TYPE=major    # 1.2.2 -> 2.0.0
+   ```
+
+3. **Update All Components**:
+   ```bash
+   make update-k8s-version    # Updates Kubernetes manifests
+   ```
+
+4. **Build and Deploy**:
+   ```bash
+   make docker-build-versioned         # Build with version tags
+   kubectl apply -k kubernetes/overlays/speedscale/
+   ```
+
+### What Gets Updated
+When version is bumped, the following are automatically updated:
+- `VERSION` file in repository root
+- All backend service `pom.xml` files
+- Frontend `package.json`
+- Simulation client `package.json`
+- Kubernetes deployment manifests (when running `make update-k8s-version`)
 
 ### Services
-All services use the same version: `user-service`, `accounts-service`, `transactions-service`, `api-gateway`, `frontend`
+All services use the same version: `user-service`, `accounts-service`, `transactions-service`, `api-gateway`, `frontend`, `simulation-client`
+
+## File Organization Standards
+
+### Directory Structure
+- **SQL Files**: Database-related SQL files belong in `database/` directory
+  - Seed files: `database/seeds/`
+  - Migration files: `database/migrations/<service>/`
+  - Schema files: `database/init/`
+- **JavaScript Utilities**: Non-application JS files belong in `scripts/` or `tools/`
+- **Test Files**: 
+  - Kubernetes test manifests: `kubernetes/testing/`
+  - Documentation for testing: `docs/`
+- **Markdown Documentation**: 
+  - Test documentation: `docs/`
+  - Service-specific docs: within service directories
+
+### Root Directory Policy
+The repository root should only contain:
+- Core project files (README.md, LICENSE, etc.)
+- Configuration files (Makefile, docker-compose.yml, etc.)
+- Project instruction files (CLAUDE.md, ARCHITECTURE.md, PLAN.md)
+- Version control files (.gitignore, VERSION)
 
 ## Known Issues & Future Improvements
 

@@ -167,6 +167,27 @@ make proxymock-mock  # No database or other services needed
 - **Container Ready**: Docker and Kubernetes deployment configurations
 - **Testing**: Comprehensive unit, integration, and E2E test coverage
 
+## Version Management
+
+The project uses semantic versioning with all services sharing the same version number:
+
+```bash
+# Check current version
+make version                          # Shows: 1.2.2
+
+# Bump version
+make version-bump BUMP_TYPE=patch     # 1.2.2 -> 1.2.3
+make version-bump BUMP_TYPE=minor     # 1.2.2 -> 1.3.0
+make version-bump BUMP_TYPE=major     # 1.2.2 -> 2.0.0
+
+# Update all files and Kubernetes manifests
+make version-bump BUMP_TYPE=patch && make update-k8s-version
+
+# Build and deploy with new version
+make docker-build-versioned           # Build images with version tag
+kubectl apply -k kubernetes/overlays/speedscale/
+```
+
 ## Documentation
 
 - **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Comprehensive debugging guide
