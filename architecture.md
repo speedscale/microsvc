@@ -229,6 +229,49 @@ The repository root should only contain:
 - Project instruction files (CLAUDE.md, ARCHITECTURE.md, PLAN.md)
 - Version control files (.gitignore, VERSION)
 
+## Git Workflow Standards
+
+### Branch Management
+- **Always work from feature branches**: Never commit directly to master
+- **Branch naming**: Use descriptive names like `fix/version-consistency` or `feat/add-logging`
+- **Short-lived branches**: Keep branches focused and merge quickly to avoid conflicts
+- **Clean up**: Delete branches after merging to avoid confusion
+
+### Workflow Process
+1. **Start from master**: Always create new branches from latest master
+   ```bash
+   git checkout master
+   git pull origin master
+   git checkout -b fix/descriptive-name
+   ```
+
+2. **Make focused changes**: Keep commits atomic and related to the branch purpose
+   ```bash
+   git add -A
+   git commit -m "descriptive commit message"
+   ```
+
+3. **Push and create PR**: Push branch and create pull request
+   ```bash
+   git push -u origin fix/descriptive-name
+   # Create PR via GitHub UI
+   ```
+
+4. **Clean up after merge**: Delete local and remote branches
+   ```bash
+   git checkout master
+   git pull origin master
+   git branch -d fix/descriptive-name
+   git push origin --delete fix/descriptive-name
+   ```
+
+### Critical Rules
+- **Never rebase or force push** to shared branches
+- **Never work directly on master** - always use feature branches
+- **Always pull latest master** before creating new branches
+- **Keep branches small** - one logical change per branch
+- **Verify clean state** before starting new work: `git status` should show clean
+
 ## Known Issues & Future Improvements
 
 - **Frontend Pod Logging**: Implemented structured logging with custom logger but logs don't appear in `kubectl logs` output. The logging middleware and API client logging are implemented but may be getting filtered by Next.js internal routing or Edge Runtime limitations. Consider investigating:
