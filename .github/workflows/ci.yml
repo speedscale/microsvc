@@ -113,6 +113,7 @@ jobs:
           - transactions-service
           - api-gateway
           - frontend
+          - simulation-client
     
     steps:
     - uses: actions/checkout@v4
@@ -133,18 +134,24 @@ jobs:
     - name: Get version
       id: version
       run: |
-        VERSION=$(cat VERSION)
+        VERSION=$(./scripts/version.sh get)
+        SIMPLE_TAG=$(./scripts/version.sh tag)
+        SHA_TAG=$(./scripts/version.sh tag-sha)
         echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "simple_tag=$SIMPLE_TAG" >> $GITHUB_OUTPUT
+        echo "sha_tag=$SHA_TAG" >> $GITHUB_OUTPUT
         echo "Current version: $VERSION"
+        echo "Simple tag: $SIMPLE_TAG"
+        echo "SHA tag: $SHA_TAG"
     
     - name: Extract metadata
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+        images: ghcr.io/speedscale/microsvc/${{ matrix.service }}
         tags: |
-          type=raw,value=v${{ steps.version.outputs.version }}-${{ github.sha }}
-          type=raw,value=v${{ steps.version.outputs.version }}
+          type=raw,value=${{ steps.version.outputs.simple_tag }}
+          type=raw,value=${{ steps.version.outputs.sha_tag }}
           type=raw,value=latest,enable={{is_default_branch}}
           type=ref,event=branch
           type=ref,event=pr
@@ -152,13 +159,54 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
-        context: ${{ matrix.service == 'frontend' && './frontend' || format('./backend/{0}', matrix.service) }}
+        context: ${{ 
+          matrix.service == 'frontend' && './frontend' || 
+          matrix.service == 'simulation-client' && './simulation-client' ||
+          format('./backend/{0}', matrix.service) }}
         platforms: linux/amd64,linux/arm64
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+
+  update-k8s-manifests:
+    needs: [build-and-push]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    permissions:
+      contents: write
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Get version
+      id: version
+      run: |
+        SIMPLE_TAG=$(./scripts/version.sh tag)
+        echo "simple_tag=$SIMPLE_TAG" >> $GITHUB_OUTPUT
+        echo "Simple tag: $SIMPLE_TAG"
+    
+    - name: Update Kubernetes manifests
+      run: |
+        make update-k8s-version
+        if [ -n "$(git diff)" ]; then
+          echo "Kubernetes manifests updated with version ${{ steps.version.outputs.simple_tag }}"
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add kubernetes/base/deployments/
+          git commit -m "Update K8s manifests to version ${{ steps.version.outputs.simple_tag }}
+
+          🤖 Generated with [Claude Code](https://claude.ai/code)
+
+          Co-Authored-By: Claude <noreply@anthropic.com>"
+          git push
+        else
+          echo "No changes to Kubernetes manifests"
+        fi
 
   e2e-test:
     needs: [build-and-push]
