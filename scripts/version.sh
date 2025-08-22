@@ -7,7 +7,7 @@ set -e
 
 VERSION_FILE="VERSION"
 REGISTRY="ghcr.io/speedscale/microsvc"
-SERVICES=("user-service" "accounts-service" "transactions-service" "api-gateway" "frontend")
+SERVICES=("user-service" "accounts-service" "transactions-service" "api-gateway" "frontend" "simulation-client")
 BACKEND_SERVICES=("user-service" "accounts-service" "transactions-service" "api-gateway")
 FRONTEND_SERVICES=("frontend")
 SIMULATION_SERVICES=("simulation-client")
