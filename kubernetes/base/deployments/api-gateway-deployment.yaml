@@ -25,7 +25,7 @@ spec:
       serviceAccountName: banking-app-sa
       containers:
       - name: api-gateway
-        image: ghcr.io/speedscale/microsvc/api-gateway:v1.1.13
+        image: ghcr.io/speedscale/microsvc/api-gateway:v1.2.3
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
