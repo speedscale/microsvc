@@ -1,9 +1,9 @@
-FROM maven:3-amazoncorretto-17 AS build
+FROM --platform=$BUILDPLATFORM maven:3-amazoncorretto-17 AS build
 WORKDIR /app
 COPY . .
 RUN mvn clean package -DskipTests
 
-FROM eclipse-temurin:17-jre-alpine
+FROM --platform=$TARGETPLATFORM amazoncorretto:17-alpine
 COPY --from=build /app/target/user-service-*.jar /app/user-service.jar
 RUN addgroup -g 1001 spring && \
     adduser -D -s /bin/sh -u 1001 -G spring spring && \
