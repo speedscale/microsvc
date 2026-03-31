@@ -18,6 +18,7 @@ pkill -f proxymock 2>/dev/null || true
 
 cleanup() {
   unset JAVA_TOOL_OPTIONS
+  unset SPRING_DATASOURCE_URL SPRING_DATASOURCE_DRIVER_CLASS_NAME
   if [ -n "$PROXYMOCK_PID" ]; then
     kill $PROXYMOCK_PID 2>/dev/null || true
   fi
@@ -33,16 +34,21 @@ cleanup() {
 }
 
 # Start proxymock with user-service
-export JAVA_TOOL_OPTIONS="-Dspring.flyway.enabled=false -Dspring.jpa.hibernate.ddl-auto=none"
+# Flyway off: use Hibernate ddl-auto=update so schema exists on the mocked empty DB.
+# Use plain PostgreSQL JDBC (not jdbc:otel + OpenTelemetryDriver) so the app can talk to proxymock's Postgres mock.
+export JAVA_TOOL_OPTIONS="-Dspring.flyway.enabled=false -Dspring.jpa.hibernate.ddl-auto=update"
 # In CI, hostname might return something unexpected, so use localhost
 export DB_HOST="${DB_HOST:-localhost}"
 export DB_PORT=65432
 export DB_NAME=banking_app
+export SPRING_DATASOURCE_URL="jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}"
+export SPRING_DATASOURCE_DRIVER_CLASS_NAME="org.postgresql.Driver"
 
 echo "Database configuration:"
 echo "  DB_HOST=$DB_HOST"
 echo "  DB_PORT=$DB_PORT"
 echo "  DB_NAME=$DB_NAME"
+echo "  SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL"
 
 # Make PROXYMOCK_DIR absolute if it's relative
 if [[ ! "$PROXYMOCK_DIR" = /* ]]; then
@@ -80,7 +86,7 @@ proxymock mock \
   --verbose \
   --in $PROXYMOCK_DIR/ \
   --no-out \
-  -m postgres=65432 \
+  --map 65432=localhost:5432 \
   --log-to proxymock.log \
   --app-log-to app.log \
   -- java -jar "$JAR_FILE" > proxymock-startup.log 2>&1 &

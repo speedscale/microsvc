@@ -14,7 +14,7 @@ timeout 5 proxymock mock \
   --verbose \
   --in "${PROXYMOCK_DIR:-proxymock/recorded-2025-08-13}/" \
   --no-out \
-  -m postgres=65432 || echo "Proxymock mock test completed"
+  --map 65432=localhost:5432 || echo "Proxymock mock test completed"
 
 # Check if port 65432 is available
 echo "Checking if port 65432 is available..."
