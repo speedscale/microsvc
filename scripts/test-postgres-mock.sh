@@ -70,13 +70,18 @@ cleanup() {
 # Flyway off: use Hibernate ddl-auto=update so schema exists on the mocked empty DB.
 # Use plain PostgreSQL JDBC (not jdbc:otel + OpenTelemetryDriver) so the app can talk to proxymock's Postgres mock.
 # Disable OTel SDK for this isolated run (no collector in CI). Health probes are enabled in application.yml.
-export JAVA_TOOL_OPTIONS="-Dspring.flyway.enabled=false -Dspring.jpa.hibernate.ddl-auto=update -Dotel.sdk.disabled=true"
+# -Dspring.profiles.active: proxymock must be set as a JVM flag so the child process spawned by proxymock inherits it (env-only SPRING_PROFILES_ACTIVE is not always forwarded).
+# application-proxymock.yml: disable JDBC metadata queries that proxymock cannot match to old recordings.
+export JAVA_TOOL_OPTIONS="-Dspring.flyway.enabled=false -Dspring.jpa.hibernate.ddl-auto=update -Dotel.sdk.disabled=true -Dspring.profiles.active=proxymock"
 export OTEL_SDK_DISABLED=true
 # In CI, hostname might return something unexpected, so use localhost
 export DB_HOST="${DB_HOST:-localhost}"
-export DB_PORT=65432
+# Postgres wire protocol is served on 127.0.0.1:5432 by proxymock mock (see proxymock.log: "postgres server listening").
+# Do not use --map 65432=... for JDBC: that port is an HTTP reverse proxy to :5432, not the PostgreSQL protocol.
+export DB_PORT=5432
 export DB_NAME=banking_app
-export SPRING_DATASOURCE_URL="jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}"
+# Mock does not implement SSL negotiation the JDBC driver expects with sslmode=prefer; disable for local mock.
+export SPRING_DATASOURCE_URL="jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable"
 export SPRING_DATASOURCE_DRIVER_CLASS_NAME="org.postgresql.Driver"
 
 echo "Database configuration:"
@@ -121,7 +126,6 @@ proxymock mock \
   --verbose \
   --in $PROXYMOCK_DIR/ \
   --no-out \
-  --map 65432=localhost:5432 \
   --log-to proxymock.log \
   --app-log-to app.log \
   -- java -jar "$JAR_FILE" > proxymock-startup.log 2>&1 &
