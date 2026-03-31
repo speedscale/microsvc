@@ -38,7 +38,7 @@ if echo "$PM_VER_OUT" | grep -Fq "not initialized"; then
     echo "Skipping proxymock validation: not initialized and PROXYMOCK_DEV_API_KEY is unset."
     exit 0
   fi
-  proxymock init --app-url dev.speedscale.com --api-key "$PROXYMOCK_DEV_API_KEY"
+  proxymock init -y --app-url dev.speedscale.com --api-key "$PROXYMOCK_DEV_API_KEY"
 fi
 
 # Clean up any existing processes
@@ -66,8 +66,8 @@ cleanup() {
 # Start proxymock with user-service
 # Flyway off: use Hibernate ddl-auto=update so schema exists on the mocked empty DB.
 # Use plain PostgreSQL JDBC (not jdbc:otel + OpenTelemetryDriver) so the app can talk to proxymock's Postgres mock.
-# Disable OTel SDK for this isolated run (no collector in CI); enable K8s-style probes for a stable health URL.
-export JAVA_TOOL_OPTIONS="-Dspring.flyway.enabled=false -Dspring.jpa.hibernate.ddl-auto=update -Dotel.sdk.disabled=true -Dmanagement.endpoint.health.probes.enabled=true"
+# Disable OTel SDK for this isolated run (no collector in CI). Health probes are enabled in application.yml.
+export JAVA_TOOL_OPTIONS="-Dspring.flyway.enabled=false -Dspring.jpa.hibernate.ddl-auto=update -Dotel.sdk.disabled=true"
 export OTEL_SDK_DISABLED=true
 # In CI, hostname might return something unexpected, so use localhost
 export DB_HOST="${DB_HOST:-localhost}"
@@ -138,40 +138,77 @@ if ! kill -0 $PROXYMOCK_PID 2>/dev/null; then
   exit 1
 fi
 
-# Continue waiting for full startup
-sleep 10
-
+# Continue waiting for JVM to bind :8080 (faster than fixed sleeps on slow CI)
 if ! kill -0 $PROXYMOCK_PID 2>/dev/null; then
   echo "Failed to start proxymock with user-service"
   cleanup
   exit 1
 fi
 
-# Wait for HTTP (liveness avoids 503 from aggregate /actuator/health when a component is slow/degraded)
-HEALTH_URL="${HEALTH_URL:-http://localhost:8080/actuator/health/liveness}"
-for i in $(seq 1 45); do
-  if curl -fsS "$HEALTH_URL" >/dev/null 2>&1; then
+wait_for_tcp_8080() {
+  local n=0
+  while [ "$n" -lt 120 ]; do
+    if (echo >/dev/tcp/127.0.0.1/8080) 2>/dev/null; then
+      return 0
+    fi
+    sleep 1
+    n=$((n + 1))
+  done
+  return 1
+}
+
+if ! wait_for_tcp_8080; then
+  echo "Timed out waiting for something to listen on 127.0.0.1:8080"
+  cleanup
+  exit 1
+fi
+
+# Prefer liveness (200 without aggregate DB noise); fall back to aggregate /actuator/health
+http_200() {
+  local url=$1
+  local code
+  code=$(curl -sS -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo 000)
+  [ "$code" = "200" ]
+}
+
+HEALTH_LIVENESS="${HEALTH_LIVENESS:-http://localhost:8080/actuator/health/liveness}"
+HEALTH_AGG="${HEALTH_AGG:-http://localhost:8080/actuator/health}"
+READY=false
+for _i in $(seq 1 60); do
+  if http_200 "$HEALTH_LIVENESS"; then
+    READY=true
+    echo "Health OK: $HEALTH_LIVENESS"
+    break
+  fi
+  if http_200 "$HEALTH_AGG"; then
+    READY=true
+    echo "Health OK: $HEALTH_AGG"
     break
   fi
   sleep 2
 done
 
-if ! curl -fsS "$HEALTH_URL" >/dev/null 2>&1; then
-  echo "Service failed to become ready at $HEALTH_URL"
+if [ "$READY" != true ]; then
+  echo "Service failed to become ready (tried $HEALTH_LIVENESS and $HEALTH_AGG)"
   cleanup
   exit 1
 fi
 
-# Replay: avoid strict latency gate on shared CI runners (was failing with latency.max > 1000)
+# Replay: optional latency gate via PROXYMOCK_REPLAY_FAIL_IF; --rewrite-host helps Host header mismatches
 REPLAY_FAIL_IF="${PROXYMOCK_REPLAY_FAIL_IF:-}"
 REPLAY_EXTRA=()
 if [ -n "$REPLAY_FAIL_IF" ]; then
   REPLAY_EXTRA=(--fail-if "$REPLAY_FAIL_IF")
 fi
+REPLAY_V=""
+if [ -n "${GITHUB_ACTIONS:-}" ]; then
+  REPLAY_V="-v"
+fi
 
 # Run replay
-if proxymock replay \
+if proxymock replay $REPLAY_V \
   --test-against localhost:8080 \
+  --rewrite-host \
   --in "$PROXYMOCK_DIR" \
   --no-out \
   --log-to replay.log \

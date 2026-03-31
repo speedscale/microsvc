@@ -36,6 +36,7 @@ if echo "$PM_VER_OUT" | grep -Fq "not initialized"; then
     echo "Configure the repo secret PROXYMOCK_DEV_API_KEY for CI, or run: proxymock init --api-key <key>"
     exit 0
   fi
+  proxymock init -y --app-url dev.speedscale.com --api-key "$PROXYMOCK_DEV_API_KEY"
 fi
 
 # Fail fast if host port 5432 is taken (proxymock Postgres mock needs it); nc is optional.

@@ -51,6 +51,8 @@ management:
         include: health,info,metrics,prometheus
   endpoint:
     health:
+      probes:
+        enabled: true
       show-details: always
   metrics:
     export:
