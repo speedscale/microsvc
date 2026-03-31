@@ -48,6 +48,7 @@ pkill -f proxymock 2>/dev/null || true
 cleanup() {
   unset JAVA_TOOL_OPTIONS
   unset OTEL_SDK_DISABLED
+  unset OTEL_TRACES_EXPORTER OTEL_METRICS_EXPORTER OTEL_LOGS_EXPORTER
   unset SPRING_DATASOURCE_URL SPRING_DATASOURCE_DRIVER_CLASS_NAME
   if [ -n "$PROXYMOCK_PID" ]; then
     kill $PROXYMOCK_PID 2>/dev/null || true
@@ -55,12 +56,14 @@ cleanup() {
   pkill -f "java -jar target/user-service" 2>/dev/null || true
   pkill -f "proxymock mock" 2>/dev/null || true
   
-  # Show startup log if it exists
-  if [ -f "proxymock-startup.log" ]; then
-    echo ""
-    echo "=== Proxymock Startup Log ==="
-    cat proxymock-startup.log
-  fi
+  # proxymock often sends app output to app.log (--app-log-to); keep both for CI debugging
+  for logf in proxymock-startup.log app.log proxymock.log; do
+    if [ -f "$logf" ]; then
+      echo ""
+      echo "=== $logf (tail) ==="
+      tail -120 "$logf" 2>/dev/null || cat "$logf"
+    fi
+  done
 }
 
 # Start proxymock with user-service
@@ -69,8 +72,11 @@ cleanup() {
 # Disable OTel SDK for this isolated run (no collector in CI). Health probes are enabled in application.yml.
 # -Dspring.profiles.active: proxymock must be set as a JVM flag so the child process spawned by proxymock inherits it (env-only SPRING_PROFILES_ACTIVE is not always forwarded).
 # application-proxymock.yml: disable JDBC metadata queries that proxymock cannot match to old recordings.
-export JAVA_TOOL_OPTIONS="-Dspring.flyway.enabled=false -Dspring.jpa.hibernate.ddl-auto=update -Dotel.sdk.disabled=true -Dspring.profiles.active=proxymock"
+export JAVA_TOOL_OPTIONS="-Dspring.flyway.enabled=false -Dspring.jpa.hibernate.ddl-auto=update -Dotel.sdk.disabled=true -Dspring.profiles.active=proxymock -Dserver.address=127.0.0.1"
 export OTEL_SDK_DISABLED=true
+export OTEL_TRACES_EXPORTER=none
+export OTEL_METRICS_EXPORTER=none
+export OTEL_LOGS_EXPORTER=none
 # Use IPv4 loopback: on Linux, "localhost" often resolves to ::1 first; proxymock Postgres listens on 127.0.0.1:5432 only.
 export DB_HOST="${DB_HOST:-127.0.0.1}"
 # Postgres wire protocol is served on 127.0.0.1:5432 by proxymock mock (see proxymock.log: "postgres server listening").
@@ -151,7 +157,10 @@ fi
 
 wait_for_tcp_8080() {
   local n=0
-  while [ "$n" -lt 120 ]; do
+  while [ "$n" -lt 180 ]; do
+    if command -v nc >/dev/null 2>&1 && nc -z 127.0.0.1 8080 2>/dev/null; then
+      return 0
+    fi
     if (echo >/dev/tcp/127.0.0.1/8080) 2>/dev/null; then
       return 0
     fi
