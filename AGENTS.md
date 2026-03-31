@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file provides guidance for AI coding assistants and other automated agents working in this repository.
+This file is the **single** place for AI coding assistants and other automated agents working in this repository. It is intentionally tool-agnostic (no vendor-specific duplicate instruction files).
 
 ## Essential Reading
 

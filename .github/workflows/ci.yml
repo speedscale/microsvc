@@ -200,9 +200,7 @@ jobs:
           git add kubernetes/base/deployments/
           git commit -m "Update K8s manifests to version ${{ steps.version.outputs.simple_tag }}
 
-          🤖 Generated with [Claude Code](https://claude.ai/code)
-
-          Co-Authored-By: Claude <noreply@anthropic.com>"
+          Automated by GitHub Actions CI workflow."
           git push
         else
           echo "No changes to Kubernetes manifests"
