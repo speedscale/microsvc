@@ -1,8 +1,6 @@
-# Activated only with -Dspring.profiles.active=proxymock (see scripts/test-postgres-mock.sh).
-# Matches accounts-service: reduces JDBC metadata access during bootstrap (helps proxymock matching).
+# Profile proxymock: avoid JDBC metadata round-trips that proxymock cannot replay (Speedscale responder miss).
 spring:
   jpa:
     properties:
-      hibernate:
-        boot:
-          allow_jdbc_metadata_access: false
+      hibernate.boot.allow_jdbc_metadata_access: DISALLOW
+      jakarta.persistence.database-product-name: PostgreSQL
