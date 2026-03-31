@@ -1,0 +1,65 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-08-13T17:28:18.946224Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.707",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "357",
+    "source": "goproxy"
+  },
+  "uuid": "O/SJUEVHSTO7EP3qYhs2uA==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "Mac.lan:5432",
+  "command": "Prepare Statement",
+  "location": "SELECT installed_rank, version, description, type, script, checksum, installed_on, installed_by, execution_time, success FROM user_service.flyway_schema_history WHERE installed_rank > $1 ORDER BY installed_rank",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "parse": {
+        "query": "/*NO LOAD BALANCE*/\nSELECT \"installed_rank\",\"version\",\"description\",\"type\",\"script\",\"checksum\",\"installed_on\",\"installed_by\",\"execution_time\",\"success\" FROM \"user_service\".\"flyway_schema_history\" WHERE \"installed_rank\" > $1 ORDER BY \"installed_rank\"",
+        "parameterOids": [
+          23
+        ]
+      }
+    },
+    "response": {
+      "parse": {
+        "complete": {}
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "UHJlcGFyZSBTdGF0ZW1lbnQ=",
+    "postgres:query": "U0VMRUNUIGluc3RhbGxlZF9yYW5rLCB2ZXJzaW9uLCBkZXNjcmlwdGlvbiwgdHlwZSwgc2NyaXB0LCBjaGVja3N1bSwgaW5zdGFsbGVkX29uLCBpbnN0YWxsZWRfYnksIGV4ZWN1dGlvbl90aW1lLCBzdWNjZXNzIEZST00gdXNlcl9zZXJ2aWNlLmZseXdheV9zY2hlbWFfaGlzdG9yeSBXSEVSRSBpbnN0YWxsZWRfcmFuayA+ICQxIE9SREVSIEJZIGluc3RhbGxlZF9yYW5r",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-08-13T17:28:18.792097Z",
+    "downstream": {
+      "established": "2025-08-13T17:28:18.718431Z",
+      "ipAddress": "127.0.0.1",
+      "port": 54790,
+      "bytesSent": "5327"
+    },
+    "upstream": {
+      "established": "2025-08-13T17:28:18.726078Z",
+      "ipAddress": "192.168.1.216",
+      "port": 5432,
+      "hostname": "Mac.lan",
+      "bytesSent": "2532"
+    }
+  }
+}

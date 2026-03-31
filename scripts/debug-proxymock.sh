@@ -12,7 +12,7 @@ proxymock --version || echo "proxymock not found or failed"
 echo "Testing proxymock mock standalone..."
 timeout 5 proxymock mock \
   --verbose \
-  --in proxymock/recorded-2025-08-13/ \
+  --in "${PROXYMOCK_DIR:-proxymock/recorded-2025-08-13}/" \
   --no-out \
   --service postgres=65432 || echo "Proxymock mock test completed"
 

@@ -1,0 +1,76 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-08-13T17:28:18.888321Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.707",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "141",
+    "source": "goproxy"
+  },
+  "uuid": "Ujf1yMWtTM2W0ZT+2xHl+A==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "Mac.lan:5432",
+  "command": "Bind Statement Parameters",
+  "location": "SELECT COUNT(*) FROM pg_namespace WHERE nspname = $1",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "bind": {
+        "parameterFormatCodes": [
+          0
+        ],
+        "parameters": [
+          {
+            "asString": "user_service"
+          }
+        ],
+        "parseRequest": {
+          "query": "SELECT COUNT(*) FROM pg_namespace WHERE nspname=$1",
+          "parameterOids": [
+            1043
+          ]
+        }
+      }
+    },
+    "response": {
+      "bind": {
+        "complete": {}
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "QmluZCBTdGF0ZW1lbnQgUGFyYW1ldGVycw==",
+    "postgres:portal": "",
+    "postgres:query": "U0VMRUNUIENPVU5UICggKiApIEZST00gcGdfbmFtZXNwYWNlIFdIRVJFIG5zcG5hbWUgPSAkMQ==",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-08-13T17:28:18.792097Z",
+    "downstream": {
+      "established": "2025-08-13T17:28:18.718431Z",
+      "ipAddress": "127.0.0.1",
+      "port": 54790,
+      "bytesSent": "1355"
+    },
+    "upstream": {
+      "established": "2025-08-13T17:28:18.726078Z",
+      "ipAddress": "192.168.1.216",
+      "port": 5432,
+      "hostname": "Mac.lan",
+      "bytesSent": "1193"
+    }
+  }
+}
