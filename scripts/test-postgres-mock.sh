@@ -218,17 +218,21 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
   REPLAY_V="-v"
 fi
 
-# Run replay
-if proxymock replay $REPLAY_V \
-  --test-against 127.0.0.1:8080 \
-  --rewrite-host \
-  --in "$PROXYMOCK_DIR" \
-  --no-out \
-  --log-to replay.log \
-  "${REPLAY_EXTRA[@]}"; then
-  REPLAY_SUCCESS=true
+# Replay is HTTP-only; Postgres-only snapshots have nothing to replay (proxymock would error on empty cache).
+REPLAY_SUCCESS=false
+if grep -rq '"l7protocol": "http' "$PROXYMOCK_DIR" --include='*.json' 2>/dev/null; then
+  if proxymock replay $REPLAY_V \
+    --test-against 127.0.0.1:8080 \
+    --rewrite-host \
+    --in "$PROXYMOCK_DIR" \
+    --no-out \
+    --log-to replay.log \
+    "${REPLAY_EXTRA[@]}"; then
+    REPLAY_SUCCESS=true
+  fi
 else
-  REPLAY_SUCCESS=false
+  echo "Skipping proxymock replay: no HTTP rrpairs under $PROXYMOCK_DIR (mock phase already validated JDBC + startup)."
+  REPLAY_SUCCESS=true
 fi
 
 cleanup
