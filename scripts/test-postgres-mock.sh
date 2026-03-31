@@ -71,18 +71,18 @@ fi
 
 echo "Using JAR file: $JAR_FILE"
 
-# Check proxymock version
+# Check proxymock version (subcommand, not --version flag)
 echo "Proxymock version:"
-proxymock --version || echo "Failed to get proxymock version"
+proxymock version || echo "Failed to get proxymock version"
 
 # Start proxymock in the background and capture output
 proxymock mock \
   --verbose \
   --in $PROXYMOCK_DIR/ \
   --no-out \
-  --service postgres=65432 \
+  -m postgres=65432 \
   --log-to proxymock.log \
-  --log-app-to app.log \
+  --app-log-to app.log \
   -- java -jar "$JAR_FILE" > proxymock-startup.log 2>&1 &
 
 PROXYMOCK_PID=$!
@@ -142,10 +142,10 @@ if [ "$REPLAY_SUCCESS" != true ]; then
   echo "❌ Replay failed"
   echo ""
   echo "=== App Logs ==="
-  tail -20 backend/user-service/app.log 2>/dev/null || echo "No app log file found"
+  tail -20 app.log 2>/dev/null || echo "No app log file found"
   echo ""
   echo "=== Proxymock Logs ==="
-  tail -20 backend/user-service/proxymock.log 2>/dev/null || echo "No proxymock log file found"
+  tail -20 proxymock.log 2>/dev/null || echo "No proxymock log file found"
 fi
 
 echo ""
