@@ -107,12 +107,12 @@ validate-e2e: test-e2e
 
 test-all: test-backend test-frontend test-e2e
 
-# Same as CI job proxymock-validation (requires initialized proxymock or PROXYMOCK_DEV_API_KEY / PROXYMOCK_API_KEY; port 5432 must be free on host).
+# Same as CI job proxymock-validation (requires initialized proxymock or PROXYMOCK_API_KEY; port 5432 must be free on host).
 .PHONY: proxymock-validation
 proxymock-validation:
 	./scripts/run-proxymock-validation.sh
 
-# Run proxymock validation in Docker when host port 5432 is in use (PROXYMOCK_DEV_API_KEY or PROXYMOCK_API_KEY).
+# Run proxymock validation in Docker when host port 5432 is in use (set PROXYMOCK_API_KEY if proxymock is not initialized).
 .PHONY: proxymock-validation-docker
 proxymock-validation-docker:
 	./scripts/run-proxymock-validation-docker.sh
