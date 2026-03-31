@@ -2,7 +2,7 @@
 
 set -ex
 
-# Use absolute path for proxymock directory
+# Use absolute path for proxymock directory (override with PROXYMOCK_DIR)
 PROXYMOCK_DIR="${PROXYMOCK_DIR:-proxymock/recorded-2025-08-13}"
 
 # Find the project root directory

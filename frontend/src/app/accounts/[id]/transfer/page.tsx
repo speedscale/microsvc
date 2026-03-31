@@ -4,30 +4,20 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
-import { useAuth } from '@/lib/auth/context';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Link from 'next/link';
 import { TransactionsAPI } from '@/lib/api/transactions';
-
-interface Account {
-  id: number;
-  accountNumber: string;
-  accountType: string;
-  balance: number;
-  currency: string;
-  status: string;
-}
+import { AccountsAPI, Account } from '@/lib/api/accounts';
 
 const TransferPage: React.FC = () => {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
   const [fromAccount, setFromAccount] = useState<Account | null>(null);
   const [toAccountId, setToAccountId] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -38,42 +28,24 @@ const TransferPage: React.FC = () => {
   useEffect(() => {
     const fetchAccountDetails = async () => {
       try {
-        // TODO: Replace with actual API call
-        // Simulate API call with mock data
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const mockFromAccount: Account = {
-          id: parseInt(fromAccountId),
-          accountNumber: fromAccountId === '1' ? '1234567890' : '0987654321',
-          accountType: fromAccountId === '1' ? 'CHECKING' : 'SAVINGS',
-          balance: fromAccountId === '1' ? 2500.50 : 10000.00,
-          currency: 'USD',
-          status: 'ACTIVE',
-        };
-        
-        setFromAccount(mockFromAccount);
+        setIsLoading(true);
+        setError(null);
+        const id = parseInt(fromAccountId, 10);
+        const [fromRes, listRes] = await Promise.all([
+          AccountsAPI.getAccount(id),
+          AccountsAPI.getAccounts(),
+        ]);
 
-        // Mock available accounts for transfer
-        const mockAvailableAccounts: Account[] = [
-          {
-            id: 1,
-            accountNumber: '1234567890',
-            accountType: 'CHECKING',
-            balance: 2500.50,
-            currency: 'USD',
-            status: 'ACTIVE',
-          },
-          {
-            id: 2,
-            accountNumber: '0987654321',
-            accountType: 'SAVINGS',
-            balance: 10000.00,
-            currency: 'USD',
-            status: 'ACTIVE',
-          },
-        ].filter(account => account.id !== parseInt(fromAccountId));
+        if (fromRes.success && fromRes.data) {
+          setFromAccount(fromRes.data);
+        } else {
+          setError(fromRes.message || 'Failed to load account details');
+          return;
+        }
 
-        setAvailableAccounts(mockAvailableAccounts);
+        if (listRes.success && listRes.data) {
+          setAvailableAccounts(listRes.data.filter((a) => a.id !== id));
+        }
       } catch {
         setError('Failed to load account details');
       } finally {
@@ -203,7 +175,7 @@ const TransferPage: React.FC = () => {
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900">Transfer Money</h1>
                   <p className="mt-1 text-sm text-gray-600">
-                    Transfer funds from your {fromAccount?.accountType.toLowerCase()} account
+                    Transfer funds from your {fromAccount?.accountType?.toLowerCase()} account
                   </p>
                 </div>
                 <Link href={`/accounts/${fromAccountId}`}>

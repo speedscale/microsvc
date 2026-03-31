@@ -1,5 +1,14 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Prerequisites
+
+- **Node.js 20+** (required by Tailwind CSS v4 and `@tailwindcss/oxide`). This repo includes a [`.nvmrc`](./.nvmrc) file; with [fnm](https://github.com/Schniz/fnm) or [nvm](https://github.com/nvm-sh/nvm), run from this directory:
+
+```bash
+fnm install && fnm use
+# or: nvm install && nvm use
+```
+
 ## Getting Started
 
 First, run the development server:

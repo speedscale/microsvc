@@ -224,7 +224,7 @@ kubectl apply -k kubernetes/overlays/speedscale/
 
 ## Getting Started
 
-1. **Prerequisites**: Docker, Docker Compose, Node.js 18+, Java 17+, Maven 3.8+
+1. **Prerequisites**: Docker, Docker Compose, Node.js 20+ (frontend / Tailwind v4), Java 17+, Maven 3.8+
 2. **Quick start**: Run `docker-compose up -d` to start everything
 3. **Development**: Use service-specific Makefiles for isolated development
 4. **Testing**: Use proxymock for dependency-free testing
