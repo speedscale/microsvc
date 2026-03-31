@@ -1,0 +1,80 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-03-31T22:51:50.017431Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.381",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "428",
+    "source": "goproxy"
+  },
+  "uuid": "c+d2NL5JRsebEKDItIJ2tg==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "Describe Portal",
+  "location": "INSERT INTO user_service.flyway_schema_history (installed_rank, version, description, type, script, checksum, installed_by, execution_time, success) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "describe": {
+        "objectType": "OBJECT_TYPE_PORTAL",
+        "parseRequest": {
+          "query": "INSERT INTO \"user_service\".\"flyway_schema_history\" (\"installed_rank\", \"version\", \"description\", \"type\", \"script\", \"checksum\", \"installed_by\", \"execution_time\", \"success\") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+          "parameterOids": [
+            23,
+            1043,
+            1043,
+            1043,
+            1043,
+            23,
+            1043,
+            23,
+            16
+          ]
+        }
+      }
+    },
+    "response": {
+      "describe": {
+        "messages": [
+          {
+            "noData": {}
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RGVzY3JpYmUgUG9ydGFs",
+    "postgres:query": "SU5TRVJUIElOVE8gdXNlcl9zZXJ2aWNlLmZseXdheV9zY2hlbWFfaGlzdG9yeSAoIGluc3RhbGxlZF9yYW5rLCB2ZXJzaW9uLCBkZXNjcmlwdGlvbiwgdHlwZSwgc2NyaXB0LCBjaGVja3N1bSwgaW5zdGFsbGVkX2J5LCBleGVjdXRpb25fdGltZSwgc3VjY2VzcyApIFZBTFVFUyAoICQxLCAkMiwgJDMsICQ0LCAkNSwgJDYsICQ3LCAkOCwgJDkgKQ==",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "2",
+    "startTime": "2026-03-31T22:51:49.791170Z",
+    "downstream": {
+      "established": "2026-03-31T22:51:49.722011Z",
+      "ipAddress": "127.0.0.1",
+      "port": 62410,
+      "bytesSent": "4305"
+    },
+    "upstream": {
+      "established": "2026-03-31T22:51:49.722239Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "3155"
+    }
+  }
+}

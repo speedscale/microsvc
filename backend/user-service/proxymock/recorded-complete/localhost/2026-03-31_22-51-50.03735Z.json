@@ -1,0 +1,121 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-03-31T22:51:50.037350Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.381",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "578",
+    "source": "goproxy"
+  },
+  "uuid": "DNHB/kGTQaq3ZKiW0wEhSw==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "Execute Prepared Statement",
+  "location": "DO $$\nDECLARE\n    user_count INTEGER;\n    total_users INTEGER;\nBEGIN\n    SELECT COUNT(*) INTO user_count FROM users WHERE username LIKE 'sim_user_%';\n    SELECT COUNT(*) INTO total_users FROM users;\n    \n    RAISE NOTICE 'Simulation users migration completed:';\n    RAISE NOTICE '  Simulation users: %', user_count;\n    RAISE NOTICE '  Total users: %', total_users;\n    RAISE NOTICE 'Migration is now idempotent and safe for pod restarts.';\nEND $$",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "execute": {
+        "bindRequest": {
+          "parseRequest": {
+            "query": "-- Summary statistics\nDO $$\nDECLARE\n    user_count INTEGER;\n    total_users INTEGER;\nBEGIN\n    SELECT COUNT(*) INTO user_count FROM users WHERE username LIKE 'sim_user_%';\n    SELECT COUNT(*) INTO total_users FROM users;\n    \n    RAISE NOTICE 'Simulation users migration completed:';\n    RAISE NOTICE '  Simulation users: %', user_count;\n    RAISE NOTICE '  Total users: %', total_users;\n    RAISE NOTICE 'Migration is now idempotent and safe for pod restarts.';\nEND $$"
+          }
+        }
+      }
+    },
+    "response": {
+      "execute": {
+        "messages": [
+          {
+            "notice": {
+              "severity": "NOTICE",
+              "severityUnlocalized": "NOTICE",
+              "code": "00000",
+              "msg": "Simulation users migration completed:",
+              "where": "PL/pgSQL function inline_code_block line 9 at RAISE",
+              "file": "pl_exec.c",
+              "line": 3891,
+              "routine": "exec_stmt_raise"
+            }
+          },
+          {
+            "notice": {
+              "severity": "NOTICE",
+              "severityUnlocalized": "NOTICE",
+              "code": "00000",
+              "msg": "  Simulation users: 999",
+              "where": "PL/pgSQL function inline_code_block line 10 at RAISE",
+              "file": "pl_exec.c",
+              "line": 3891,
+              "routine": "exec_stmt_raise"
+            }
+          },
+          {
+            "notice": {
+              "severity": "NOTICE",
+              "severityUnlocalized": "NOTICE",
+              "code": "00000",
+              "msg": "  Total users: 1089",
+              "where": "PL/pgSQL function inline_code_block line 11 at RAISE",
+              "file": "pl_exec.c",
+              "line": 3891,
+              "routine": "exec_stmt_raise"
+            }
+          },
+          {
+            "notice": {
+              "severity": "NOTICE",
+              "severityUnlocalized": "NOTICE",
+              "code": "00000",
+              "msg": "Migration is now idempotent and safe for pod restarts.",
+              "where": "PL/pgSQL function inline_code_block line 12 at RAISE",
+              "file": "pl_exec.c",
+              "line": 3891,
+              "routine": "exec_stmt_raise"
+            }
+          },
+          {
+            "complete": {
+              "tag": "DO"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RXhlY3V0ZSBQcmVwYXJlZCBTdGF0ZW1lbnQ=",
+    "postgres:portal": "",
+    "postgres:query": "RE8gJCQKREVDTEFSRQogICAgdXNlcl9jb3VudCBJTlRFR0VSOwogICAgdG90YWxfdXNlcnMgSU5URUdFUjsKQkVHSU4KICAgIFNFTEVDVCBDT1VOVCgqKSBJTlRPIHVzZXJfY291bnQgRlJPTSB1c2VycyBXSEVSRSB1c2VybmFtZSBMSUtFICdzaW1fdXNlcl8lJzsKICAgIFNFTEVDVCBDT1VOVCgqKSBJTlRPIHRvdGFsX3VzZXJzIEZST00gdXNlcnM7CiAgICAKICAgIFJBSVNFIE5PVElDRSAnU2ltdWxhdGlvbiB1c2VycyBtaWdyYXRpb24gY29tcGxldGVkOic7CiAgICBSQUlTRSBOT1RJQ0UgJyAgU2ltdWxhdGlvbiB1c2VyczogJScsIHVzZXJfY291bnQ7CiAgICBSQUlTRSBOT1RJQ0UgJyAgVG90YWwgdXNlcnM6ICUnLCB0b3RhbF91c2VyczsKICAgIFJBSVNFIE5PVElDRSAnTWlncmF0aW9uIGlzIG5vdyBpZGVtcG90ZW50IGFuZCBzYWZlIGZvciBwb2QgcmVzdGFydHMuJzsKRU5EICQk",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "3",
+    "startTime": "2026-03-31T22:51:49.946710Z",
+    "downstream": {
+      "established": "2026-03-31T22:51:49.929036Z",
+      "ipAddress": "127.0.0.1",
+      "port": 62413,
+      "bytesSent": "4938"
+    },
+    "upstream": {
+      "established": "2026-03-31T22:51:49.929197Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "2495"
+    }
+  }
+}

@@ -7,7 +7,7 @@
     "test": "node test-script.js"
   },
   "dependencies": {
-    "@playwright/test": "^1.40.0",
+    "@playwright/test": "^1.56.0",
     "node-fetch": "^3.3.2"
   },
   "type": "module"

@@ -1,0 +1,73 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-03-31T22:51:50.004085Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.381",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "360",
+    "source": "goproxy"
+  },
+  "uuid": "FIjVMJpETrWtt4B9ZYPl0g==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "Execute Prepared Statement",
+  "location": "CREATE INDEX IF NOT EXISTS idx_users_username_simulation ON users(username) WHERE username LIKE 'sim_user_%'",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "execute": {
+        "bindRequest": {
+          "parseRequest": {
+            "query": "-- Create index for better performance during simulation\nCREATE INDEX IF NOT EXISTS idx_users_username_simulation ON users(username) WHERE username LIKE 'sim_user_%'"
+          }
+        }
+      }
+    },
+    "response": {
+      "execute": {
+        "messages": [
+          {
+            "complete": {
+              "tag": "CREATE INDEX"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RXhlY3V0ZSBQcmVwYXJlZCBTdGF0ZW1lbnQ=",
+    "postgres:portal": "",
+    "postgres:query": "Q1JFQVRFIElOREVYIElGIE5PVCBFWElTVFMgaWR4X3VzZXJzX3VzZXJuYW1lX3NpbXVsYXRpb24gT04gdXNlcnMgKCB1c2VybmFtZSApIFdIRVJFIHVzZXJuYW1lIExJS0UgJ3NpbV91c2VyXyUn",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "3",
+    "startTime": "2026-03-31T22:51:49.946710Z",
+    "downstream": {
+      "established": "2026-03-31T22:51:49.929036Z",
+      "ipAddress": "127.0.0.1",
+      "port": 62413,
+      "bytesSent": "1799"
+    },
+    "upstream": {
+      "established": "2026-03-31T22:51:49.929197Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "684"
+    }
+  }
+}

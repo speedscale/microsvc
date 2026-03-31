@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.time.Duration;
 
@@ -13,21 +13,17 @@ import java.time.Duration;
 public class RestTemplateConfig {
 
     @Bean
-    @ConditionalOnProperty(name = "otel.traces.exporter", havingValue = "otlp", matchIfMissing = false)
-    public RestTemplate restTemplate() {
-        // Use RestTemplateBuilder for automatic trace propagation
-        return new RestTemplateBuilder()
-                .setConnectTimeout(Duration.ofSeconds(5))
-                .setReadTimeout(Duration.ofSeconds(10))
-                .build();
-    }
-
-    @Bean
-    @ConditionalOnProperty(name = "otel.traces.exporter", havingValue = "otlp", matchIfMissing = true)
-    public RestTemplate restTemplateFallback() {
+    public RestTemplate restTemplate(ObjectProvider<RestTemplateBuilder> builderProvider) {
+        RestTemplateBuilder builder = builderProvider.getIfAvailable();
+        if (builder != null) {
+            return builder
+                    .setConnectTimeout(Duration.ofSeconds(5))
+                    .setReadTimeout(Duration.ofSeconds(10))
+                    .build();
+        }
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(5000); // 5 seconds
-        factory.setReadTimeout(10000);   // 10 seconds
+        factory.setConnectTimeout(5000);
+        factory.setReadTimeout(10000);
         return new RestTemplate(factory);
     }
-} 
+}

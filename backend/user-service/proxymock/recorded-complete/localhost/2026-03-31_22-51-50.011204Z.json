@@ -1,0 +1,109 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-03-31T22:51:50.011204Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.381",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "378",
+    "source": "goproxy"
+  },
+  "uuid": "Ig906vc9RrSjU+eK3Qyx/g==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "Execute Prepared Statement",
+  "location": "DO $$\nDECLARE\n    user_count INTEGER;\nBEGIN\n    SELECT COUNT(*) INTO user_count FROM users WHERE username LIKE 'sim_user_%';\n    \n    RAISE NOTICE 'Simulation users seeded successfully:';\n    RAISE NOTICE '  Users created: %', user_count;\n    RAISE NOTICE 'Note: Accounts and transactions will be created by their respective services when users interact with the system.';\nEND $$",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "execute": {
+        "bindRequest": {
+          "parseRequest": {
+            "query": "-- Summary statistics\nDO $$\nDECLARE\n    user_count INTEGER;\nBEGIN\n    SELECT COUNT(*) INTO user_count FROM users WHERE username LIKE 'sim_user_%';\n    \n    RAISE NOTICE 'Simulation users seeded successfully:';\n    RAISE NOTICE '  Users created: %', user_count;\n    RAISE NOTICE 'Note: Accounts and transactions will be created by their respective services when users interact with the system.';\nEND $$"
+          }
+        }
+      }
+    },
+    "response": {
+      "execute": {
+        "messages": [
+          {
+            "notice": {
+              "severity": "NOTICE",
+              "severityUnlocalized": "NOTICE",
+              "code": "00000",
+              "msg": "Simulation users seeded successfully:",
+              "where": "PL/pgSQL function inline_code_block line 7 at RAISE",
+              "file": "pl_exec.c",
+              "line": 3891,
+              "routine": "exec_stmt_raise"
+            }
+          },
+          {
+            "notice": {
+              "severity": "NOTICE",
+              "severityUnlocalized": "NOTICE",
+              "code": "00000",
+              "msg": "  Users created: 999",
+              "where": "PL/pgSQL function inline_code_block line 8 at RAISE",
+              "file": "pl_exec.c",
+              "line": 3891,
+              "routine": "exec_stmt_raise"
+            }
+          },
+          {
+            "notice": {
+              "severity": "NOTICE",
+              "severityUnlocalized": "NOTICE",
+              "code": "00000",
+              "msg": "Note: Accounts and transactions will be created by their respective services when users interact with the system.",
+              "where": "PL/pgSQL function inline_code_block line 9 at RAISE",
+              "file": "pl_exec.c",
+              "line": 3891,
+              "routine": "exec_stmt_raise"
+            }
+          },
+          {
+            "complete": {
+              "tag": "DO"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RXhlY3V0ZSBQcmVwYXJlZCBTdGF0ZW1lbnQ=",
+    "postgres:portal": "",
+    "postgres:query": "RE8gJCQKREVDTEFSRQogICAgdXNlcl9jb3VudCBJTlRFR0VSOwpCRUdJTgogICAgU0VMRUNUIENPVU5UKCopIElOVE8gdXNlcl9jb3VudCBGUk9NIHVzZXJzIFdIRVJFIHVzZXJuYW1lIExJS0UgJ3NpbV91c2VyXyUnOwogICAgCiAgICBSQUlTRSBOT1RJQ0UgJ1NpbXVsYXRpb24gdXNlcnMgc2VlZGVkIHN1Y2Nlc3NmdWxseTonOwogICAgUkFJU0UgTk9USUNFICcgIFVzZXJzIGNyZWF0ZWQ6ICUnLCB1c2VyX2NvdW50OwogICAgUkFJU0UgTk9USUNFICdOb3RlOiBBY2NvdW50cyBhbmQgdHJhbnNhY3Rpb25zIHdpbGwgYmUgY3JlYXRlZCBieSB0aGVpciByZXNwZWN0aXZlIHNlcnZpY2VzIHdoZW4gdXNlcnMgaW50ZXJhY3Qgd2l0aCB0aGUgc3lzdGVtLic7CkVORCAkJA==",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "3",
+    "startTime": "2026-03-31T22:51:49.946710Z",
+    "downstream": {
+      "established": "2026-03-31T22:51:49.929036Z",
+      "ipAddress": "127.0.0.1",
+      "port": 62413,
+      "bytesSent": "2508"
+    },
+    "upstream": {
+      "established": "2026-03-31T22:51:49.929197Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "1275"
+    }
+  }
+}

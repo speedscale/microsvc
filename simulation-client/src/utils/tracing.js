@@ -8,8 +8,6 @@ function initializeTracing() {
       serviceName: config.observability.otel.serviceName,
       endpoint: config.observability.otel.endpoint
     });
-    
-    // TODO: Add proper OpenTelemetry integration when packages are compatible
     return null;
   } catch (error) {
     logger.error('Failed to initialize tracing', {

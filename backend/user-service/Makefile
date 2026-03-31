@@ -5,9 +5,9 @@ SERVICE_PORT := 8081
 PROXY_IN_PORT := 4181
 PROXY_OUT_PORT := 7481
 
-# Proxymock configuration
-PROXYMOCK_RECORD_DIR := ../../proxymock/$(SERVICE_NAME)/recorded-$(shell date +%Y-%m-%d)
-PROXYMOCK_REPLAY_DIR := ../../proxymock/$(SERVICE_NAME)/recorded-$(shell date +%Y-%m-%d)
+# Proxymock configuration (JSON bundle for mock/replay; regenerate with scripts/record-proxymock-user-service.sh)
+PROXYMOCK_RECORD_DIR := proxymock/recorded-complete
+PROXYMOCK_REPLAY_DIR := proxymock/recorded-complete
 
 # Default target
 .DEFAULT_GOAL := help
@@ -57,17 +57,18 @@ clean:
 # Proxymock targets
 .PHONY: proxymock-record
 proxymock-record:
-	@echo "Starting proxymock recording for $(SERVICE_NAME)..."
-	@echo "This will record both inbound HTTP and outbound database traffic"
-	@echo "Inbound proxy: http://localhost:$(PROXY_IN_PORT) -> http://localhost:$(SERVICE_PORT)"
-	@echo "Outbound proxy: Set HTTP(S)_PROXY=http://localhost:$(PROXY_OUT_PORT)"
-	@echo "Database will be proxied through $(PROXY_OUT_PORT)"
+	@echo "Recording inbound HTTP + Postgres for $(SERVICE_NAME) (requires Postgres on 127.0.0.1:5432 and a built JAR)."
+	@echo "Prefer from repo root: ./scripts/record-proxymock-user-service.sh"
 	@mkdir -p $(PROXYMOCK_RECORD_DIR)
-	proxymock start_recording_traffic \
-		--app-port $(SERVICE_PORT) \
-		--proxy-in-port $(PROXY_IN_PORT) \
-		--proxy-out-port $(PROXY_OUT_PORT) \
-		--out-directory $(PROXYMOCK_RECORD_DIR)
+	proxymock record -v \
+		--out-format json \
+		--out $(PROXYMOCK_RECORD_DIR) \
+		--app-port 8080 \
+		--proxy-in-port 4143 \
+		--map 65432=postgres://127.0.0.1:5432 \
+		--app-log-to record-app.log \
+		--log-to record-proxymock.log \
+		-- java -jar $$(find target -name 'user-service-*.jar' -not -name '*original*' | head -1)
 
 .PHONY: proxymock-mock
 proxymock-mock:
@@ -104,12 +105,12 @@ proxymock-env:
 .PHONY: proxymock-list
 proxymock-list:
 	@echo "Recorded traffic files for $(SERVICE_NAME):"
-	@find ../../proxymock/$(SERVICE_NAME) -name "*.json" -o -name "*.md" 2>/dev/null | head -20 || echo "No recorded traffic found"
+	@find proxymock -name "*.json" 2>/dev/null | head -20 || echo "No recorded traffic found"
 
 .PHONY: proxymock-clean
 proxymock-clean:
 	@echo "Cleaning recorded traffic for $(SERVICE_NAME)..."
-	@rm -rf ../../proxymock/$(SERVICE_NAME)/recorded-*
+	@rm -rf proxymock/recorded-*
 	@echo "Cleaned recorded traffic files"
 
 .PHONY: proxymock-stop

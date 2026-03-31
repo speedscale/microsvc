@@ -4,29 +4,19 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
-import { useAuth } from '@/lib/auth/context';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Link from 'next/link';
 import { TransactionsAPI } from '@/lib/api/transactions';
-
-interface Account {
-  id: number;
-  accountNumber: string;
-  accountType: string;
-  balance: number;
-  currency: string;
-  status: string;
-}
+import { AccountsAPI, Account } from '@/lib/api/accounts';
 
 const WithdrawPage: React.FC = () => {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
   const [account, setAccount] = useState<Account | null>(null);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -36,20 +26,14 @@ const WithdrawPage: React.FC = () => {
   useEffect(() => {
     const fetchAccountDetails = async () => {
       try {
-        // TODO: Replace with actual API call
-        // Simulate API call with mock data
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const mockAccount: Account = {
-          id: parseInt(accountId),
-          accountNumber: accountId === '1' ? '1234567890' : '0987654321',
-          accountType: accountId === '1' ? 'CHECKING' : 'SAVINGS',
-          balance: accountId === '1' ? 2500.50 : 10000.00,
-          currency: 'USD',
-          status: 'ACTIVE',
-        };
-        
-        setAccount(mockAccount);
+        setIsLoading(true);
+        setError(null);
+        const response = await AccountsAPI.getAccount(parseInt(accountId, 10));
+        if (response.success && response.data) {
+          setAccount(response.data);
+        } else {
+          setError(response.message || 'Failed to load account details');
+        }
       } catch {
         setError('Failed to load account details');
       } finally {
@@ -168,7 +152,7 @@ const WithdrawPage: React.FC = () => {
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900">Withdraw Funds</h1>
                   <p className="mt-1 text-sm text-gray-600">
-                    Withdraw funds from your {account?.accountType.toLowerCase()} account
+                    Withdraw funds from your {account?.accountType?.toLowerCase()} account
                   </p>
                 </div>
                 <Link href={`/accounts/${accountId}`}>
