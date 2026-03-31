@@ -107,6 +107,16 @@ validate-e2e: test-e2e
 
 test-all: test-backend test-frontend test-e2e
 
+# Same as CI job proxymock-validation (requires initialized proxymock or PROXYMOCK_DEV_API_KEY; port 5432 must be free on host).
+.PHONY: proxymock-validation
+proxymock-validation:
+	./scripts/run-proxymock-validation.sh
+
+# Run proxymock validation in Docker when host port 5432 is in use (requires PROXYMOCK_DEV_API_KEY).
+.PHONY: proxymock-validation-docker
+proxymock-validation-docker:
+	./scripts/run-proxymock-validation-docker.sh
+
 # Kubernetes targets - Consolidated
 .PHONY: k8s-deploy observability-deploy speedscale-deploy k8s-cleanup k8s-status
 k8s-deploy:
@@ -244,6 +254,8 @@ help:
 	@echo "  test-e2e-k8s       - Run E2E tests against Kubernetes deployment"
 	@echo "  validate-e2e       - Validate E2E tests (alias for test-e2e)"
 	@echo "  test-all           - Run all tests (backend, frontend, e2e)"
+	@echo "  proxymock-validation - user-service proxymock mock+replay (matches CI; needs free :5432)"
+	@echo "  proxymock-validation-docker - same test in Docker if host :5432 is busy"
 	@echo ""
 	@echo "Kubernetes:"
 	@echo "  k8s-deploy         - Deploy banking application to Kubernetes"

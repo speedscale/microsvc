@@ -12,6 +12,37 @@ cd "$PROJECT_ROOT"
 
 cd backend/user-service
 
+# Ensure proxymock is on PATH (install via scripts/run-proxymock-validation.sh or curl installer)
+export PATH="${HOME}/.speedscale:${PATH}"
+
+if ! command -v proxymock >/dev/null 2>&1; then
+  echo "error: proxymock not found. Install with:"
+  echo "  curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh"
+  echo "Or run the full CI-equivalent script: ./scripts/run-proxymock-validation.sh"
+  exit 1
+fi
+
+# proxymock's Postgres mock binds 127.0.0.1:5432; fail fast if Docker/local Postgres uses it.
+if command -v nc >/dev/null 2>&1; then
+  if nc -z 127.0.0.1 5432 2>/dev/null; then
+    echo "error: port 5432 is already in use. proxymock must bind its Postgres mock on 127.0.0.1:5432."
+    echo "Stop local PostgreSQL (e.g. docker compose stop) or run: make proxymock-validation-docker"
+    exit 1
+  fi
+fi
+
+# proxymock mock/replay require a one-time init (CI uses PROXYMOCK_DEV_API_KEY).
+PM_VER_OUT=$(proxymock version 2>&1) || true
+if echo "$PM_VER_OUT" | grep -Fq "(not initialized)"; then
+  if [ -z "${PROXYMOCK_DEV_API_KEY:-}" ]; then
+    echo "error: proxymock is not initialized."
+    echo "  export PROXYMOCK_DEV_API_KEY=<key from https://app.speedscale.com >"
+    echo "  proxymock init --app-url dev.speedscale.com --api-key \"\$PROXYMOCK_DEV_API_KEY\""
+    exit 1
+  fi
+  proxymock init --app-url dev.speedscale.com --api-key "$PROXYMOCK_DEV_API_KEY"
+fi
+
 # Clean up any existing processes
 pkill -f user-service 2>/dev/null || true
 pkill -f proxymock 2>/dev/null || true

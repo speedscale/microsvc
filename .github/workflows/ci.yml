@@ -79,22 +79,10 @@ jobs:
         distribution: 'temurin'
         cache: maven
     
-    - name: Build
-      run: |
-        cd backend/user-service
-        ./mvnw clean package -DskipTests
-    
-    - name: Setup proxymock
+    - name: Proxymock validation (install, init, build, mock+replay)
       env:
         PROXYMOCK_DEV_API_KEY: ${{ secrets.PROXYMOCK_DEV_API_KEY }}
-      run: |
-        mkdir -p .speedscale
-        curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh
-        echo "$HOME/.speedscale" >> $GITHUB_PATH
-        $HOME/.speedscale/proxymock init --app-url dev.speedscale.com --api-key "$PROXYMOCK_DEV_API_KEY"
-    
-    - name: proxymock replay with mocked Postgres
-      run: ./scripts/test-postgres-mock.sh
+      run: ./scripts/run-proxymock-validation.sh
   
   build-and-push:
     needs: [test-backend, test-frontend]
