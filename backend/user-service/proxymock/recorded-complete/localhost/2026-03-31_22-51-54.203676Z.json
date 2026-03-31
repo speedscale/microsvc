@@ -1,0 +1,107 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-03-31T22:51:54.203676Z",
+  "l7protocol": "http",
+  "duration": 71,
+  "tags": {
+    "captureMode": "proxy",
+    "proxyLocation": "in",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.381",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "915",
+    "source": "goproxy"
+  },
+  "uuid": "l7jbnY24Rja0lLWb0uwkvQ==",
+  "direction": "IN",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:8080",
+  "command": "GET",
+  "location": "/api/users/check-username",
+  "status": "200",
+  "http": {
+    "req": {
+      "url": "/api/users/check-username",
+      "uri": "/api/users/check-username?username=recordprobe",
+      "version": "1.1",
+      "method": "GET",
+      "host": "localhost:8080",
+      "headers": {
+        "Accept": [
+          "*/*"
+        ],
+        "Host": [
+          "localhost:8080"
+        ],
+        "User-Agent": [
+          "curl/8.7.1"
+        ]
+      },
+      "queryParams": {
+        "username": [
+          "recordprobe"
+        ]
+      }
+    },
+    "res": {
+      "contentType": "application/json",
+      "statusCode": 200,
+      "statusMessage": "200 ",
+      "headers": {
+        "Cache-Control": [
+          "no-cache, no-store, max-age=0, must-revalidate"
+        ],
+        "Content-Type": [
+          "application/json"
+        ],
+        "Date": [
+          "Tue, 31 Mar 2026 22:51:54 GMT"
+        ],
+        "Expires": [
+          "0"
+        ],
+        "Pragma": [
+          "no-cache"
+        ],
+        "X-Content-Type-Options": [
+          "nosniff"
+        ],
+        "X-Frame-Options": [
+          "DENY"
+        ],
+        "X-Xss-Protection": [
+          "0"
+        ]
+      },
+      "bodyBase64": "eyJzdWNjZXNzIjp0cnVlLCJhdmFpbGFibGUiOnRydWUsIm1lc3NhZ2UiOiJVc2VybmFtZSBpcyBhdmFpbGFibGUifQ=="
+    }
+  },
+  "signature": {
+    "http:host": "bG9jYWxob3N0",
+    "http:method": "R0VU",
+    "http:queryparams:username": "cmVjb3JkcHJvYmU=",
+    "http:url": "L2FwaS91c2Vycy9jaGVjay11c2VybmFtZQ=="
+  },
+  "netinfo": {
+    "id": "15",
+    "startTime": "2026-03-31T22:51:54.203629Z",
+    "downstream": {
+      "established": "2026-03-31T22:51:54.203152Z",
+      "ipAddress": "127.0.0.1",
+      "port": 62442,
+      "bytesSent": "122"
+    },
+    "upstream": {
+      "established": "2026-03-31T22:51:54.203577Z",
+      "ipAddress": "127.0.0.1",
+      "port": 8080,
+      "hostname": "localhost",
+      "bytesSent": "362"
+    }
+  }
+}

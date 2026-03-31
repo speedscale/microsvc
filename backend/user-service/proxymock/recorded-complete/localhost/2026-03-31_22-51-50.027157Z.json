@@ -1,0 +1,62 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-03-31T22:51:50.027157Z",
+  "l7protocol": "postgres",
+  "duration": 7,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.381",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "545",
+    "source": "goproxy"
+  },
+  "uuid": "11JL2AJKSsSD0H0ZeJp8zw==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "Prepare Statement",
+  "location": "INSERT INTO users (username, email, password_hash, roles, created_at, updated_at) SELECT 'sim_user_' || LPAD(generate_series :: text, 3, '0') as username, 'sim_user_' || LPAD(generate_series :: text, 3, '0') || '@simulation.local' as email, '$2a$10$7Gejer63hAKLgl/PEvESJ.CBuqHm5hvqFxU2Y4vmw1VJ6pdiEidmK' as password_hash, ARRAY ['USER'] as roles, NOW() - (RANDOM() * INTERVAL '365 days') as created_at, NOW() - (RANDOM() * INTERVAL '90 days') as updated_at FROM generate_series(1, 1000) ON CONFLICT (username) DO NOTHING",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "parse": {
+        "query": "-- Migration V3: Fix simulation users insertion to be idempotent\n-- This addresses the unique constraint violation issue from V2\n-- Safe to run even if some simulation users already exist\n\n-- Insert missing simulation users (idempotent)\nINSERT INTO users (username, email, password_hash, roles, created_at, updated_at)\nSELECT \n    'sim_user_' || LPAD(generate_series::text, 3, '0') as username,\n    'sim_user_' || LPAD(generate_series::text, 3, '0') || '@simulation.local' as email,\n    -- BCrypt hash for 'NewUser123!' - matches what simulation client expects\n    '$2a$10$7Gejer63hAKLgl/PEvESJ.CBuqHm5hvqFxU2Y4vmw1VJ6pdiEidmK' as password_hash,\n    ARRAY['USER'] as roles,\n    NOW() - (RANDOM() * INTERVAL '365 days') as created_at,\n    NOW() - (RANDOM() * INTERVAL '90 days') as updated_at\nFROM generate_series(1, 1000)\nON CONFLICT (username) DO NOTHING"
+      }
+    },
+    "response": {
+      "parse": {
+        "complete": {}
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "UHJlcGFyZSBTdGF0ZW1lbnQ=",
+    "postgres:query": "SU5TRVJUIElOVE8gdXNlcnMgKCB1c2VybmFtZSwgZW1haWwsIHBhc3N3b3JkX2hhc2gsIHJvbGVzLCBjcmVhdGVkX2F0LCB1cGRhdGVkX2F0ICkgU0VMRUNUICdzaW1fdXNlcl8nIHx8IExQQUQgKCBnZW5lcmF0ZV9zZXJpZXMgOjogdGV4dCwgMywgJzAnICksICdzaW1fdXNlcl8nIHx8IExQQUQgKCBnZW5lcmF0ZV9zZXJpZXMgOjogdGV4dCwgMywgJzAnICkgfHwgJ0BzaW11bGF0aW9uLmxvY2FsJywgJyQyYSQxMCQ3R2VqZXI2M2hBS0xnbC9QRXZFU0ouQ0J1cUhtNWh2cUZ4VTJZNHZtdzFWSjZwZGlFaWRtSycsIEFSUkFZIFsgJ1VTRVInIF0sIE5PVyAoICkgLSAoIFJBTkRPTSAoICkgKiBJTlRFUlZBTCAnMzY1IGRheXMnICksIE5PVyAoICkgLSAoIFJBTkRPTSAoICkgKiBJTlRFUlZBTCAnOTAgZGF5cycgKSBGUk9NIGdlbmVyYXRlX3NlcmllcyAoIDEsIDEwMDAgKSBPTiBDT05GTElDVCAoIHVzZXJuYW1lICkgRE8gTk9USElORw==",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "3",
+    "startTime": "2026-03-31T22:51:49.946710Z",
+    "downstream": {
+      "established": "2026-03-31T22:51:49.929036Z",
+      "ipAddress": "127.0.0.1",
+      "port": 62413,
+      "bytesSent": "3752"
+    },
+    "upstream": {
+      "established": "2026-03-31T22:51:49.929197Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "1666"
+    }
+  }
+}

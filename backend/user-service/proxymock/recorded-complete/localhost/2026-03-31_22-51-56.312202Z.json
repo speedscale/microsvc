@@ -1,0 +1,54 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-03-31T22:51:56.312202Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.381",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "933",
+    "source": "goproxy"
+  },
+  "uuid": "Ev/qhAjCRi2B28BdYdytKw==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "Terminate",
+  "location": "N/A",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "terminate": {}
+    },
+    "response": {}
+  },
+  "signature": {
+    "postgres:msg_type": "VGVybWluYXRl"
+  },
+  "netinfo": {
+    "id": "10",
+    "startTime": "2026-03-31T22:51:50.115692Z",
+    "downstream": {
+      "established": "2026-03-31T22:51:50.106329Z",
+      "ipAddress": "127.0.0.1",
+      "port": 62427,
+      "bytesSent": "152"
+    },
+    "upstream": {
+      "established": "2026-03-31T22:51:50.106546Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "95"
+    }
+  }
+}

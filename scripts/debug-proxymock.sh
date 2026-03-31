@@ -12,7 +12,7 @@ proxymock version || echo "proxymock not found or failed"
 echo "Testing proxymock mock standalone..."
 timeout 5 proxymock mock \
   --verbose \
-  --in "${PROXYMOCK_DIR:-proxymock/recorded-2025-08-13}/" \
+  --in "${PROXYMOCK_DIR:-proxymock/recorded-complete}/" \
   --no-out \
   || echo "Proxymock mock test completed"
 

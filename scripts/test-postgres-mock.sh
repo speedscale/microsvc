@@ -3,7 +3,7 @@
 set -ex
 
 # Use absolute path for proxymock directory (override with PROXYMOCK_DIR)
-PROXYMOCK_DIR="${PROXYMOCK_DIR:-proxymock/recorded-2025-08-13}"
+PROXYMOCK_DIR="${PROXYMOCK_DIR:-proxymock/recorded-complete}"
 
 # Find the project root directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

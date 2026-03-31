@@ -1,0 +1,76 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-03-31T22:51:50.051816Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.381",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "730",
+    "source": "goproxy"
+  },
+  "uuid": "mnGKjgOtSvqmGhu68lAUJw==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "Execute Prepared Statement",
+  "location": "COMMIT",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "execute": {
+        "maxRows": 1,
+        "bindRequest": {
+          "preparedStatement": "S_1",
+          "parseRequest": {
+            "name": "S_1",
+            "query": "COMMIT"
+          }
+        }
+      }
+    },
+    "response": {
+      "execute": {
+        "messages": [
+          {
+            "complete": {
+              "tag": "COMMIT"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RXhlY3V0ZSBQcmVwYXJlZCBTdGF0ZW1lbnQ=",
+    "postgres:portal": "",
+    "postgres:query": "Q09NTUlU",
+    "postgres:query_name": "U18x"
+  },
+  "netinfo": {
+    "id": "2",
+    "startTime": "2026-03-31T22:51:49.791170Z",
+    "downstream": {
+      "established": "2026-03-31T22:51:49.722011Z",
+      "ipAddress": "127.0.0.1",
+      "port": 62410,
+      "bytesSent": "6753"
+    },
+    "upstream": {
+      "established": "2026-03-31T22:51:49.722239Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "4971"
+    }
+  }
+}

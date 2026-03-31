@@ -1,0 +1,73 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-03-31T22:51:50.008484Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.381",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "369",
+    "source": "goproxy"
+  },
+  "uuid": "UUj9jnjCQkai/ncA2x6arw==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "Execute Prepared Statement",
+  "location": "ALTER TABLE users ADD CONSTRAINT chk_simulation_user_email CHECK (email ~ '^sim_user_[0-9]{3}@simulation\\.local$' OR email NOT LIKE '%@simulation.local')",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "execute": {
+        "bindRequest": {
+          "parseRequest": {
+            "query": "-- Add constraint to ensure data quality for simulation users\nALTER TABLE users ADD CONSTRAINT chk_simulation_user_email \n    CHECK (email ~ '^sim_user_[0-9]{3}@simulation\\.local$' OR email NOT LIKE '%@simulation.local')"
+          }
+        }
+      }
+    },
+    "response": {
+      "execute": {
+        "messages": [
+          {
+            "complete": {
+              "tag": "ALTER TABLE"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RXhlY3V0ZSBQcmVwYXJlZCBTdGF0ZW1lbnQ=",
+    "postgres:portal": "",
+    "postgres:query": "QUxURVIgVEFCTEUgdXNlcnMgQUREIENPTlNUUkFJTlQgY2hrX3NpbXVsYXRpb25fdXNlcl9lbWFpbCBDSEVDSyAoIGVtYWlsIH4gJ15zaW1fdXNlcl9bMC05XXszfUBzaW11bGF0aW9uXC5sb2NhbCQnIE9SIGVtYWlsIE5PVCBMSUtFICclQHNpbXVsYXRpb24ubG9jYWwnICk=",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "3",
+    "startTime": "2026-03-31T22:51:49.946710Z",
+    "downstream": {
+      "established": "2026-03-31T22:51:49.929036Z",
+      "ipAddress": "127.0.0.1",
+      "port": 62413,
+      "bytesSent": "2063"
+    },
+    "upstream": {
+      "established": "2026-03-31T22:51:49.929197Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "722"
+    }
+  }
+}

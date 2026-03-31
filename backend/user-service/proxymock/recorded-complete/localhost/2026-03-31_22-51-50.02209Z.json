@@ -1,0 +1,78 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-03-31T22:51:50.022090Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.381",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "474",
+    "source": "goproxy"
+  },
+  "uuid": "wPWXJZ4MR7GzzIWkyoL5tw==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "localhost:5432",
+  "command": "Describe Portal",
+  "location": "SELECT pg_try_advisory_xact_lock(77433341017749)",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "describe": {
+        "objectType": "OBJECT_TYPE_PORTAL",
+        "parseRequest": {
+          "query": "SELECT pg_try_advisory_xact_lock(77433341017749)"
+        }
+      }
+    },
+    "response": {
+      "describe": {
+        "messages": [
+          {
+            "rowDescription": {
+              "fields": [
+                {
+                  "name": "exists",
+                  "dataTypeOid": 16,
+                  "dataTypeSize": 1,
+                  "typeModifier": -1
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RGVzY3JpYmUgUG9ydGFs",
+    "postgres:query": "U0VMRUNUIHBnX3RyeV9hZHZpc29yeV94YWN0X2xvY2sgKCA3NzQzMzM0MTAxNzc0OSAp",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "2",
+    "startTime": "2026-03-31T22:51:49.791170Z",
+    "downstream": {
+      "established": "2026-03-31T22:51:49.722011Z",
+      "ipAddress": "127.0.0.1",
+      "port": 62410,
+      "bytesSent": "4823"
+    },
+    "upstream": {
+      "established": "2026-03-31T22:51:49.722239Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "3406"
+    }
+  }
+}
