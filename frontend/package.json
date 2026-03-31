@@ -35,7 +35,7 @@
     "@opentelemetry/sdk-trace-node": "^1.8.0",
     "@opentelemetry/semantic-conventions": "^1.8.0",
     "@types/js-cookie": "^3.0.6",
-    "axios": "1.13.6",
+    "axios": "1.14.0",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.525.0",
     "next": "15.4.2",
