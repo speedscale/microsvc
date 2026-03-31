@@ -11,20 +11,82 @@ The application implements the three pillars of observability:
 
 ## Architecture
 
+### Trace export (OpenTelemetry)
+
+Services emit OTLP traces. **Docker Compose** sends them straight into Jaeger’s OTLP receiver. **Kubernetes** sends them through the OpenTelemetry Collector (filtering noise spans) before Jaeger.
+
+```mermaid
+flowchart LR
+  subgraph clients["Application services"]
+    frontend[frontend]
+    gateway[api-gateway]
+    accounts[accounts-service]
+    transactions[transactions-service]
+    users[user-service]
+  end
+  collector[otel-collector]
+  jaeger[jaeger]
+
+  frontend --> collector
+  gateway --> collector
+  accounts --> collector
+  transactions --> collector
+  users --> collector
+  collector --> jaeger
 ```
-[Services] → [OpenTelemetry] → [OTLP Collector] → [Jaeger UI]
-     ↓              ↓
-[Micrometer] → [Prometheus] → [Grafana]
-     ↓
-[Logs] → [Docker Compose Logs]
+
+### OpenTelemetry trace data processing
+
+How trace data moves from code to storage:
+
+1. **SDK** — Auto-instrumentation and manual spans run in-process; `tracecontext` propagates IDs across HTTP calls; the sampler decides whether to record; spans are batched (for example `BatchSpanProcessor` with queue and export intervals in Spring config) and exported over **OTLP** (gRPC on `:4317` for Java services, HTTP/protobuf on `:4318` for the frontend where configured).
+2. **Docker Compose** — OTLP goes to **Jaeger all-in-one** (`COLLECTOR_OTLP_ENABLED`); there is no separate collector service in `docker-compose.yml`.
+3. **Kubernetes** — OTLP goes to **`otel-collector`** (`kubernetes/observability/otel-collector.yaml`): **receivers** `otlp` (gRPC + HTTP) → **processors** `filter` (drops noisy actuator/security spans) → **exporters** `otlp` → Jaeger. The traces pipeline is `receivers: [otlp] → processors: [filter] → exporters: [otlp]`.
+
+```mermaid
+flowchart TB
+  subgraph sdk["OpenTelemetry SDK (each service)"]
+    instr[Instrumentation]
+    prop[Context propagation tracecontext]
+    samp[Sampler e.g. always_on]
+    batch[Batch span processor]
+    export[OTLP exporter]
+    instr --> prop --> samp --> batch --> export
+  end
+
+  export --> route{Deploy target}
+
+  route -->|docker-compose| jaeger_in[Jaeger OTLP receiver]
+  route -->|Kubernetes| recv[Collector receiver otlp]
+  recv --> filt[Processor filter]
+  filt --> out[Exporter otlp to Jaeger]
+  out --> store[(Trace storage)]
+  jaeger_in --> store
+  store --> ui[Jaeger UI]
+```
+
+### Metrics and logs (summary)
+
+```mermaid
+flowchart LR
+  subgraph svc["Services"]
+    S[Micrometer / app logs]
+  end
+  prom[prometheus]
+  graf[grafana]
+  logs[Docker Compose logs]
+
+  S --> prom
+  prom --> graf
+  S --> logs
 ```
 
 ## Quick Start
 
 ### Starting the Observability Stack
 ```bash
-# Start all monitoring services
-docker-compose up -d prometheus grafana jaeger otel-collector
+# Start all monitoring services (Jaeger receives OTLP directly in compose; collector is Kubernetes-only)
+docker-compose up -d prometheus grafana jaeger
 
 # Verify services are running
 curl http://localhost:9090/api/v1/targets  # Prometheus targets

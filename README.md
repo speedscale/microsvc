@@ -37,7 +37,33 @@ A microservices application with:
 - **Database**: PostgreSQL with service-specific schemas
 - **Observability**: OpenTelemetry with Jaeger, Prometheus, and Grafana
 
-![Architecture](./images/microsvc-architecture.png)
+How **OpenTelemetry trace data** is processed in-process (SDK) and after export (OTLP → collector on Kubernetes, or direct to Jaeger in Docker Compose) is documented with Mermaid diagrams in [OBSERVABILITY.md — OpenTelemetry trace data processing](./OBSERVABILITY.md#opentelemetry-trace-data-processing) and [architecture.md — OTel trace data processing](./architecture.md#otel-trace-data-processing).
+
+```mermaid
+flowchart LR
+  subgraph clients["Clients"]
+    browser[browser]
+    mobile[mobile]
+    api[api]
+  end
+  frontend[frontend]
+  gateway[api-gateway]
+  accounts[accounts-service]
+  transactions[transactions-service]
+  users[user-service]
+  postgres[(postgres)]
+
+  browser --> frontend
+  mobile --> frontend
+  api --> frontend
+  frontend --> gateway
+  gateway --> accounts
+  gateway --> transactions
+  gateway --> users
+  accounts --> postgres
+  transactions --> postgres
+  users --> postgres
+```
 
 ## Repository Structure
 
@@ -190,10 +216,11 @@ kubectl apply -k kubernetes/overlays/speedscale/
 
 ## Documentation
 
+- **[AGENTS.md](./AGENTS.md)** - Guidance for AI assistants and automated agents
 - **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Comprehensive debugging guide
 - **[OBSERVABILITY.md](./OBSERVABILITY.md)** - Monitoring, tracing, and metrics setup
 - **[PLAN.md](./PLAN.md)** - Detailed implementation phases and testing criteria
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System architecture and design decisions
+- **[architecture.md](./architecture.md)** - System architecture and design decisions
 
 ## Getting Started
 

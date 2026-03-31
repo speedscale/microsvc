@@ -2,25 +2,19 @@
 
 ## Local Development with Colima
 
-When using Colima for local Kubernetes development, use the local overlay which references local Docker images:
+The `kubernetes/overlays/local/` overlay uses the same base manifests and namespace (`banking-app`) as the default stack. It does not override container images; services use the published images from the base manifests (e.g. `ghcr.io/speedscale/microsvc/...`).
+
+To run against images built locally (e.g. `localhost:5000/...`), build and tag images, run a local registry if needed, then patch deployments or use `kubectl set image` to point at your registry.
 
 ```bash
-# Build local images (without pushing to registry)
-make docker-build-versioned
-
-# Deploy using local overlay (uses localhost:5000 registry)
+# Example: deploy the local overlay (same images as base unless you patch)
 kubectl apply -k kubernetes/overlays/local/
 
-# Or if running a local registry
+# Optional: local registry for custom tags
 docker run -d -p 5000:5000 --name registry registry:2
-docker tag ghcr.io/speedscale/microsvc/frontend:v1.1.11 localhost:5000/frontend:v1.1.11
-docker push localhost:5000/frontend:v1.1.11
+docker tag ghcr.io/speedscale/microsvc/frontend:v1.3.4 localhost:5000/frontend:v1.3.4
+docker push localhost:5000/frontend:v1.3.4
 ```
-
-The local overlay:
-- Uses `imagePullPolicy: IfNotPresent` instead of `Always`
-- References images from `localhost:5000` registry
-- Avoids pulling from remote registries
 
 ## Traffic Flow Design
 All external traffic flows through the frontend service, which acts as the single entry point:
@@ -112,6 +106,32 @@ The trace flow follows the application's traffic flow:
 `Frontend → API Gateway → Backend Service → Database`
 
 This setup allows for debugging and performance analysis by visualizing the entire lifecycle of a request as it travels through the different components of the system.
+
+#### OTel trace data processing
+
+Traces are produced in each service by the OpenTelemetry SDK (instrumentation → sampling → batching → OTLP export). **Docker Compose** delivers OTLP directly to Jaeger. **Kubernetes** routes OTLP through the collector (`kubernetes/observability/otel-collector.yaml`): receive OTLP → **filter** processor (drops actuator/health noise) → export OTLP to Jaeger → storage and Jaeger UI.
+
+```mermaid
+flowchart TB
+  subgraph sdk["OpenTelemetry SDK (each service)"]
+    instr[Instrumentation]
+    prop[Context propagation tracecontext]
+    samp[Sampler e.g. always_on]
+    batch[Batch span processor]
+    export[OTLP exporter]
+    instr --> prop --> samp --> batch --> export
+  end
+
+  export --> route{Deploy target}
+
+  route -->|docker-compose| jaeger_in[Jaeger OTLP receiver]
+  route -->|Kubernetes| recv[Collector receiver otlp]
+  recv --> filt[Processor filter]
+  filt --> out[Exporter otlp to Jaeger]
+  out --> store[(Trace storage)]
+  jaeger_in --> store
+  store --> ui[Jaeger UI]
+```
 
 ## Troubleshooting
 
@@ -226,7 +246,7 @@ All services use the same version: `user-service`, `accounts-service`, `transact
 The repository root should only contain:
 - Core project files (README.md, LICENSE, etc.)
 - Configuration files (Makefile, docker-compose.yml, etc.)
-- Project instruction files (CLAUDE.md, ARCHITECTURE.md, PLAN.md)
+- Project instruction files (AGENTS.md, architecture.md, PLAN.md)
 - Version control files (.gitignore, VERSION)
 
 ## Git Workflow Standards

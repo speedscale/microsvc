@@ -30,6 +30,8 @@ data:
   OTEL_PROPAGATORS: "tracecontext"
   OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app"
   MANAGEMENT_TRACING_ENABLED: "true"
+  # Enable Spring Boot health probe groups (liveness/readiness)
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
   MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "1.0"
   
   # Logging

@@ -12,6 +12,10 @@ spring:
     username: accounts_service_user
     password: accounts_service_pass
     driver-class-name: io.opentelemetry.instrumentation.jdbc.OpenTelemetryDriver
+    hikari:
+      minimum-idle: 0
+      maximum-pool-size: 5
+      initializationFailTimeout: 0
   
   jpa:
     hibernate:
@@ -26,6 +30,8 @@ spring:
         order_inserts: true
         order_updates: true
         batch_versioned_data: true
+        boot:
+          allow_jdbc_metadata_access: false
     database-platform: org.hibernate.dialect.PostgreSQLDialect
   
   flyway:
@@ -47,24 +53,26 @@ jwt:
 # Logging Configuration
 logging:
   level:
-    com.banking.accountsservice: DEBUG
-    org.springframework.web: DEBUG
-    org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.banking.accountsservice: INFO
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
   pattern:
     console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
     file: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
 
 # Management endpoints
 management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
   endpoints:
     web:
       exposure:
         include: health,info,prometheus,metrics
-  endpoint:
-    health:
-      show-details: always
   metrics:
     export:
       prometheus:
