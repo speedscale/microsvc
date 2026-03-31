@@ -67,12 +67,12 @@ cleanup() {
 }
 
 # Start proxymock with user-service
-# Flyway off: use Hibernate ddl-auto=update so schema exists on the mocked empty DB.
+# Flyway off: ddl-auto=create on empty DB avoids schema *update* JDBC metadata (pg_catalog) that proxymock recordings rarely match.
 # Use plain PostgreSQL JDBC (not jdbc:otel + OpenTelemetryDriver) so the app can talk to proxymock's Postgres mock.
 # Disable OTel SDK for this isolated run (no collector in CI). Health probes are enabled in application.yml.
 # -Dspring.profiles.active: proxymock must be set as a JVM flag so the child process spawned by proxymock inherits it (env-only SPRING_PROFILES_ACTIVE is not always forwarded).
 # application-proxymock.yml: disable JDBC metadata queries that proxymock cannot match to old recordings.
-export JAVA_TOOL_OPTIONS="-Dspring.flyway.enabled=false -Dspring.jpa.hibernate.ddl-auto=update -Dotel.sdk.disabled=true -Dspring.profiles.active=proxymock -Dserver.address=127.0.0.1"
+export JAVA_TOOL_OPTIONS="-Dspring.flyway.enabled=false -Dspring.jpa.hibernate.ddl-auto=create -Dotel.sdk.disabled=true -Dspring.profiles.active=proxymock -Dserver.address=127.0.0.1"
 export OTEL_SDK_DISABLED=true
 export OTEL_TRACES_EXPORTER=none
 export OTEL_METRICS_EXPORTER=none

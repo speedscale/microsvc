@@ -1,6 +1,8 @@
-# Profile proxymock: avoid JDBC metadata round-trips that proxymock cannot replay (Speedscale responder miss).
+# Profile proxymock: limit JDBC metadata (recordings); CI script uses ddl-auto=create to skip schema-update queries.
 spring:
   jpa:
+    hibernate:
+      ddl-auto: create
     properties:
       hibernate.boot.allow_jdbc_metadata_access: DISALLOW
       jakarta.persistence.database-product-name: PostgreSQL
