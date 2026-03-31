@@ -15,6 +15,9 @@ cd backend/user-service
 # Ensure proxymock is on PATH (install via scripts/run-proxymock-validation.sh or curl installer)
 export PATH="${HOME}/.speedscale:${PATH}"
 
+# Same key as CI: prefer PROXYMOCK_DEV_API_KEY, else PROXYMOCK_API_KEY (repo may define either secret).
+export PROXYMOCK_DEV_API_KEY="${PROXYMOCK_DEV_API_KEY:-${PROXYMOCK_API_KEY:-}}"
+
 if ! command -v proxymock >/dev/null 2>&1; then
   echo "error: proxymock not found. Install with:"
   echo "  curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh"
@@ -31,11 +34,11 @@ if command -v nc >/dev/null 2>&1; then
   fi
 fi
 
-# proxymock mock/replay require a one-time init (CI uses PROXYMOCK_DEV_API_KEY).
+# proxymock mock/replay require a one-time init (CI passes coalesced API key).
 PM_VER_OUT=$(proxymock version 2>&1) || true
 if echo "$PM_VER_OUT" | grep -Fq "not initialized"; then
   if [ -z "${PROXYMOCK_DEV_API_KEY:-}" ]; then
-    echo "Skipping proxymock validation: not initialized and PROXYMOCK_DEV_API_KEY is unset."
+    echo "Skipping proxymock validation: not initialized and no API key (PROXYMOCK_DEV_API_KEY or PROXYMOCK_API_KEY)."
     exit 0
   fi
   proxymock init -y --app-url dev.speedscale.com --api-key "$PROXYMOCK_DEV_API_KEY"

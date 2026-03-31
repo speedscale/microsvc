@@ -81,7 +81,9 @@ jobs:
     
     - name: Proxymock validation (install, init, build, mock+replay)
       env:
+        # Same Speedscale key; scripts use PROXYMOCK_DEV_API_KEY if set, else PROXYMOCK_API_KEY
         PROXYMOCK_DEV_API_KEY: ${{ secrets.PROXYMOCK_DEV_API_KEY }}
+        PROXYMOCK_API_KEY: ${{ secrets.PROXYMOCK_API_KEY }}
       run: ./scripts/run-proxymock-validation.sh
   
   build-and-push:
