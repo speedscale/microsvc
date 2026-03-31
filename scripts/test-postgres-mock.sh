@@ -71,8 +71,8 @@ cleanup() {
 # application-proxymock.yml: disable JDBC metadata queries that proxymock cannot match to old recordings.
 export JAVA_TOOL_OPTIONS="-Dspring.flyway.enabled=false -Dspring.jpa.hibernate.ddl-auto=update -Dotel.sdk.disabled=true -Dspring.profiles.active=proxymock"
 export OTEL_SDK_DISABLED=true
-# In CI, hostname might return something unexpected, so use localhost
-export DB_HOST="${DB_HOST:-localhost}"
+# Use IPv4 loopback: on Linux, "localhost" often resolves to ::1 first; proxymock Postgres listens on 127.0.0.1:5432 only.
+export DB_HOST="${DB_HOST:-127.0.0.1}"
 # Postgres wire protocol is served on 127.0.0.1:5432 by proxymock mock (see proxymock.log: "postgres server listening").
 # Do not use --map 65432=... for JDBC: that port is an HTTP reverse proxy to :5432, not the PostgreSQL protocol.
 export DB_PORT=5432
@@ -175,8 +175,8 @@ http_200() {
   [ "$code" = "200" ]
 }
 
-HEALTH_LIVENESS="${HEALTH_LIVENESS:-http://localhost:8080/actuator/health/liveness}"
-HEALTH_AGG="${HEALTH_AGG:-http://localhost:8080/actuator/health}"
+HEALTH_LIVENESS="${HEALTH_LIVENESS:-http://127.0.0.1:8080/actuator/health/liveness}"
+HEALTH_AGG="${HEALTH_AGG:-http://127.0.0.1:8080/actuator/health}"
 READY=false
 for _i in $(seq 1 60); do
   if http_200 "$HEALTH_LIVENESS"; then
@@ -211,7 +211,7 @@ fi
 
 # Run replay
 if proxymock replay $REPLAY_V \
-  --test-against localhost:8080 \
+  --test-against 127.0.0.1:8080 \
   --rewrite-host \
   --in "$PROXYMOCK_DIR" \
   --no-out \
