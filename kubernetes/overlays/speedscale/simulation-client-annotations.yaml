@@ -10,5 +10,4 @@ spec:
   template:
     metadata:
       annotations:
-        sidecar.speedscale.com/inject: "false"
         speedscale.com/enabled: "false"

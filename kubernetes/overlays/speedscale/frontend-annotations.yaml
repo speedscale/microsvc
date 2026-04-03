@@ -6,8 +6,3 @@ metadata:
   annotations:
     sidecar.speedscale.com/inject: "false"
     sidecar.speedscale.com/tls-out: "true"
-spec:
-  template:
-    metadata:
-      annotations:
-        sidecar.speedscale.com/inject: "false"
