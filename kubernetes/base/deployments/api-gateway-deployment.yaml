@@ -25,7 +25,7 @@ spec:
       serviceAccountName: banking-app-sa
       containers:
       - name: api-gateway
-        image: ghcr.io/speedscale/microsvc/api-gateway:v1.4.0
+        image: ghcr.io/speedscale/microsvc/api-gateway:v1.4.1
         imagePullPolicy: Always
         command: ["/bin/sh", "-c"]
         args: ["exec java $JAVA_OPTS org.springframework.boot.loader.launch.JarLauncher"]
