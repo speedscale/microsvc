@@ -27,6 +27,8 @@ spec:
       - name: api-gateway
         image: ghcr.io/speedscale/microsvc/api-gateway:v1.4.0
         imagePullPolicy: Always
+        command: ["/bin/sh", "-c"]
+        args: ["exec java $JAVA_OPTS org.springframework.boot.loader.launch.JarLauncher"]
         ports:
         - containerPort: 8080
           name: http
