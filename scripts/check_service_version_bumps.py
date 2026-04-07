@@ -63,6 +63,10 @@ def read_base_file(base_sha, file_path):
     return run_git(["show", f"{base_sha}:{git_path}"])
 
 
+def merge_base(commit_a, commit_b):
+    return run_git(["merge-base", commit_a, commit_b]).strip()
+
+
 def main():
     if len(sys.argv) != 3:
         print(
@@ -73,6 +77,7 @@ def main():
 
     base_sha = sys.argv[1]
     head_sha = sys.argv[2]
+    comparison_base_sha = merge_base(base_sha, head_sha)
 
     services = set(discover_services())
     if not services:
@@ -82,7 +87,13 @@ def main():
     changed_files = [
         line.strip()
         for line in run_git(
-            ["diff", "--name-only", "--diff-filter=ACDMRT", base_sha, head_sha]
+            [
+                "diff",
+                "--name-only",
+                "--diff-filter=ACDMRT",
+                comparison_base_sha,
+                head_sha,
+            ]
         ).splitlines()
         if line.strip()
     ]
@@ -124,11 +135,15 @@ def main():
             continue
 
         try:
-            base_version = read_project_version(read_base_file(base_sha, pom_path))
+            base_version = read_project_version(
+                read_base_file(comparison_base_sha, pom_path)
+            )
             head_version = read_project_version(head_pom.read_text(encoding="utf-8"))
         except subprocess.CalledProcessError:
             failures.append(
-                f"- {service}: unable to read {pom_path.as_posix()} from base commit {base_sha}"
+                "- "
+                f"{service}: unable to read {pom_path.as_posix()} "
+                f"from comparison base commit {comparison_base_sha}"
             )
             continue
         except (ET.ParseError, ValueError) as exc:
