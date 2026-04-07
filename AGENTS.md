@@ -39,6 +39,13 @@ This project follows a phased implementation approach. Each phase must be comple
 - Follow atomic transaction patterns in transactions-service
 - Store JWT tokens in HttpOnly cookies on frontend
 
+## Version Bump Policy
+
+- CI pipeline enforcement is the source of truth for service version bumps.
+- For pull requests, if code changes under `backend/<service>/`, that service must bump the project `<version>` in `backend/<service>/pom.xml`.
+- Docs-only or infra-only changes can skip a service version bump.
+- Agent behavior should attempt version bumps, but CI is the final gate.
+
 ## Current Status
 
 Check `PLAN.md` for the current implementation phase and specific tasks. Each sub-phase includes both implementation tasks and testing requirements that must be completed.
