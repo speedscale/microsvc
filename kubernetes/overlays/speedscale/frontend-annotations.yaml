@@ -4,5 +4,5 @@ metadata:
   name: frontend
   namespace: banking-app
   annotations:
-    sidecar.speedscale.com/inject: "false"
+    sidecar.speedscale.com/inject: "true"
     sidecar.speedscale.com/tls-out: "true"
