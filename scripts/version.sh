@@ -177,6 +177,21 @@ validate_versions() {
     fi
 }
 
+# Update only frontend and simulation-client package.json files (not backend pom.xml)
+update_frontend_versions() {
+    local version=$(get_version)
+    echo "Updating frontend package.json files with version: $version"
+
+    for service in "${FRONTEND_SERVICES[@]}" "${SIMULATION_SERVICES[@]}"; do
+        local package_file="${service}/package.json"
+        if [ -f "$package_file" ]; then
+            sed -i.bak "s|\"version\": \"[0-9]*\.[0-9]*\.[0-9]*\"|\"version\": \"${version}\"|" "$package_file"
+            echo "Updated $package_file to version $version"
+            rm -f "${package_file}.bak"
+        fi
+    done
+}
+
 # Update Kubernetes manifests with the simple version tag
 update_k8s_manifests() {
     local tag=$(get_image_tag) # Explicitly use the simple tag
@@ -248,6 +263,9 @@ case "${1:-help}" in
         fi
         get_image_name "$2"
         ;;
+    "update-frontend")
+        update_frontend_versions
+        ;;
     "update-k8s")
         update_k8s_manifests
         ;;
@@ -276,6 +294,7 @@ case "${1:-help}" in
         echo "  tag                    - Get simple image tag (e.g., v1.2.3)"
         echo "  tag-sha                - Get image tag with git hash (e.g., v1.2.3-a1b2c3d)"
         echo "  image <service>        - Get full image name for service with SHA"
+        echo "  update-frontend        - Update frontend/simulation-client package.json with current version"
         echo "  update-k8s             - Update Kubernetes manifests with simple version"
         echo "  update-all             - Update all project files (pom.xml, package.json) with current version"
         echo "  validate               - Validate that all project files have consistent versions"
@@ -290,6 +309,7 @@ case "${1:-help}" in
         echo "  $0 tag                 # Get simple tag"
         echo "  $0 tag-sha             # Get tag with SHA"
         echo "  $0 image api-gateway   # Get image name for api-gateway"
+        echo "  $0 update-frontend     # Update frontend/simulation-client package.json"
         echo "  $0 update-k8s          # Update K8s manifests with simple version"
         echo "  $0 update-all          # Update all project files with current version"
         echo "  $0 validate            # Check version consistency"

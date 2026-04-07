@@ -41,10 +41,32 @@ This project follows a phased implementation approach. Each phase must be comple
 
 ## Version Bump Policy
 
-- CI pipeline enforcement is the source of truth for service version bumps.
-- For pull requests, if code changes under `backend/<service>/`, that service must bump the project `<version>` in `backend/<service>/pom.xml`.
-- Docs-only or infra-only changes can skip a service version bump.
-- Agent behavior should attempt version bumps, but CI is the final gate.
+The project uses a two-tier versioning model:
+
+**Global version** — stored in the root `VERSION` file (e.g. `1.4.1`). This is the canonical source of truth for Docker image tags and all non-Java package versions.
+
+**Per-service version** — each Java backend service tracks its own `<version>` in `backend/<service>/pom.xml`.
+
+### Rules for agents and developers
+
+| File | Who bumps it? | When? |
+|------|--------------|-------|
+| `backend/<service>/pom.xml` | Agent / developer | Required in any PR that modifies code under `backend/<service>/` |
+| `VERSION` | Agent / developer | When a global release version change is needed (e.g. a minor or major bump) |
+| `frontend/package.json` | **CI only — do not touch** | Auto-synced from `VERSION` on every merge to `master` |
+| `simulation-client/package.json` | **CI only — do not touch** | Auto-synced from `VERSION` on every merge to `master` |
+| `kubernetes/base/deployments/*.yaml` | **CI only — do not touch** | Auto-updated from `VERSION` on every merge to `master` |
+
+### How CI handles versioning (on merge to `master`)
+
+The `update-k8s-manifests` CI job runs `make update-frontend-version` followed by `make update-k8s-version` and commits any resulting changes back to the branch. This is implemented via:
+
+- `scripts/version.sh update-frontend` — syncs `frontend/package.json` and `simulation-client/package.json` to `VERSION`
+- `scripts/version.sh update-k8s` — updates image tags in `kubernetes/base/deployments/`
+
+**Do NOT manually bump `frontend/package.json` or `simulation-client/package.json`.** Doing so creates merge conflicts across concurrent branches because multiple agents will all bump from the same base version independently. Let CI handle it.
+
+Docs-only or infra-only changes can skip a `pom.xml` version bump. CI is the final enforcement gate.
 
 ## Current Status
 
