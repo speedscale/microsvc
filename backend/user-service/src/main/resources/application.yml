@@ -64,9 +64,9 @@ management:
 # Logging
 logging:
   level:
-    com.banking.userservice: DEBUG
+    com.banking.userservice: ${APP_LOG_LEVEL:INFO}
     org.springframework.web: INFO
-    org.springframework.security: DEBUG
+    org.springframework.security: ${SECURITY_LOG_LEVEL:WARN}
   pattern:
     console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
 
