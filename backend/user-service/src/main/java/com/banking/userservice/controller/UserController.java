@@ -226,7 +226,7 @@ public class UserController {
     public ResponseEntity<?> checkUsernameAvailability(@RequestParam String username) {
         Span span = tracer.spanBuilder("UserController.checkUsernameAvailability").startSpan();
         try {
-            logger.info("Checking username availability: {}", username);
+            logger.debug("Checking username availability: {}", username);
 
             boolean exists = userService.usernameExists(username);
 
@@ -254,7 +254,7 @@ public class UserController {
     public ResponseEntity<?> checkEmailAvailability(@RequestParam String email) {
         Span span = tracer.spanBuilder("UserController.checkEmailAvailability").startSpan();
         try {
-            logger.info("Checking email availability: {}", email);
+            logger.debug("Checking email availability: {}", email);
 
             boolean exists = userService.emailExists(email);
 

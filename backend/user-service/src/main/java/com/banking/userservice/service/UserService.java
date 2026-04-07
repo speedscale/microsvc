@@ -17,13 +17,22 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Service
 @Transactional
 public class UserService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    private static final long AVAILABILITY_CACHE_TTL_MILLIS = 5000;
+
+    private final ConcurrentMap<String, AvailabilityCacheEntry> usernameAvailabilityCache = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, AvailabilityCacheEntry> emailAvailabilityCache = new ConcurrentHashMap<>();
+
+    private record AvailabilityCacheEntry(boolean exists, long expiresAtMillis) {}
 
     @Autowired
     private UserRepository userRepository;
@@ -81,6 +90,7 @@ public class UserService {
 
             User savedUser = userRepository.save(user);
             logger.info("User registered successfully: {}", savedUser.getUsername());
+            clearAvailabilityCacheForUser(savedUser.getUsername(), savedUser.getEmail());
             
             registeredUsersCounter.add(1);
             
@@ -246,7 +256,15 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public boolean usernameExists(String username) {
-        return userRepository.existsByUsername(username);
+        String cacheKey = normalizeAvailabilityKey(username);
+        Boolean cached = getFromCache(usernameAvailabilityCache, cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
+        boolean exists = userRepository.existsByUsername(username);
+        putInCache(usernameAvailabilityCache, cacheKey, exists);
+        return exists;
     }
 
     /**
@@ -256,6 +274,43 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public boolean emailExists(String email) {
-        return userRepository.existsByEmail(email);
+        String cacheKey = normalizeAvailabilityKey(email);
+        Boolean cached = getFromCache(emailAvailabilityCache, cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
+        boolean exists = userRepository.existsByEmail(email);
+        putInCache(emailAvailabilityCache, cacheKey, exists);
+        return exists;
+    }
+
+    private static String normalizeAvailabilityKey(String value) {
+        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static Boolean getFromCache(ConcurrentMap<String, AvailabilityCacheEntry> cache, String key) {
+        AvailabilityCacheEntry entry = cache.get(key);
+        long now = System.currentTimeMillis();
+        if (entry == null) {
+            return null;
+        }
+
+        if (entry.expiresAtMillis <= now) {
+            cache.remove(key, entry);
+            return null;
+        }
+
+        return entry.exists;
+    }
+
+    private static void putInCache(ConcurrentMap<String, AvailabilityCacheEntry> cache, String key, boolean exists) {
+        long expiresAtMillis = System.currentTimeMillis() + AVAILABILITY_CACHE_TTL_MILLIS;
+        cache.put(key, new AvailabilityCacheEntry(exists, expiresAtMillis));
+    }
+
+    private void clearAvailabilityCacheForUser(String username, String email) {
+        usernameAvailabilityCache.remove(normalizeAvailabilityKey(username));
+        emailAvailabilityCache.remove(normalizeAvailabilityKey(email));
     }
 }
