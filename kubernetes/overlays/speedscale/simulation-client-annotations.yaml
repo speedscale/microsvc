@@ -4,7 +4,7 @@ metadata:
   name: simulation-client
   namespace: banking-app
   annotations:
-    sidecar.speedscale.com/inject: "false"
+    sidecar.speedscale.com/inject: "true"
     speedscale.com/service-name: "simulation-client"
 spec:
   template:
