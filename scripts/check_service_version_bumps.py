@@ -67,6 +67,7 @@ def merge_base(commit_a, commit_b):
     return run_git(["merge-base", commit_a, commit_b]).strip()
 
 
+
 def main():
     if len(sys.argv) != 3:
         print(

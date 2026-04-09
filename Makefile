@@ -222,6 +222,9 @@ version-set:
 	fi
 	@./scripts/version.sh set $(VERSION)
 
+update-frontend-version:
+	@./scripts/version.sh update-frontend
+
 update-k8s-version:
 	@./scripts/version.sh update-k8s
 
@@ -286,6 +289,7 @@ help:
 	@echo "  version-info       - Show version information"
 	@echo "  version-bump       - Bump version (BUMP_TYPE=<patch|minor|major>)"
 	@echo "  version-set        - Set version (VERSION=<version>)"
+	@echo "  update-frontend-version - Sync frontend/simulation-client package.json version from VERSION file"
 	@echo "  update-k8s-version - Update Kubernetes manifests with current version"
 	@echo ""
 	@echo "Utilities:"
