@@ -5,6 +5,18 @@ resources:
 - ../../base
 
 patches:
+# Add Istio injection and Speedscale labels to the existing banking-app namespace
+- target:
+    version: v1
+    kind: Namespace
+    name: banking-app
+  patch: |-
+    - op: add
+      path: /metadata/labels/istio-injection
+      value: enabled
+    - op: add
+      path: /metadata/labels/speedscale
+      value: "true"
 - path: user-service-annotations.yaml
 - path: accounts-service-annotations.yaml
 - path: transactions-service-annotations.yaml
