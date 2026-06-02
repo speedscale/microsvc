@@ -3,8 +3,10 @@ package main
 import (
 	"log"
 	"net"
+	"net/http"
 	"os"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 
 	"github.com/speedscale/microsvc/fraud-service/internal/fraud"
@@ -13,10 +15,10 @@ import (
 )
 
 func main() {
-	port := os.Getenv("GRPC_PORT")
-	if port == "" {
-		port = "50051"
-	}
+	port := envOrDefault("GRPC_PORT", "50051")
+	metricsPort := envOrDefault("METRICS_PORT", "9091")
+
+	go serveMetrics(metricsPort)
 
 	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
@@ -30,4 +32,22 @@ func main() {
 	if err := srv.Serve(lis); err != nil {
 		log.Fatalf("server exited: %v", err)
 	}
+}
+
+// serveMetrics exposes Prometheus metrics on a dedicated HTTP port so the
+// gRPC port stays protocol-pure.
+func serveMetrics(port string) {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+	log.Printf("fraud-service metrics on :%s/metrics", port)
+	if err := http.ListenAndServe(":"+port, mux); err != nil {
+		log.Printf("metrics server stopped: %v", err)
+	}
+}
+
+func envOrDefault(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
 }
