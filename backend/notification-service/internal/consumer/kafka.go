@@ -8,6 +8,8 @@ import (
 	"time"
 
 	kafka "github.com/segmentio/kafka-go"
+
+	"github.com/speedscale/microsvc/notification-service/internal/metrics"
 )
 
 const ringSize = 1000
@@ -39,6 +41,7 @@ func (r *RingBuffer) Push(e *TransactionEvent) {
 	if r.count < ringSize {
 		r.count++
 	}
+	metrics.BufferEvents.Set(float64(r.count))
 }
 
 // Latest returns up to n events, newest first.
@@ -105,17 +108,20 @@ func (c *Consumer) Run(ctx context.Context) {
 				log.Printf("kafka consumer stopped: %v", ctx.Err())
 				return
 			}
+			metrics.ConsumeErrors.Inc()
 			log.Printf("kafka read error: %v", err)
 			continue
 		}
 		var evt TransactionEvent
 		if err := json.Unmarshal(m.Value, &evt); err != nil {
+			metrics.ConsumeErrors.Inc()
 			log.Printf("unmarshal error (offset=%d): %v", m.Offset, err)
 			continue
 		}
 		log.Printf("event: id=%s account=%s user=%s type=%s status=%s amount=%.2f",
 			evt.TransactionID, evt.AccountID, evt.UserID,
 			evt.TransactionType, evt.Status, evt.Amount)
+		metrics.EventsConsumed.WithLabelValues(evt.TransactionType, evt.Status).Inc()
 		c.Buffer.Push(&evt)
 	}
 }

@@ -25,14 +25,18 @@ spec:
       serviceAccountName: banking-app-sa
       containers:
       - name: fraud-service
-        image: ghcr.io/speedscale/microsvc/fraud-service:v1.4.1
+        image: ghcr.io/speedscale/microsvc/fraud-service:v1.4.2
         imagePullPolicy: Always
         ports:
         - containerPort: 50051
           name: grpc
+        - containerPort: 9091
+          name: metrics
         env:
         - name: GRPC_PORT
           value: "50051"
+        - name: METRICS_PORT
+          value: "9091"
         envFrom:
         - configMapRef:
             name: app-config

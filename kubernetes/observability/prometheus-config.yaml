@@ -48,3 +48,15 @@ data:
           - targets: ['frontend:3000']
         metrics_path: '/metrics'
         scrape_interval: 30s
+
+      - job_name: 'fraud-service'
+        static_configs:
+          - targets: ['banking-fraud:9091']
+        metrics_path: '/metrics'
+        scrape_interval: 30s
+
+      - job_name: 'notification-service'
+        static_configs:
+          - targets: ['banking-notification:80']
+        metrics_path: '/metrics'
+        scrape_interval: 30s

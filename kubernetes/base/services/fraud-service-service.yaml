@@ -14,6 +14,10 @@ spec:
     targetPort: 50051
     protocol: TCP
     name: grpc
+  - port: 9091
+    targetPort: 9091
+    protocol: TCP
+    name: metrics
   selector:
     app: banking-fraud
     app.kubernetes.io/name: banking-app

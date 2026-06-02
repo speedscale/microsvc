@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/speedscale/microsvc/notification-service/internal/consumer"
 )
 
@@ -20,6 +21,7 @@ func NewHandler(buf *consumer.RingBuffer) http.Handler {
 	h := &Handler{buf: buf}
 	r := mux.NewRouter()
 	r.HandleFunc("/health", h.health).Methods(http.MethodGet)
+	r.Handle("/metrics", promhttp.Handler()).Methods(http.MethodGet)
 	r.HandleFunc("/notifications", h.list).Methods(http.MethodGet)
 	r.HandleFunc("/notifications/{user_id}", h.byUser).Methods(http.MethodGet)
 	return r
