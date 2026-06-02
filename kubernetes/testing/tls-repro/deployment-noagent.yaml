@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: treasury-client-noagent
+  namespace: otel-tls-repro
+  labels:
+    app: treasury-client
+    variant: noagent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: treasury-client
+      variant: noagent
+  template:
+    metadata:
+      labels:
+        app: treasury-client
+        variant: noagent
+    spec:
+      containers:
+      - name: client
+        image: eclipse-temurin:21-jdk
+        command: ["java", "/app/TreasuryClient.java"]
+        env:
+        - name: REPRO_MODE
+          value: noagent
+        - name: FRESH_CLIENT
+          value: "true"
+        volumeMounts:
+        - name: src
+          mountPath: /app
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+      volumes:
+      - name: src
+        configMap:
+          name: treasury-client-src

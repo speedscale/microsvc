@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: treasury-client-agent
+  namespace: otel-tls-repro
+  labels:
+    app: treasury-client
+    variant: agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: treasury-client
+      variant: agent
+  template:
+    metadata:
+      labels:
+        app: treasury-client
+        variant: agent
+    spec:
+      initContainers:
+      - name: nettap-agent-installer
+        image: gcr.io/speedscale/nettap:v0.1.25
+        command: ["cp", "/usr/local/share/nettap-agent.jar", "/nettap-agent/nettap-agent.jar"]
+        volumeMounts:
+        - name: nettap-agent
+          mountPath: /nettap-agent
+      containers:
+      - name: client
+        image: eclipse-temurin:21-jdk
+        command:
+        - java
+        - -javaagent:/nettap-agent/nettap-agent.jar=speedscale-nettap.speedscale:8000
+        - /app/TreasuryClient.java
+        env:
+        - name: REPRO_MODE
+          value: agent
+        - name: FRESH_CLIENT
+          value: "true"
+        volumeMounts:
+        - name: src
+          mountPath: /app
+        - name: nettap-agent
+          mountPath: /nettap-agent
+          readOnly: true
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+      volumes:
+      - name: src
+        configMap:
+          name: treasury-client-src
+      - name: nettap-agent
+        emptyDir: {}
