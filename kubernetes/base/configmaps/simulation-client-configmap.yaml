@@ -14,6 +14,7 @@ data:
   
   # Target application settings
   TARGET_BASE_URL: "http://banking-frontend:80"
+  NOTIFICATION_SERVICE_URL: "http://banking-notification:80"
   REQUEST_TIMEOUT: "10000"
   
   # Simulation settings

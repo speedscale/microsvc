@@ -38,6 +38,11 @@ spring:
     url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:banking_app}
   main:
     web-application-type: servlet
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS:banking-kafka:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 # JWT Configuration
 jwt:
@@ -48,6 +53,16 @@ jwt:
 accounts:
   service:
     url: ${ACCOUNTS_SERVICE_URL:http://accounts-service:8080}
+
+grpc:
+  client:
+    fraud-service:
+      address: static://${FRAUD_SERVICE_HOST:banking-fraud}:${FRAUD_SERVICE_PORT:50051}
+      negotiation-type: plaintext
+
+kafka:
+  topic:
+    transactions: ${KAFKA_TOPIC:transaction-events}
 
 # Logging Configuration
 logging:

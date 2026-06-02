@@ -84,8 +84,32 @@ jobs:
         PROXYMOCK_API_KEY: ${{ secrets.PROXYMOCK_API_KEY }}
       run: ./scripts/run-proxymock-validation.sh
   
+  test-go-services:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: backend/fraud-service/go.mod
+        cache-dependency-path: |
+          backend/fraud-service/go.sum
+          backend/notification-service/go.sum
+
+    - name: Test fraud-service
+      run: |
+        cd backend/fraud-service
+        go test ./...
+
+    - name: Test notification-service
+      run: |
+        cd backend/notification-service
+        go test ./...
+
   build-and-push:
-    needs: [test-backend, test-frontend]
+    needs: [test-backend, test-frontend, test-go-services]
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     
@@ -95,13 +119,15 @@ jobs:
     
     strategy:
       matrix:
-        service: 
+        service:
           - user-service
           - accounts-service
           - transactions-service
           - api-gateway
           - frontend
           - simulation-client
+          - fraud-service
+          - notification-service
     
     steps:
     - uses: actions/checkout@v4

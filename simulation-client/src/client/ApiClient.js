@@ -170,6 +170,17 @@ class ApiClient {
     });
   }
 
+  // Notification service endpoints
+  async getNotifications(userId) {
+    return this.retryRequest(async () => {
+      const response = await axios.get(`${config.target.notificationServiceUrl}/notifications/${userId}`, {
+        timeout: this.timeout,
+        headers: { 'User-Agent': 'Banking-Simulation-Client/1.0.0' }
+      });
+      return response.data;
+    });
+  }
+
   // Health check
   async healthCheck() {
     return this.retryRequest(async () => {

@@ -1,7 +1,10 @@
 package com.banking.transactionsservice.service;
 
+import com.banking.transactions.grpc.FraudCheckResponse;
 import com.banking.transactionsservice.client.AccountsServiceClient;
+import com.banking.transactionsservice.client.FraudServiceClient;
 import com.banking.transactionsservice.dto.*;
+import com.banking.transactionsservice.event.TransactionEventProducer;
 import com.banking.transactionsservice.entity.Transaction;
 import com.banking.transactionsservice.repository.TransactionRepository;
 import io.opentelemetry.api.metrics.DoubleHistogram;
@@ -10,6 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -24,6 +29,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class TransactionServiceTest {
 
     @Mock
@@ -31,6 +37,12 @@ class TransactionServiceTest {
 
     @Mock
     private AccountsServiceClient accountsServiceClient;
+
+    @Mock
+    private FraudServiceClient fraudServiceClient;
+
+    @Mock
+    private TransactionEventProducer transactionEventProducer;
 
     @Mock
     private DoubleHistogram depositAmountHistogram;
@@ -53,6 +65,10 @@ class TransactionServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Fraud service approves all transactions by default in unit tests
+        when(fraudServiceClient.checkTransaction(anyString(), anyString(), anyDouble(), anyString()))
+                .thenReturn(FraudCheckResponse.newBuilder().setApproved(true).setRiskScore(0.0).setReason("OK").build());
+
         testTransaction = new Transaction();
         testTransaction.setId(1L);
         testTransaction.setUserId(testUserId);

@@ -20,19 +20,27 @@ resources:
   - configmaps/simulation-client-configmap.yaml
   - configmaps/simulation-client-secret.yaml
   
+  # Kafka
+  - kafka/kafka-deployment.yaml
+  - kafka/kafka-service.yaml
+
   # Microservice Deployments
   - deployments/user-service-deployment.yaml
   - deployments/accounts-service-deployment.yaml
   - deployments/transactions-service-deployment.yaml
+  - deployments/fraud-service-deployment.yaml
+  - deployments/notification-service-deployment.yaml
   - deployments/api-gateway-deployment.yaml
   - deployments/frontend-deployment.yaml
   - deployments/simulation-client-deployment.yaml
   - deployments/simulation-client-hpa.yaml
-  
+
   # Microservice Services
   - services/user-service-service.yaml
   - services/accounts-service-service.yaml
   - services/transactions-service-service.yaml
+  - services/fraud-service-service.yaml
+  - services/notification-service-service.yaml
   - services/api-gateway-service.yaml
   - services/frontend-service.yaml
   - services/frontend-service-nodeport.yaml

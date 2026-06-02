@@ -1,0 +1,8 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-fraud
+  namespace: banking-app
+  annotations:
+    sidecar.speedscale.com/inject: "false"
+    capture.speedscale.com/enabled: "true"

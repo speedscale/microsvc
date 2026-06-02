@@ -1,0 +1,20 @@
+syntax = "proto3";
+package fraud.v1;
+option java_package = "com.banking.transactions.grpc";
+option java_outer_classname = "FraudProto";
+option java_multiple_files = true;
+
+service FraudChecker {
+  rpc CheckTransaction(TransactionRequest) returns (FraudCheckResponse);
+}
+message TransactionRequest {
+  string account_id = 1;
+  string user_id = 2;
+  double amount = 3;
+  string transaction_type = 4;
+}
+message FraudCheckResponse {
+  bool approved = 1;
+  double risk_score = 2;
+  string reason = 3;
+}

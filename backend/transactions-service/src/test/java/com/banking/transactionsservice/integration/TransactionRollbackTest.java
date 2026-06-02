@@ -1,10 +1,12 @@
 package com.banking.transactionsservice.integration;
 
 import com.banking.transactionsservice.client.AccountsServiceClient;
+import com.banking.transactionsservice.client.FraudServiceClient;
 import com.banking.transactionsservice.dto.DepositRequest;
 import com.banking.transactionsservice.dto.TransferRequest;
 import com.banking.transactionsservice.dto.WithdrawRequest;
 import com.banking.transactionsservice.entity.Transaction;
+import com.banking.transactionsservice.event.TransactionEventProducer;
 import com.banking.transactionsservice.repository.TransactionRepository;
 import com.banking.transactionsservice.service.TransactionService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +21,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
+import com.banking.transactions.grpc.FraudCheckResponse;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -40,6 +44,12 @@ class TransactionRollbackTest {
     private AccountsServiceClient accountsServiceClient;
 
     @MockBean
+    private FraudServiceClient fraudServiceClient;
+
+    @MockBean
+    private TransactionEventProducer transactionEventProducer;
+
+    @MockBean
     private HttpServletRequest httpServletRequest;
 
     private Long testUserId = 1L;
@@ -48,8 +58,10 @@ class TransactionRollbackTest {
 
     @BeforeEach
     void setUp() {
-        // Clean up database before each test
         transactionRepository.deleteAll();
+        // Fraud service approves all transactions by default in tests
+        when(fraudServiceClient.checkTransaction(anyString(), anyString(), anyDouble(), anyString()))
+                .thenReturn(FraudCheckResponse.newBuilder().setApproved(true).setRiskScore(0.0).setReason("OK").build());
     }
 
     @Test
