@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-transactions
+  namespace: banking-app
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: nettap-agent-installer
+        image: gcr.io/speedscale/nettap:v0.1.25
+        command: ["cp", "/usr/local/share/nettap-agent.jar", "/nettap-agent/nettap-agent.jar"]
+        volumeMounts:
+        - name: nettap-agent
+          mountPath: /nettap-agent
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 2100
+      containers:
+      - name: transactions-service
+        env:
+        - name: JAVA_TOOL_OPTIONS
+          value: "-javaagent:/nettap-agent/nettap-agent.jar"
+        volumeMounts:
+        - name: nettap-agent
+          mountPath: /nettap-agent
+          readOnly: true
+      volumes:
+      - name: nettap-agent
+        emptyDir: {}

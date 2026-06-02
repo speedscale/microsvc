@@ -1,0 +1,40 @@
+# Strategic merge patch applied to each Java service deployment.
+# Adds an init container that copies the Speedscale nettap JVM agent JAR
+# from the nettap image into a shared emptyDir, then appends -javaagent
+# to JAVA_OPTS so the main container loads it at startup.
+# The agent connects back to speedscale-nettap:8000 (internalTrafficPolicy: Local
+# ensures it reaches the nettap pod on the same node).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder  # overridden by kustomize target selector
+  namespace: banking-app
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: nettap-agent-installer
+        image: gcr.io/speedscale/nettap:v0.1.25
+        command: ["cp", "/usr/local/share/nettap-agent.jar", "/nettap-agent/nettap-agent.jar"]
+        volumeMounts:
+        - name: nettap-agent
+          mountPath: /nettap-agent
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 2100
+      containers:
+      - name: placeholder  # matched by name in container list merge
+        env:
+        - name: JAVA_OPTS
+          value: "-Xms64m -Xmx192m -XX:MaxMetaspaceSize=96m -XX:ReservedCodeCacheSize=32m -XX:MaxDirectMemorySize=16m -XX:+UseSerialGC -XX:+UseStringDeduplication -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom -Dspring.main.lazy-initialization=true -javaagent:/nettap-agent/nettap-agent.jar"
+        volumeMounts:
+        - name: nettap-agent
+          mountPath: /nettap-agent
+          readOnly: true
+      volumes:
+      - name: nettap-agent
+        emptyDir: {}
