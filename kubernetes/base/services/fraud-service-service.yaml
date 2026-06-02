@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: banking-fraud
+  namespace: banking-app
+  labels:
+    app.kubernetes.io/name: banking-app
+    app.kubernetes.io/component: microservice
+    app.kubernetes.io/service: fraud-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 50051
+    targetPort: 50051
+    protocol: TCP
+    name: grpc
+  selector:
+    app: banking-fraud
+    app.kubernetes.io/name: banking-app
+    app.kubernetes.io/component: microservice

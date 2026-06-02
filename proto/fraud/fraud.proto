@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package fraud.v1;
+
+option go_package = "github.com/speedscale/microsvc/fraud-service/gen/fraud/v1;fraudv1";
+
+service FraudChecker {
+  rpc CheckTransaction(TransactionRequest) returns (FraudCheckResponse);
+}
+
+message TransactionRequest {
+  string account_id = 1;
+  string user_id = 2;
+  double amount = 3;
+  // e.g. "DEPOSIT", "WITHDRAWAL", "TRANSFER"
+  string transaction_type = 4;
+}
+
+message FraudCheckResponse {
+  bool approved = 1;
+  // risk score in range 0.0-1.0
+  double risk_score = 2;
+  string reason = 3;
+}

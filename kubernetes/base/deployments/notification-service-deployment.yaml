@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-notification
+  namespace: banking-app
+  labels:
+    app.kubernetes.io/name: banking-app
+    app.kubernetes.io/component: microservice
+    app.kubernetes.io/service: notification-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: banking-notification
+      app.kubernetes.io/name: banking-app
+      app.kubernetes.io/component: microservice
+  template:
+    metadata:
+      labels:
+        app: banking-notification
+        app.kubernetes.io/name: banking-app
+        app.kubernetes.io/component: microservice
+        app.kubernetes.io/service: notification-service
+    spec:
+      serviceAccountName: banking-app-sa
+      initContainers:
+      - name: wait-for-kafka
+        image: busybox
+        command: ['sh', '-c', 'echo "[notification-service] Waiting for Kafka..."; until nc -z banking-kafka 9092; do sleep 1; done; echo "[notification-service] Kafka ready!"']
+      containers:
+      - name: notification-service
+        image: ghcr.io/speedscale/microsvc/notification-service:v1.4.1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: KAFKA_BROKERS
+          value: "banking-kafka:9092"
+        - name: KAFKA_TOPIC
+          value: "transaction-events"
+        - name: HTTP_PORT
+          value: "8080"
+        envFrom:
+        - configMapRef:
+            name: app-config
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6

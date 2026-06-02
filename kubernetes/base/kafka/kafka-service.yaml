@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: banking-kafka
+  namespace: banking-app
+  labels:
+    app.kubernetes.io/name: banking-app
+    app.kubernetes.io/component: messaging
+    app.kubernetes.io/service: kafka
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9092
+    targetPort: 9092
+    protocol: TCP
+    name: plaintext
+  selector:
+    app: banking-kafka
+    app.kubernetes.io/name: banking-app
+    app.kubernetes.io/component: messaging

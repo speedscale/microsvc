@@ -1,8 +1,10 @@
 package com.banking.transactionsservice.service;
 
 import com.banking.transactionsservice.client.AccountsServiceClient;
+import com.banking.transactionsservice.client.FraudServiceClient;
 import com.banking.transactionsservice.dto.*;
 import com.banking.transactionsservice.entity.Transaction;
+import com.banking.transactionsservice.event.TransactionEventProducer;
 import com.banking.transactionsservice.repository.TransactionRepository;
 import io.opentelemetry.api.metrics.DoubleHistogram;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,6 +29,12 @@ public class TransactionService {
     
     @Autowired
     private AccountsServiceClient accountsServiceClient;
+
+    @Autowired
+    private FraudServiceClient fraudServiceClient;
+
+    @Autowired
+    private TransactionEventProducer transactionEventProducer;
 
     @Autowired
     private DoubleHistogram depositAmountHistogram;
@@ -54,9 +62,17 @@ public class TransactionService {
     }
     
     public synchronized TransactionResponse deposit(DepositRequest request, Long userId, HttpServletRequest httpRequest) {
-        logger.info("Processing deposit for user: {}, account: {}, amount: {}", 
+        logger.info("Processing deposit for user: {}, account: {}, amount: {}",
                    userId, request.getAccountId(), request.getAmount());
-        
+
+        // Fraud check before processing
+        var fraudResult = fraudServiceClient.checkTransaction(
+                String.valueOf(request.getAccountId()), String.valueOf(userId),
+                request.getAmount(), "DEPOSIT");
+        if (!fraudResult.getApproved()) {
+            throw new RuntimeException("Transaction rejected by fraud check: " + fraudResult.getReason());
+        }
+
         // Validate account ownership
         if (!accountsServiceClient.validateAccountOwnership(request.getAccountId(), httpRequest)) {
             throw new RuntimeException("Account not found or access denied");
@@ -93,9 +109,10 @@ public class TransactionService {
             
             Transaction savedTransaction = transactionRepository.save(transaction);
             logger.info("Deposit completed successfully for transaction: {}", savedTransaction.getId());
-            
+
             depositAmountHistogram.record(request.getAmount().doubleValue());
-            
+            transactionEventProducer.publishTransactionEvent(savedTransaction);
+
             return convertToResponse(savedTransaction);
         } catch (Exception e) {
             // Mark transaction as failed
@@ -109,9 +126,17 @@ public class TransactionService {
     }
     
     public synchronized TransactionResponse withdraw(WithdrawRequest request, Long userId, HttpServletRequest httpRequest) {
-        logger.info("Processing withdrawal for user: {}, account: {}, amount: {}", 
+        logger.info("Processing withdrawal for user: {}, account: {}, amount: {}",
                    userId, request.getAccountId(), request.getAmount());
-        
+
+        // Fraud check before processing
+        var fraudResult = fraudServiceClient.checkTransaction(
+                String.valueOf(request.getAccountId()), String.valueOf(userId),
+                request.getAmount(), "WITHDRAWAL");
+        if (!fraudResult.getApproved()) {
+            throw new RuntimeException("Transaction rejected by fraud check: " + fraudResult.getReason());
+        }
+
         // Validate account ownership
         if (!accountsServiceClient.validateAccountOwnership(request.getAccountId(), httpRequest)) {
             throw new RuntimeException("Account not found or access denied");
@@ -153,9 +178,10 @@ public class TransactionService {
             
             Transaction savedTransaction = transactionRepository.save(transaction);
             logger.info("Withdrawal completed successfully for transaction: {}", savedTransaction.getId());
-            
+
             withdrawAmountHistogram.record(request.getAmount().doubleValue());
-            
+            transactionEventProducer.publishTransactionEvent(savedTransaction);
+
             return convertToResponse(savedTransaction);
         } catch (Exception e) {
             // Mark transaction as failed
@@ -169,9 +195,17 @@ public class TransactionService {
     }
     
     public synchronized TransactionResponse transfer(TransferRequest request, Long userId, HttpServletRequest httpRequest) {
-        logger.info("Processing transfer for user: {}, from: {}, to: {}, amount: {}", 
+        logger.info("Processing transfer for user: {}, from: {}, to: {}, amount: {}",
                    userId, request.getFromAccountId(), request.getToAccountId(), request.getAmount());
-        
+
+        // Fraud check before processing
+        var fraudResult = fraudServiceClient.checkTransaction(
+                String.valueOf(request.getFromAccountId()), String.valueOf(userId),
+                request.getAmount(), "TRANSFER");
+        if (!fraudResult.getApproved()) {
+            throw new RuntimeException("Transaction rejected by fraud check: " + fraudResult.getReason());
+        }
+
         // Validate from account ownership
         if (!accountsServiceClient.validateAccountOwnership(request.getFromAccountId(), httpRequest)) {
             throw new RuntimeException("From account not found or access denied");
@@ -227,9 +261,10 @@ public class TransactionService {
             
             Transaction savedTransaction = transactionRepository.save(transaction);
             logger.info("Transfer completed successfully for transaction: {}", savedTransaction.getId());
-            
+
             transferAmountHistogram.record(request.getAmount().doubleValue());
-            
+            transactionEventProducer.publishTransactionEvent(savedTransaction);
+
             return convertToResponse(savedTransaction);
         } catch (Exception e) {
             // Mark transaction as failed

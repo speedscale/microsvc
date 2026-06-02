@@ -11,6 +11,7 @@ const config = {
   // Target application settings
   target: {
     baseUrl: process.env.TARGET_BASE_URL || 'http://frontend:3000',
+    notificationServiceUrl: process.env.NOTIFICATION_SERVICE_URL || 'http://banking-notification:80',
     timeout: parseInt(process.env.REQUEST_TIMEOUT) || 10000
   },
 

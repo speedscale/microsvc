@@ -59,6 +59,11 @@ class UserWorkflow {
     await this.getAccountsAndBalances(user);
     await this.randomDelay();
 
+    // Step 7: Optionally check notifications (30% of the time)
+    if (Math.random() < 0.3) {
+      await this.checkNotifications(user);
+    }
+
     logger.info('Existing user workflow completed', { user: user.toLogData() });
   }
 
@@ -386,6 +391,28 @@ class UserWorkflow {
         error: error.message
       });
       throw error;
+    }
+  }
+
+  async checkNotifications(user) {
+    try {
+      logger.debug('Checking notifications', { userId: user.id });
+
+      const notifications = await this.apiClient.getNotifications(user.id);
+
+      logger.info('Retrieved notifications', {
+        userId: user.id,
+        notificationCount: notifications?.length || 0
+      });
+
+      user.updateLastAction();
+      return notifications;
+    } catch (error) {
+      logger.warn('Failed to get notifications', {
+        userId: user.id,
+        error: error.message
+      });
+      // Don't throw - notification check is optional
     }
   }
 
