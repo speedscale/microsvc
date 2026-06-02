@@ -1,8 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
+  name: banking-frontend
   namespace: banking-app
   annotations:
-    sidecar.speedscale.com/inject: "true"
-    sidecar.speedscale.com/tls-out: "true"
+    sidecar.speedscale.com/inject: "false"
+    capture.speedscale.com/enabled: "true"

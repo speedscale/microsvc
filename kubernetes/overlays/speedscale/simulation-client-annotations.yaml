@@ -1,13 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: simulation-client
+  name: banking-sim
   namespace: banking-app
   annotations:
-    sidecar.speedscale.com/inject: "true"
-    speedscale.com/service-name: "simulation-client"
-spec:
-  template:
-    metadata:
-      annotations:
-        speedscale.com/enabled: "false"
+    sidecar.speedscale.com/inject: "false"

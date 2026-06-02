@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres
+  name: banking-postgres
   namespace: banking-app
   labels:
     app.kubernetes.io/name: banking-app
@@ -10,13 +10,13 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: postgres
+      app: banking-postgres
       app.kubernetes.io/name: banking-app
       app.kubernetes.io/component: database
   template:
     metadata:
       labels:
-        app: postgres
+        app: banking-postgres
         app.kubernetes.io/name: banking-app
         app.kubernetes.io/component: database
     spec:
@@ -35,7 +35,7 @@ spec:
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: postgres-secret
+              name: banking-postgres-secret
               key: password
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata
@@ -75,7 +75,7 @@ spec:
       volumes:
       - name: postgres-storage
         persistentVolumeClaim:
-          claimName: postgres-pvc
+          claimName: banking-postgres-pvc
       - name: postgres-init
         configMap:
-          name: postgres-init-script
+          name: banking-postgres-init

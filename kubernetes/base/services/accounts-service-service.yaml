@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: accounts-service
+  name: banking-accounts
   namespace: banking-app
   labels:
     app.kubernetes.io/name: banking-app
@@ -15,6 +15,6 @@ spec:
     protocol: TCP
     name: http
   selector:
-    app: accounts-service
+    app: banking-accounts
     app.kubernetes.io/name: banking-app
     app.kubernetes.io/component: microservice

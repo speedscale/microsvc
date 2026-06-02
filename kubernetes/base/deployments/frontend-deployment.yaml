@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
+  name: banking-frontend
   namespace: banking-app
   labels:
-    app: frontend
+    app: banking-frontend
     app.kubernetes.io/name: banking-app
     app.kubernetes.io/component: frontend
     app.kubernetes.io/managed-by: kustomize
@@ -14,11 +14,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: frontend
+      app: banking-frontend
   template:
     metadata:
       labels:
-        app: frontend
+        app: banking-frontend
         app.kubernetes.io/name: banking-app
         app.kubernetes.io/component: frontend
         app.kubernetes.io/service: frontend
@@ -33,7 +33,7 @@ spec:
           name: http
         envFrom:
         - configMapRef:
-            name: frontend-config
+            name: banking-frontend-config
         resources:
           requests:
             memory: "128Mi"

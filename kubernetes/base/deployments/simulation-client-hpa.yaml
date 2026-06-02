@@ -10,7 +10,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: simulation-client
+    name: banking-sim
   
   minReplicas: 1
   maxReplicas: 5

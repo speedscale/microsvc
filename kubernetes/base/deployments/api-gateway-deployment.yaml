@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api-gateway
+  name: banking-gateway
   namespace: banking-app
   labels:
     app.kubernetes.io/name: banking-app
@@ -11,13 +11,13 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: api-gateway
+      app: banking-gateway
       app.kubernetes.io/name: banking-app
       app.kubernetes.io/component: gateway
   template:
     metadata:
       labels:
-        app: api-gateway
+        app: banking-gateway
         app.kubernetes.io/name: banking-app
         app.kubernetes.io/component: gateway
         app.kubernetes.io/service: api-gateway
@@ -36,7 +36,7 @@ spec:
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
-              name: jwt-secret
+              name: banking-jwt-secret
               key: secret
         - name: JAVA_OPTS
           value: "-Xms64m -Xmx192m -XX:MaxMetaspaceSize=96m -XX:ReservedCodeCacheSize=32m -XX:MaxDirectMemorySize=16m -XX:+UseSerialGC -XX:+UseStringDeduplication -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom -Dspring.main.lazy-initialization=true"
@@ -44,7 +44,7 @@ spec:
         - configMapRef:
             name: app-config
         - configMapRef:
-            name: api-gateway-config
+            name: banking-gateway-config
         resources:
           requests:
             memory: "256Mi"
@@ -79,4 +79,4 @@ spec:
       initContainers:
       - name: wait-for-services
         image: busybox:1.35
-        command: ['sh', '-c', 'echo "[api-gateway] Waiting for microservices..."; services="user-service:80 accounts-service:80 transactions-service:80"; for service in $services; do while ! nc -z ${service%:*} ${service#*:}; do echo "[api-gateway] Waiting for $service..."; sleep 1; done; echo "[api-gateway] ✓ $service ready"; done; echo "[api-gateway] All services ready!"']
+        command: ['sh', '-c', 'echo "[api-gateway] Waiting for microservices..."; services="banking-user:80 banking-accounts:80 banking-transactions:80"; for service in $services; do while ! nc -z ${service%:*} ${service#*:}; do echo "[api-gateway] Waiting for $service..."; sleep 1; done; echo "[api-gateway] ✓ $service ready"; done; echo "[api-gateway] All services ready!"']

@@ -1,9 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: accounts-service
+  name: banking-accounts
   namespace: banking-app
   annotations:
-    sidecar.speedscale.com/inject: "true"
-    sidecar.speedscale.com/tls-out: "true"
-    sidecar.speedscale.com/tls-java-tool-options: "true"
+    sidecar.speedscale.com/inject: "false"
+    capture.speedscale.com/enabled: "true"
