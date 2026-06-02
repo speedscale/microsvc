@@ -25,7 +25,9 @@ spec:
       serviceAccountName: banking-app-sa
       containers:
       - name: kafka
-        image: bitnami/kafka:3.7
+        # bitnami/kafka:3.7 was purged from Docker Hub (Aug 2025 Bitnami repo
+        # change); free tags moved to bitnamilegacy/. Pin a concrete patch.
+        image: bitnamilegacy/kafka:3.7.1
         imagePullPolicy: Always
         ports:
         - containerPort: 9092
