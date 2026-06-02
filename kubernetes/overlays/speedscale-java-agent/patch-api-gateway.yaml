@@ -24,7 +24,7 @@ spec:
       - name: api-gateway
         env:
         - name: JAVA_TOOL_OPTIONS
-          value: "-javaagent:/nettap-agent/nettap-agent.jar"
+          value: "-javaagent:/nettap-agent/nettap-agent.jar=speedscale-nettap.speedscale:8000"
         volumeMounts:
         - name: nettap-agent
           mountPath: /nettap-agent
