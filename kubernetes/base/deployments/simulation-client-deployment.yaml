@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: simulation-client
+  name: banking-sim
   namespace: banking-app
   labels:
-    app: simulation-client
+    app: banking-sim
     component: simulation
 spec:
   replicas: 1
@@ -15,11 +15,11 @@ spec:
       maxSurge: 1
   selector:
     matchLabels:
-      app: simulation-client
+      app: banking-sim
   template:
     metadata:
       labels:
-        app: simulation-client
+        app: banking-sim
         component: simulation
       annotations:
         # Force restart when config changes
@@ -44,9 +44,9 @@ spec:
         
         envFrom:
         - configMapRef:
-            name: simulation-client-config
+            name: banking-sim-config
         - secretRef:
-            name: simulation-client-secret
+            name: banking-sim-secret
         
         resources:
           requests:

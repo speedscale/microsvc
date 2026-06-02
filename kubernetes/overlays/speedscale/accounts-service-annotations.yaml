@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: accounts-service
+  name: banking-accounts
   namespace: banking-app
   annotations:
     sidecar.speedscale.com/inject: "false"

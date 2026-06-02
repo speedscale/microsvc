@@ -27,13 +27,13 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: frontend
+            name: banking-frontend
             port:
               number: 80
       - path: /api
         pathType: Prefix
         backend:
           service:
-            name: api-gateway
+            name: banking-gateway
             port:
               number: 8080 

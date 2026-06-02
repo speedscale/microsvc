@@ -8,14 +8,14 @@ metadata:
     app.kubernetes.io/component: config
 data:
   # Database configuration
-  DB_HOST: "postgres"
+  DB_HOST: "banking-postgres"
   DB_PORT: "5432"
   DB_NAME: "banking_app"
   
   # Service URLs (for inter-service communication)
-  USER_SERVICE_URL: "http://user-service:80"
-  ACCOUNTS_SERVICE_URL: "http://accounts-service:80"
-  TRANSACTIONS_SERVICE_URL: "http://transactions-service:80"
+  USER_SERVICE_URL: "http://banking-user:80"
+  ACCOUNTS_SERVICE_URL: "http://banking-accounts:80"
+  TRANSACTIONS_SERVICE_URL: "http://banking-transactions:80"
   
   # Spring profiles
   SPRING_PROFILES_ACTIVE: "docker"
@@ -42,7 +42,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: user-service-config
+  name: banking-user-config
   namespace: banking-app
   labels:
     app.kubernetes.io/name: banking-app
@@ -64,7 +64,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: accounts-service-config
+  name: banking-accounts-config
   namespace: banking-app
   labels:
     app.kubernetes.io/name: banking-app
@@ -86,7 +86,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: transactions-service-config
+  name: banking-transactions-config
   namespace: banking-app
   labels:
     app.kubernetes.io/name: banking-app
@@ -108,7 +108,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: api-gateway-config
+  name: banking-gateway-config
   namespace: banking-app
   labels:
     app.kubernetes.io/name: banking-app
@@ -130,7 +130,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: frontend-config
+  name: banking-frontend-config
   namespace: banking-app
   labels:
     app.kubernetes.io/name: banking-app

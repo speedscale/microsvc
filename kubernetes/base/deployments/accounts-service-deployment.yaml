@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: accounts-service
+  name: banking-accounts
   namespace: banking-app
   labels:
     app.kubernetes.io/name: banking-app
@@ -11,13 +11,13 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: accounts-service
+      app: banking-accounts
       app.kubernetes.io/name: banking-app
       app.kubernetes.io/component: microservice
   template:
     metadata:
       labels:
-        app: accounts-service
+        app: banking-accounts
         app.kubernetes.io/name: banking-app
         app.kubernetes.io/component: microservice
         app.kubernetes.io/service: accounts-service
@@ -36,12 +36,12 @@ spec:
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: db-credentials
+              name: banking-db-credentials
               key: accounts-service-password
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
-              name: jwt-secret
+              name: banking-jwt-secret
               key: secret
         - name: JAVA_OPTS
           value: "-Xms64m -Xmx192m -XX:MaxMetaspaceSize=96m -XX:ReservedCodeCacheSize=32m -XX:MaxDirectMemorySize=16m -XX:+UseSerialGC -XX:+UseStringDeduplication -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom -Dspring.main.lazy-initialization=true"
@@ -49,7 +49,7 @@ spec:
         - configMapRef:
             name: app-config
         - configMapRef:
-            name: accounts-service-config
+            name: banking-accounts-config
         resources:
           requests:
             memory: "256Mi"
@@ -84,4 +84,4 @@ spec:
       initContainers:
       - name: wait-for-postgres
         image: postgres:15-alpine
-        command: ['sh', '-c', 'echo "[accounts-service] Waiting for PostgreSQL..."; until pg_isready -h postgres -p 5432 -q; do sleep 1; done; echo "[accounts-service] PostgreSQL ready!"']
+        command: ['sh', '-c', 'echo "[accounts-service] Waiting for PostgreSQL..."; until pg_isready -h banking-postgres -p 5432 -q; do sleep 1; done; echo "[accounts-service] PostgreSQL ready!"']
