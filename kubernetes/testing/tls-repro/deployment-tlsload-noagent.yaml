@@ -1,42 +1,48 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: treasury-client-noagent
+  name: tlsload-noagent
   namespace: otel-tls-repro
   labels:
-    app: treasury-client
+    app: tlsload
     variant: noagent
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
-      app: treasury-client
+      app: tlsload
       variant: noagent
   template:
     metadata:
       labels:
-        app: treasury-client
+        app: tlsload
         variant: noagent
     spec:
       containers:
       - name: client
         image: eclipse-temurin:21-jdk
-        command: ["java", "/app/TreasuryClient.java"]
+        command: ["sh", "-c"]
+        args:
+        - |
+          keytool -genkeypair -alias t -keyalg RSA -keysize 2048 -keystore /tmp/ks.p12 \
+            -storetype PKCS12 -storepass changeit -dname "CN=localhost" \
+            -ext SAN=dns:localhost -validity 2
+          exec java /app/TlsLoad.java
         env:
         - name: REPRO_MODE
           value: noagent
-        - name: FRESH_CLIENT
-          value: "true"
+        - name: THREADS
+          value: "32"
         volumeMounts:
         - name: src
           mountPath: /app
         resources:
           requests:
-            cpu: "50m"
-            memory: "128Mi"
+            cpu: "200m"
+            memory: "256Mi"
           limits:
-            cpu: "500m"
-            memory: "512Mi"
+            cpu: "2"
+            memory: "1Gi"
       volumes:
       - name: src
         configMap:

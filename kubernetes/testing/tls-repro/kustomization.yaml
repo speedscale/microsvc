@@ -5,13 +5,18 @@ namespace: otel-tls-repro
 
 resources:
 - namespace.yaml
+# low-volume live-HTTPS sanity drivers (Treasury API)
 - deployment-noagent.yaml
 - deployment-agent.yaml
+# high-volume in-process TLS load drivers
+- deployment-tlsload-noagent.yaml
+- deployment-tlsload-agent.yaml
 
 configMapGenerator:
 - name: treasury-client-src
   files:
   - TreasuryClient.java
+  - TlsLoad.java
 
 generatorOptions:
   disableNameSuffixHash: true
