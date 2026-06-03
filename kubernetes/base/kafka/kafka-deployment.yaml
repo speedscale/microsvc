@@ -41,6 +41,11 @@ spec:
           value: "controller,broker"
         - name: KAFKA_CFG_LISTENERS
           value: "PLAINTEXT://:9092,CONTROLLER://:9093"
+        # Without this, KRaft advertises the pod hostname (banking-kafka-<hash>),
+        # which clients can't resolve after bootstrapping via the Service. Pin the
+        # advertised PLAINTEXT listener to the stable Service name.
+        - name: KAFKA_CFG_ADVERTISED_LISTENERS
+          value: "PLAINTEXT://banking-kafka:9092"
         - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
           value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
         # Single-node KRaft: the controller quorum is this pod itself. Use
