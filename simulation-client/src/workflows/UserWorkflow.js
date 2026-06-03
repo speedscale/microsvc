@@ -43,7 +43,11 @@ class UserWorkflow {
     await this.randomDelay();
 
     // Step 3: Check accounts and balances
-    const accounts = await this.getAccountsAndBalances(user);
+    await this.getAccountsAndBalances(user);
+    await this.randomDelay();
+
+    // Seeded users may have no account yet; open one so they can transact.
+    const accounts = await this.ensureAccount(user);
     await this.randomDelay();
 
     // Step 4: View recent transactions
@@ -80,11 +84,15 @@ class UserWorkflow {
     await this.getUserProfile(user);
     await this.randomDelay();
 
-    // Step 4: Check accounts (likely empty for new user)
-    const accounts = await this.getAccountsAndBalances(user);
+    // Step 4: Check accounts (empty for a brand-new user)
+    await this.getAccountsAndBalances(user);
     await this.randomDelay();
 
-    // Step 5: Make an initial deposit if accounts exist
+    // Step 5: Open an account so the new user can transact
+    const accounts = await this.ensureAccount(user);
+    await this.randomDelay();
+
+    // Step 6: Make an initial deposit if accounts exist
     if (accounts && accounts.length > 0) {
       await this.makeInitialDeposit(user, accounts[0]);
       await this.randomDelay();
@@ -217,6 +225,27 @@ class UserWorkflow {
         error: error.message
       });
       throw error;
+    }
+  }
+
+  // Nothing creates accounts server-side (no auto-provision on registration),
+  // so a user with no account can never transact. Open one so the downstream
+  // transaction -> fraud-check (gRPC) -> Kafka event flow actually exercises.
+  async ensureAccount(user) {
+    if (user.accounts && user.accounts.length > 0) {
+      return user.accounts;
+    }
+    try {
+      logger.debug('No account found; opening one', { userId: user.id });
+      await this.apiClient.createAccount(
+        { accountType: 'CHECKING', initialBalance: 500 },
+        user.token
+      );
+      logger.info('Opened account for user', { userId: user.id });
+      return await this.getAccountsAndBalances(user);
+    } catch (error) {
+      logger.warn('Failed to open account', { userId: user.id, error: error.message });
+      return user.accounts || [];
     }
   }
 

@@ -124,6 +124,15 @@ class ApiClient {
     });
   }
 
+  async createAccount(accountData, token) {
+    return this.retryRequest(async () => {
+      const response = await this.client.post('/api/accounts', accountData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    });
+  }
+
   async getAccountBalance(accountId, token) {
     return this.retryRequest(async () => {
       const response = await this.client.get(`/api/accounts/${accountId}/balance`, {
