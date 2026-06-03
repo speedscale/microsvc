@@ -35,7 +35,9 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     const body = await request.json();
     
-    const response = await fetch(`${API_GATEWAY_URL}/api/transactions`, {
+    // transactions-service exposes POST /api/transactions/create (a type
+    // dispatcher -> deposit/withdraw/transfer); the bare path is GET-only.
+    const response = await fetch(`${API_GATEWAY_URL}/api/transactions/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
