@@ -15,14 +15,16 @@ import (
 const ringSize = 1000
 
 // TransactionEvent mirrors the upstream transaction-events message schema.
+// The Java producer sends transaction_id and user_id as JSON numbers and
+// account_id as a number or null, so we use json.Number (nullable via pointer).
 type TransactionEvent struct {
-	TransactionID   string    `json:"transaction_id"`
-	AccountID       string    `json:"account_id"`
-	UserID          string    `json:"user_id"`
-	Amount          float64   `json:"amount"`
-	TransactionType string    `json:"transaction_type"`
-	Status          string    `json:"status"`
-	Timestamp       time.Time `json:"timestamp"`
+	TransactionID   json.Number  `json:"transaction_id"`
+	AccountID       *json.Number `json:"account_id"`
+	UserID          json.Number  `json:"user_id"`
+	Amount          float64      `json:"amount"`
+	TransactionType string       `json:"transaction_type"`
+	Status          string       `json:"status"`
+	Timestamp       time.Time    `json:"timestamp"`
 }
 
 // RingBuffer holds the last N events in insertion order.
@@ -67,7 +69,7 @@ func (r *RingBuffer) ForUser(userID string, n int) []*TransactionEvent {
 	for i := 1; i <= r.count; i++ {
 		idx := (r.head - i + ringSize) % ringSize
 		e := r.events[idx]
-		if e != nil && e.UserID == userID {
+		if e != nil && e.UserID.String() == userID {
 			out = append(out, e)
 			if len(out) >= n {
 				break
@@ -118,8 +120,12 @@ func (c *Consumer) Run(ctx context.Context) {
 			log.Printf("unmarshal error (offset=%d): %v", m.Offset, err)
 			continue
 		}
+		acctID := "null"
+		if evt.AccountID != nil {
+			acctID = evt.AccountID.String()
+		}
 		log.Printf("event: id=%s account=%s user=%s type=%s status=%s amount=%.2f",
-			evt.TransactionID, evt.AccountID, evt.UserID,
+			evt.TransactionID.String(), acctID, evt.UserID.String(),
 			evt.TransactionType, evt.Status, evt.Amount)
 		metrics.EventsConsumed.WithLabelValues(evt.TransactionType, evt.Status).Inc()
 		c.Buffer.Push(&evt)
