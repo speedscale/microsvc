@@ -222,6 +222,9 @@ version-set:
 	fi
 	@./scripts/version.sh set $(VERSION)
 
+update-backend-version:
+	@./scripts/version.sh update-backend
+
 update-frontend-version:
 	@./scripts/version.sh update-frontend
 

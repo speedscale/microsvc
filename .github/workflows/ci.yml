@@ -204,21 +204,22 @@ jobs:
         echo "simple_tag=$SIMPLE_TAG" >> $GITHUB_OUTPUT
         echo "Simple tag: $SIMPLE_TAG"
     
-    - name: Update Kubernetes manifests and frontend version
+    - name: Update Kubernetes manifests, frontend, and backend versions
       run: |
         make update-k8s-version
         make update-frontend-version
+        make update-backend-version
         if [ -n "$(git diff)" ]; then
-          echo "Manifests and package.json updated with version ${{ steps.version.outputs.simple_tag }}"
+          echo "Versions updated to ${{ steps.version.outputs.simple_tag }}"
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add kubernetes/base/deployments/ frontend/package.json simulation-client/package.json
+          git add kubernetes/base/deployments/ frontend/package.json simulation-client/package.json backend/*/pom.xml
           git commit -m "CI: sync versions to ${{ steps.version.outputs.simple_tag }}
 
           Automated by GitHub Actions CI workflow."
           git push
         else
-          echo "No changes to manifests or package versions"
+          echo "No version changes to sync"
         fi
 
   e2e-test:
