@@ -1,21 +1,44 @@
-name: Service Version Bump Check
+name: Auto Version Bump
 
 on:
   pull_request:
     branches: [ master, develop ]
 
+permissions:
+  contents: write
+
 jobs:
-  check-service-version-bump:
+  auto-version-bump:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout PR branch
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        ref: ${{ github.head_ref }}
+        token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Enforce service version bump policy
+    - name: Auto-bump VERSION if backend code changed
       run: |
+        set +e
         python3 scripts/check_service_version_bumps.py \
           "${{ github.event.pull_request.base.sha }}" \
-          "${{ github.event.pull_request.head.sha }}"
+          "HEAD"
+        EXIT_CODE=$?
+        set -e
+
+        if [ $EXIT_CODE -eq 0 ]; then
+          echo "VERSION already bumped or no bump needed."
+          exit 0
+        fi
+
+        ./scripts/version.sh bump patch
+        NEW_VERSION=$(./scripts/version.sh get)
+        echo "Auto-bumped VERSION to $NEW_VERSION"
+
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add VERSION
+        git commit -m "CI: auto-bump VERSION to $NEW_VERSION"
+        git push
