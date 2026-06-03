@@ -152,9 +152,13 @@ class ApiClient {
   }
 
   // Transaction endpoints
+  // transactions-service maps POST /api/transactions/create (a type dispatcher
+  // that runs the fraud gRPC check + Kafka publish) and requires a currency.
+  // The bare POST /api/transactions path does not exist.
   async createTransaction(transactionData, token) {
+    const payload = { currency: 'USD', ...transactionData };
     return this.retryRequest(async () => {
-      const response = await this.client.post('/api/transactions', transactionData, {
+      const response = await this.client.post('/api/transactions/create', payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       return response.data;
@@ -163,7 +167,8 @@ class ApiClient {
 
   async getRecentTransactions(token) {
     return this.retryRequest(async () => {
-      const response = await this.client.get('/api/transactions/recent', {
+      // The service lists transactions at GET /api/transactions (no /recent).
+      const response = await this.client.get('/api/transactions', {
         headers: { Authorization: `Bearer ${token}` }
       });
       return response.data;
