@@ -54,7 +54,9 @@ spec:
             cpu: "50m"
           limits:
             memory: "768Mi"
-            cpu: "150m"
+            # 150m throttled the JVM so hard under live login load (bcrypt) that
+            # /actuator/health timed out, dropping the pod from ready endpoints.
+            cpu: "1000m"
         startupProbe:
           tcpSocket:
             port: 8080
