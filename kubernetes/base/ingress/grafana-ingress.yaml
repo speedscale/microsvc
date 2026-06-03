@@ -11,16 +11,6 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: banking-dev-grafana.trafficreplay.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: grafana
-            port:
-              number: 3000
   - host: banking-staging-grafana.trafficreplay.com
     http:
       paths:
