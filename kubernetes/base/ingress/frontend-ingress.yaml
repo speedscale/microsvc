@@ -11,7 +11,17 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: banking.trafficreplay.com
+  - host: banking-dev.trafficreplay.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: banking-frontend
+            port:
+              number: 80
+  - host: banking-staging.trafficreplay.com
     http:
       paths:
       - path: /
