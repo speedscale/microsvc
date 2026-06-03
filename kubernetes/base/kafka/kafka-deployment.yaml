@@ -43,8 +43,11 @@ spec:
           value: "PLAINTEXT://:9092,CONTROLLER://:9093"
         - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
           value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+        # Single-node KRaft: the controller quorum is this pod itself. Use
+        # localhost so registration doesn't depend on the ClusterIP Service
+        # routing 9093 back to the same pod (the Service only exposes 9092).
         - name: KAFKA_CFG_CONTROLLER_QUORUM_VOTERS
-          value: "0@banking-kafka:9093"
+          value: "0@localhost:9093"
         - name: KAFKA_CFG_CONTROLLER_LISTENER_NAMES
           value: "CONTROLLER"
         - name: KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE
