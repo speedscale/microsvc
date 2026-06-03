@@ -37,8 +37,8 @@ public class TransactionEventProducer {
                 transaction.getType().name(),
                 transaction.getStatus().name(),
                 transaction.getProcessedAt() != null
-                    ? transaction.getProcessedAt().toString()
-                    : transaction.getCreatedAt().toString()
+                    ? transaction.getProcessedAt().toString() + "Z"
+                    : transaction.getCreatedAt().toString() + "Z"
             );
 
             kafkaTemplate.send(topic, String.valueOf(transaction.getId()), payload);
