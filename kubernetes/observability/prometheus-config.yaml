@@ -19,34 +19,29 @@ data:
         static_configs:
           - targets: ['localhost:9090']
 
+      # Services were renamed with the banking- prefix and all expose port 80.
       - job_name: 'user-service'
         static_configs:
-          - targets: ['user-service:8080']
+          - targets: ['banking-user:80']
         metrics_path: '/actuator/prometheus'
         scrape_interval: 30s
 
       - job_name: 'accounts-service'
         static_configs:
-          - targets: ['accounts-service:8080']
+          - targets: ['banking-accounts:80']
         metrics_path: '/actuator/prometheus'
         scrape_interval: 30s
 
       - job_name: 'transactions-service'
         static_configs:
-          - targets: ['transactions-service:8080']
+          - targets: ['banking-transactions:80']
         metrics_path: '/actuator/prometheus'
         scrape_interval: 30s
 
       - job_name: 'api-gateway'
         static_configs:
-          - targets: ['api-gateway:80']
+          - targets: ['banking-gateway:80']
         metrics_path: '/actuator/prometheus'
-        scrape_interval: 30s
-
-      - job_name: 'frontend'
-        static_configs:
-          - targets: ['frontend:3000']
-        metrics_path: '/metrics'
         scrape_interval: 30s
 
       - job_name: 'fraud-service'
