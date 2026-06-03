@@ -141,9 +141,12 @@ metadata:
     app.kubernetes.io/component: config
     app.kubernetes.io/service: frontend
 data:
-  # Backend API configuration  
-  API_GATEWAY_URL: "http://api-gateway:80"
-  BACKEND_API_URL: "http://api-gateway:80"
+  # Backend API configuration
+  # Service was renamed to banking-gateway in the banking- prefix rename; the
+  # frontend's Next.js proxy routes resolve this host server-side, so a stale
+  # name here makes every /api/* call fail with ENOTFOUND -> HTTP 500.
+  API_GATEWAY_URL: "http://banking-gateway:80"
+  BACKEND_API_URL: "http://banking-gateway:80"
   
   # OpenTelemetry configuration
   OTEL_SERVICE_NAME: "frontend"
