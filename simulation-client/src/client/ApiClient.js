@@ -152,13 +152,13 @@ class ApiClient {
   }
 
   // Transaction endpoints
-  // transactions-service maps POST /api/transactions/create (a type dispatcher
-  // that runs the fraud gRPC check + Kafka publish) and requires a currency.
-  // The bare POST /api/transactions path does not exist.
+  // The frontend BFF route is POST /api/transactions (it proxies to the
+  // backend's /api/transactions/create). transactions-service requires a
+  // currency, so default it here.
   async createTransaction(transactionData, token) {
     const payload = { currency: 'USD', ...transactionData };
     return this.retryRequest(async () => {
-      const response = await this.client.post('/api/transactions/create', payload, {
+      const response = await this.client.post('/api/transactions', payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       return response.data;
