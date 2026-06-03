@@ -177,6 +177,21 @@ validate_versions() {
     fi
 }
 
+# Update only backend pom.xml files with VERSION
+update_backend_versions() {
+    local version=$(get_version)
+    echo "Updating backend pom.xml files with version: $version"
+
+    for service in "${BACKEND_SERVICES[@]}"; do
+        local pom_file="backend/${service}/pom.xml"
+        if [ -f "$pom_file" ]; then
+            sed -i.bak "/^[[:space:]]*<artifactId>${service}<\/artifactId>/,/^[[:space:]]*<properties>/ s|<version>[0-9]*\.[0-9]*\.[0-9]*</version>|<version>${version}</version>|" "$pom_file"
+            echo "Updated $pom_file to version $version"
+            rm -f "${pom_file}.bak"
+        fi
+    done
+}
+
 # Update only frontend and simulation-client package.json files (not backend pom.xml)
 update_frontend_versions() {
     local version=$(get_version)
@@ -262,6 +277,9 @@ case "${1:-help}" in
             exit 1
         fi
         get_image_name "$2"
+        ;;
+    "update-backend")
+        update_backend_versions
         ;;
     "update-frontend")
         update_frontend_versions
