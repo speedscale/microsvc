@@ -48,7 +48,6 @@ resources:
 
   # Ingress
   - ingress/frontend-ingress.yaml
-  - ingress/grafana-ingress.yaml
 
 namespace: banking-app
 
