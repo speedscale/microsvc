@@ -1,33 +1,33 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: frontend-ingress
+  name: grafana-ingress
   namespace: banking-app
   labels:
     app.kubernetes.io/name: banking-app
-    app.kubernetes.io/component: frontend
+    app.kubernetes.io/component: observability
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   ingressClassName: nginx
   rules:
-  - host: banking-dev.trafficreplay.com
+  - host: banking-dev-grafana.trafficreplay.com
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: banking-frontend
+            name: grafana
             port:
-              number: 80
-  - host: banking-staging.trafficreplay.com
+              number: 3000
+  - host: banking-staging-grafana.trafficreplay.com
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: banking-frontend
+            name: grafana
             port:
-              number: 80
+              number: 3000

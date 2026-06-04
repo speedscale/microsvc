@@ -46,6 +46,10 @@ resources:
   - services/frontend-service.yaml
   - services/frontend-service-nodeport.yaml
 
+  # Ingress
+  - ingress/frontend-ingress.yaml
+  - ingress/grafana-ingress.yaml
+
 namespace: banking-app
 
 labels:
