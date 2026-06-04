@@ -5,6 +5,7 @@ import com.banking.accountsservice.dto.AccountResponse;
 import com.banking.accountsservice.dto.BalanceResponse;
 import com.banking.accountsservice.security.UserAuthenticationDetails;
 import com.banking.accountsservice.service.AccountService;
+import com.banking.accountsservice.service.StatementExportService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.metrics.LongCounterBuilder;
@@ -56,6 +57,9 @@ class AccountControllerTest {
 
     @MockBean
     private AccountService accountService;
+
+    @MockBean
+    private StatementExportService statementExportService;
 
     @Autowired
     private ObjectMapper objectMapper;
