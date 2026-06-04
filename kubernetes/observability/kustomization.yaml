@@ -6,15 +6,12 @@ metadata:
   namespace: banking-app
 
 resources:
-  - grafana-deployment.yaml
-  - grafana-config.yaml
   - prometheus-deployment.yaml
   - prometheus-config.yaml
-  - jaeger-deployment.yaml
   - otel-collector.yaml
 
 labels:
   - pairs:
       app.kubernetes.io/name: banking-app
       app.kubernetes.io/component: observability
-      app.kubernetes.io/version: v1.0.0 
+      app.kubernetes.io/version: v1.0.0
