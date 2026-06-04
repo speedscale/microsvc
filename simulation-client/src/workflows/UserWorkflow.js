@@ -54,6 +54,12 @@ class UserWorkflow {
     await this.viewRecentTransactions(user);
     await this.randomDelay();
 
+    // Step 4b: Occasionally export a statement to S3
+    if (Math.random() < 0.1 && user.accounts && user.accounts.length > 0) {
+      await this.exportStatement(user, user.accounts);
+      await this.randomDelay();
+    }
+
     // Step 5: Perform some transactions (optional)
     if (Math.random() < 0.7) { // 70% chance of making transactions
       await this.performRandomTransactions(user, accounts);
@@ -63,7 +69,13 @@ class UserWorkflow {
     await this.getAccountsAndBalances(user);
     await this.randomDelay();
 
-    // Step 7: Optionally check notifications (30% of the time)
+    // Step 7: 30% chance of asking the AI assistant a question
+    if (Math.random() < 0.3) {
+      await this.askAIAssistant(user);
+      await this.randomDelay();
+    }
+
+    // Step 8: Optionally check notifications (30% of the time)
     if (Math.random() < 0.3) {
       await this.checkNotifications(user);
     }
@@ -442,6 +454,52 @@ class UserWorkflow {
         error: error.message
       });
       // Don't throw - notification check is optional
+    }
+  }
+
+  async exportStatement(user, accounts) {
+    const account = accounts[Math.floor(Math.random() * accounts.length)];
+    try {
+      logger.debug('Exporting statement', { userId: user.id, accountId: account.id });
+      const result = await this.apiClient.exportStatement(account.id, user.token);
+      logger.info('Statement exported', {
+        userId: user.id,
+        accountId: account.id,
+        key: result?.key
+      });
+      user.updateLastAction();
+    } catch (error) {
+      logger.warn('Statement export failed', {
+        userId: user.id,
+        accountId: account.id,
+        error: error.message
+      });
+    }
+  }
+
+  async askAIAssistant(user) {
+    const questions = [
+      "What's my account balance?",
+      'Show me my recent transactions',
+      'Am I spending too much?',
+      'What are my biggest expenses?',
+    ];
+    const question = questions[Math.floor(Math.random() * questions.length)];
+
+    try {
+      logger.debug('Asking AI assistant', { userId: user.id, question });
+      const result = await this.apiClient.askAIChat(question, user.token);
+      logger.info('AI assistant responded', {
+        userId: user.id,
+        questionLength: question.length,
+        responseLength: result?.message?.length || 0,
+      });
+      user.updateLastAction();
+    } catch (error) {
+      logger.warn('AI assistant request failed', {
+        userId: user.id,
+        error: error.message,
+      });
     }
   }
 

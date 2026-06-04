@@ -34,6 +34,12 @@ spec:
         envFrom:
         - configMapRef:
             name: banking-frontend-config
+        env:
+        - name: AI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-api-key
+              key: AI_API_KEY
         resources:
           requests:
             memory: "128Mi"

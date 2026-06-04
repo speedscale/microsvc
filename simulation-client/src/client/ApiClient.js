@@ -184,6 +184,24 @@ class ApiClient {
     });
   }
 
+  async exportStatement(accountId, token) {
+    return this.retryRequest(async () => {
+      const response = await this.client.post(`/api/accounts/${accountId}/export-statement`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    });
+  }
+
+  async askAIChat(message, token) {
+    return this.retryRequest(async () => {
+      const response = await this.client.post('/api/ai/chat', { message }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    });
+  }
+
   // Notification service endpoints
   async getNotifications(userId) {
     return this.retryRequest(async () => {

@@ -5,6 +5,7 @@ import com.banking.accountsservice.dto.AccountResponse;
 import com.banking.accountsservice.dto.BalanceResponse;
 import com.banking.accountsservice.security.UserAuthenticationDetails;
 import com.banking.accountsservice.service.AccountService;
+import com.banking.accountsservice.service.StatementExportService;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import jakarta.validation.Valid;
@@ -30,7 +31,10 @@ public class AccountController {
     
     @Autowired
     private AccountService accountService;
-    
+
+    @Autowired
+    private StatementExportService statementExportService;
+
     @Autowired
     private Tracer tracer;
     
@@ -167,6 +171,39 @@ public class AccountController {
         }
     }
     
+    @PostMapping("/{accountId}/export-statement")
+    public ResponseEntity<Map<String, String>> exportStatement(
+            @PathVariable Long accountId) {
+        Span span = tracer.spanBuilder("export-statement").startSpan();
+        try {
+            if (!statementExportService.isConfigured()) {
+                Map<String, String> body = new HashMap<>();
+                body.put("status", "unavailable");
+                body.put("reason", "S3 not configured");
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body);
+            }
+
+            Long userId = getUserIdFromAuthentication();
+            logger.info("Exporting statement for account {} user {}", accountId, userId);
+
+            String key = statementExportService.exportStatement(accountId, userId);
+            span.setAttribute("user.id", userId);
+            span.setAttribute("account.id", accountId);
+            span.setAttribute("s3.key", key);
+
+            Map<String, String> body = new HashMap<>();
+            body.put("status", "exported");
+            body.put("key", key);
+            return ResponseEntity.ok(body);
+        } catch (RuntimeException e) {
+            span.recordException(e);
+            logger.error("Statement export failed", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } finally {
+            span.end();
+        }
+    }
+
     private Long getUserIdFromAuthentication() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getDetails() == null) {
