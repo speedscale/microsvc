@@ -54,6 +54,12 @@ class UserWorkflow {
     await this.viewRecentTransactions(user);
     await this.randomDelay();
 
+    // Step 4b: Occasionally export a statement to S3
+    if (Math.random() < 0.1 && user.accounts && user.accounts.length > 0) {
+      await this.exportStatement(user, user.accounts);
+      await this.randomDelay();
+    }
+
     // Step 5: Perform some transactions (optional)
     if (Math.random() < 0.7) { // 70% chance of making transactions
       await this.performRandomTransactions(user, accounts);
@@ -448,6 +454,26 @@ class UserWorkflow {
         error: error.message
       });
       // Don't throw - notification check is optional
+    }
+  }
+
+  async exportStatement(user, accounts) {
+    const account = accounts[Math.floor(Math.random() * accounts.length)];
+    try {
+      logger.debug('Exporting statement', { userId: user.id, accountId: account.id });
+      const result = await this.apiClient.exportStatement(account.id, user.token);
+      logger.info('Statement exported', {
+        userId: user.id,
+        accountId: account.id,
+        key: result?.key
+      });
+      user.updateLastAction();
+    } catch (error) {
+      logger.warn('Statement export failed', {
+        userId: user.id,
+        accountId: account.id,
+        error: error.message
+      });
     }
   }
 
