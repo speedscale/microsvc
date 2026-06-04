@@ -53,6 +53,12 @@ const Header: React.FC = () => {
               Transactions
             </Link>
             <Link
+              href="/ai-assistant"
+              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              AI Assistant
+            </Link>
+            <Link
               href="/profile"
               className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
@@ -96,6 +102,12 @@ const Header: React.FC = () => {
               className="text-gray-700 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
             >
               Transactions
+            </Link>
+            <Link
+              href="/ai-assistant"
+              className="text-gray-700 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
+            >
+              AI Assistant
             </Link>
             <Link
               href="/profile"

@@ -19,6 +19,7 @@ resources:
   - configmaps/app-secrets.yaml
   - configmaps/simulation-client-configmap.yaml
   - configmaps/simulation-client-secret.yaml
+  - configmaps/ai-secret.yaml
   
   # Kafka
   - kafka/kafka-deployment.yaml

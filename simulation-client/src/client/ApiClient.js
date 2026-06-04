@@ -184,6 +184,15 @@ class ApiClient {
     });
   }
 
+  async askAIChat(message, token) {
+    return this.retryRequest(async () => {
+      const response = await this.client.post('/api/ai/chat', { message }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    });
+  }
+
   // Notification service endpoints
   async getNotifications(userId) {
     return this.retryRequest(async () => {
