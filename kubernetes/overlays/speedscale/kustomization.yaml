@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
 - ../../base
+- ../../observability
 
 patches:
 # Add Istio injection and Speedscale labels to the existing banking-app namespace
