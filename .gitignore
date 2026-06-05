@@ -89,3 +89,10 @@ spring-shell.log
 # Application specific
 application-local.yml
 application-local.properties
+
+# proxymock results (generated output, not source)
+proxymock/results/
+**/proxymock/results/
+
+# Claude Code
+.claude/

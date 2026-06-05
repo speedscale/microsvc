@@ -1,0 +1,176 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: byoc-grafana
+data:
+  otel.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: speedscale-forwarder
+              scrape_interval: 30s
+              metrics_path: /metrics
+              static_configs:
+                - targets:
+                    - speedscale-forwarder-metrics.speedscale.svc.cluster.local:4145
+                  labels:
+                    service: speedscale
+                    component: forwarder
+            - job_name: speedscale-nettap
+              scrape_interval: 30s
+              metrics_path: /metrics
+              static_configs:
+                - targets:
+                    - speedscale-nettap-metrics.speedscale.svc.cluster.local:4145
+                  labels:
+                    service: speedscale
+                    component: nettap-ingest
+
+    processors:
+      batch: {}
+      attributes/loki-hints:
+        actions:
+          - key: loki.attribute.labels
+            value: service,namespace
+            action: insert
+      resource/loki-hints:
+        attributes:
+          - key: loki.resource.labels
+            value: cluster
+            action: insert
+      transform/rrpair-attrs:
+        log_statements:
+          - context: log
+            statements:
+              - set(attributes["svc"],         body["service"])
+              - set(attributes["status"],      body["status"])
+              - set(attributes["l7"],          body["l7protocol"])
+              - set(attributes["duration_ms"], Double(body["duration"]))
+      filter/http-only:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'attributes["l7"] != "http"'
+      deltatocumulative/traffic: {}
+
+    connectors:
+      count:
+        logs:
+          speedscale_calls:
+            description: "Total HTTP calls by service and status"
+            attributes:
+              - key: svc
+              - key: status
+      sum:
+        logs:
+          speedscale_request_duration_ms_sum:
+            description: "Sum of HTTP request duration (ms) by service"
+            source_attribute: duration_ms
+            attributes:
+              - key: svc
+
+    exporters:
+      loki:
+        endpoint: http://loki.byoc-grafana.svc.cluster.local:3100/loki/api/v1/push
+        default_labels_enabled:
+          exporter: true
+          job: true
+      prometheusremotewrite:
+        endpoint: http://prometheus.byoc-grafana.svc.cluster.local:9090/api/v1/write
+        tls:
+          insecure: true
+      debug:
+        verbosity: basic
+
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+
+    service:
+      extensions: [health_check]
+      pipelines:
+        logs:
+          receivers: [otlp]
+          processors: [resource/loki-hints, attributes/loki-hints, batch]
+          exporters: [loki, debug]
+        logs/metrics:
+          receivers: [otlp]
+          processors: [transform/rrpair-attrs, filter/http-only, batch]
+          exporters: [count, sum]
+        metrics:
+          receivers: [prometheus, count, sum]
+          processors: [deltatocumulative/traffic, batch]
+          exporters: [prometheusremotewrite, debug]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: byoc-grafana
+  labels:
+    app: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      containers:
+        - name: otel-collector
+          image: otel/opentelemetry-collector-contrib:0.120.0
+          args:
+            - --config=/conf/otel.yaml
+          ports:
+            - containerPort: 4317
+              name: otlp-grpc
+            - containerPort: 4318
+              name: otlp-http
+            - containerPort: 13133
+              name: health
+          volumeMounts:
+            - name: config
+              mountPath: /conf
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: config
+          configMap:
+            name: otel-collector-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: byoc-grafana
+spec:
+  selector:
+    app: otel-collector
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
