@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-demo-user
+  namespace: banking-app
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 5
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: seed
+          image: busybox:1.35
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for user-service..."
+              until wget -q -O- http://banking-gateway:80/api/healthz 2>/dev/null; do sleep 5; done
+              echo "Registering demo user..."
+              wget -q -O- --post-data='{"username":"demo_user","email":"demo@apexbanking.com","password":"Demo1234!"}' \
+                --header='Content-Type: application/json' \
+                http://banking-gateway:80/api/users/register 2>&1 || echo "User may already exist"
+              echo "Logging in..."
+              TOKEN=$(wget -q -O- --post-data='{"usernameOrEmail":"demo_user","password":"Demo1234!"}' \
+                --header='Content-Type: application/json' \
+                http://banking-gateway:80/api/users/login 2>&1 | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
+              if [ -z "$TOKEN" ]; then echo "Login failed"; exit 1; fi
+              echo "Creating checking account..."
+              wget -q -O- --post-data='{"accountType":"CHECKING"}' \
+                --header="Authorization: Bearer $TOKEN" \
+                --header='Content-Type: application/json' \
+                http://banking-gateway:80/api/accounts 2>&1 || true
+              echo "Getting account ID..."
+              ACCT_ID=$(wget -q -O- --header="Authorization: Bearer $TOKEN" \
+                http://banking-gateway:80/api/accounts 2>&1 | sed -n 's/.*"id":\([0-9]*\).*/\1/p' | head -1)
+              if [ -z "$ACCT_ID" ]; then echo "No account found"; exit 0; fi
+              echo "Seeding transactions on account $ACCT_ID..."
+              for amt in 5000 2500 800 350; do
+                wget -q -O- --post-data="{\"type\":\"DEPOSIT\",\"amount\":$amt,\"accountId\":$ACCT_ID,\"currency\":\"USD\",\"description\":\"Direct deposit\"}" \
+                  --header="Authorization: Bearer $TOKEN" \
+                  --header='Content-Type: application/json' \
+                  http://banking-gateway:80/api/transactions 2>&1 || true
+                sleep 2
+              done
+              for amt_desc in "45.00:Gas station" "89.75:Grocery store" "12.50:Coffee shop"; do
+                amt=$(echo $amt_desc | cut -d: -f1)
+                desc=$(echo $amt_desc | cut -d: -f2)
+                wget -q -O- --post-data="{\"type\":\"WITHDRAWAL\",\"amount\":$amt,\"accountId\":$ACCT_ID,\"currency\":\"USD\",\"description\":\"$desc\"}" \
+                  --header="Authorization: Bearer $TOKEN" \
+                  --header='Content-Type: application/json' \
+                  http://banking-gateway:80/api/transactions 2>&1 || true
+                sleep 2
+              done
+              echo "Demo user seeded."

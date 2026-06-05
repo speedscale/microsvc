@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Banking Application',
-  description: 'Secure banking application with microservices architecture',
+  title: 'Apex Banking',
+  description: 'Secure digital banking platform',
 };
 
 export default function RootLayout({
