@@ -9,6 +9,7 @@ resources:
   - prometheus-deployment.yaml
   - prometheus-config.yaml
   - otel-collector.yaml
+  - jaeger-deployment.yaml
 
 labels:
   - pairs:
