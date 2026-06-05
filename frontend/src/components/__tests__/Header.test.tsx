@@ -55,7 +55,7 @@ describe('Header', () => {
 
     render(<Header />);
 
-    expect(screen.getByText('Banking App')).toBeInTheDocument();
+    expect(screen.getByText('Apex Banking')).toBeInTheDocument();
     expect(screen.getAllByText('Dashboard')).toHaveLength(2);
     expect(screen.getAllByText('Accounts')).toHaveLength(2);
     expect(screen.getAllByText('Transactions')).toHaveLength(2);
@@ -98,7 +98,7 @@ describe('Header', () => {
 
     render(<Header />);
 
-    const logoLink = screen.getByRole('link', { name: /banking app/i });
+    const logoLink = screen.getByRole('link', { name: /apex banking/i });
     expect(logoLink).toHaveAttribute('href', '/dashboard');
   });
 
@@ -142,7 +142,7 @@ describe('Header', () => {
 
     render(<Header />);
 
-    expect(screen.getByText('B')).toBeInTheDocument();
+    expect(screen.getByText('A')).toBeInTheDocument();
   });
 
   it('handles user with different username formats', () => {

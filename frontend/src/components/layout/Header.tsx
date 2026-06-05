@@ -26,9 +26,9 @@ const Header: React.FC = () => {
           <div className="flex items-center">
             <Link href="/dashboard" className="flex items-center">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">B</span>
+                <span className="text-white font-bold text-sm">A</span>
               </div>
-              <span className="ml-2 text-xl font-semibold text-gray-900">Banking App</span>
+              <span className="ml-2 text-xl font-semibold text-gray-900">Apex Banking</span>
             </Link>
           </div>
 

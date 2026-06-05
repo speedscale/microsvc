@@ -63,10 +63,20 @@ const LoginForm: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Sign in to your account
+            <div className="flex justify-center mb-4">
+              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-center text-3xl font-extrabold text-gray-900">
+              Apex Banking
             </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
+            <p className="mt-1 text-center text-sm text-gray-500">
+              Secure Digital Banking Platform
+            </p>
+            <p className="mt-4 text-center text-sm text-gray-600">
               Or{' '}
               <Link
                 href="/register"
@@ -128,6 +138,12 @@ const LoginForm: React.FC = () => {
               {isSubmitting ? 'Signing in...' : 'Sign in'}
             </Button>
           </form>
+
+          <div className="mt-4 p-3 bg-gray-100 rounded-md border border-gray-200">
+            <p className="text-xs text-gray-500 text-center">
+              Demo credentials: <span className="font-mono font-medium text-gray-700">demo_user</span> / <span className="font-mono font-medium text-gray-700">Demo1234!</span>
+            </p>
+          </div>
         </div>
       </div>
     </>

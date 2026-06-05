@@ -49,6 +49,9 @@ resources:
   # Ingress
   - ingress/frontend-ingress.yaml
 
+  # Demo data seeding
+  - jobs/seed-demo-user.yaml
+
 namespace: banking-app
 
 labels:

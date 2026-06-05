@@ -42,7 +42,7 @@ describe('LoginForm Component', () => {
   it('renders login form elements', () => {
     render(<LoginForm />)
     
-    expect(screen.getByText('Sign in to your account')).toBeInTheDocument()
+    expect(screen.getByText('Apex Banking')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Enter your username or email')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Enter your password')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument()
