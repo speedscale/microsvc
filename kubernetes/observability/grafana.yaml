@@ -90,6 +90,8 @@ spec:
               value: "true"
             - name: GF_AUTH_ANONYMOUS_ORG_ROLE
               value: Viewer
+            - name: GF_USERS_VIEWERS_CAN_EDIT
+              value: "true"
             - name: GF_SERVER_ROOT_URL
               value: https://grafana-staging.trafficreplay.com
           volumeMounts:

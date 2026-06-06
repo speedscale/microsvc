@@ -1,1 +1,232 @@
-{"annotations": {"list": []}, "title": "Banking Application \u2014 Health", "uid": "banking-app-health", "tags": ["banking-app", "health", "golden-signals"], "editable": true, "schemaVersion": 39, "version": 9, "time": {"from": "now-30m", "to": "now"}, "refresh": "10s", "panels": [{"type": "timeseries", "title": "Latency \u2014 Front Door p95 / p50", "description": "Response time at the API gateway \u2014 the user-facing entry point", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}, "datasource": {"type": "prometheus", "uid": "prometheus-app"}, "targets": [{"expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"api-gateway\"}[5m])))", "legendFormat": "p95", "refId": "A"}, {"expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"api-gateway\"}[5m])))", "legendFormat": "p50", "refId": "B"}], "fieldConfig": {"defaults": {"custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "pointSize": 5, "showPoints": "never"}, "unit": "s", "color": {"mode": "palette-classic"}}, "overrides": [{"matcher": {"id": "byName", "options": "p95"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]}, {"matcher": {"id": "byName", "options": "p50"}, "properties": [{"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}]}]}}, {"type": "timeseries", "title": "Throughput \u2014 Requests / sec", "description": "Total HTTP throughput across all services", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}, "datasource": {"type": "prometheus", "uid": "prometheus-app"}, "targets": [{"expr": "sum(rate(http_server_requests_seconds_count[5m]))", "legendFormat": "total req/s", "refId": "A"}, {"expr": "sum by (job) (rate(http_server_requests_seconds_count[5m]))", "legendFormat": "{{job}}", "refId": "B"}], "fieldConfig": {"defaults": {"custom": {"drawStyle": "line", "fillOpacity": 15, "lineWidth": 1, "stacking": {"mode": "normal"}}, "unit": "reqps"}, "overrides": [{"matcher": {"id": "byName", "options": "total req/s"}, "properties": [{"id": "custom.stacking", "value": {"mode": "none"}}, {"id": "custom.lineWidth", "value": 3}, {"id": "custom.fillOpacity", "value": 0}, {"id": "color", "value": {"fixedColor": "white", "mode": "fixed"}}]}]}}, {"type": "timeseries", "title": "Saturation \u2014 CPU", "description": "Process CPU utilization per service (0\u20131 = one core)", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}, "datasource": {"type": "prometheus", "uid": "prometheus-app"}, "targets": [{"expr": "process_cpu_usage", "legendFormat": "{{job}}", "refId": "A"}], "fieldConfig": {"defaults": {"custom": {"drawStyle": "line", "fillOpacity": 20, "lineWidth": 1}, "unit": "percentunit", "min": 0, "max": 1}}}, {"type": "timeseries", "title": "Saturation \u2014 Memory", "description": "JVM heap used vs max per service", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}, "datasource": {"type": "prometheus", "uid": "prometheus-app"}, "targets": [{"expr": "sum by (job) (jvm_memory_used_bytes{area=\"heap\"})", "legendFormat": "{{job}} used", "refId": "A"}, {"expr": "sum by (job) (jvm_memory_max_bytes{area=\"heap\"})", "legendFormat": "{{job}} max", "refId": "B"}], "fieldConfig": {"defaults": {"custom": {"drawStyle": "line", "fillOpacity": 15, "lineWidth": 1}, "unit": "bytes"}, "overrides": [{"matcher": {"id": "byRegexp", "options": ".* max"}, "properties": [{"id": "custom.lineStyle", "value": {"fill": "dash", "dash": [10, 10]}}, {"id": "custom.fillOpacity", "value": 0}, {"id": "custom.lineWidth", "value": 1}]}]}}, {"type": "timeseries", "title": "Error Rate \u2014 by Service & Status", "description": "HTTP 4xx/5xx errors detected by Speedscale eBPF capture, by service and status code", "gridPos": {"h": 8, "w": 16, "x": 0, "y": 16}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "sum by (svc, status) (rate(speedscale_calls_total{status=~\"[45]..\", svc=~\"banking-.*\"}[5m]))", "legendFormat": "{{svc}} {{status}}", "refId": "A"}], "fieldConfig": {"defaults": {"custom": {"drawStyle": "bars", "fillOpacity": 80, "lineWidth": 0, "stacking": {"mode": "normal"}}, "unit": "reqps", "links": [{"title": "Search traces for this service", "url": "/explore?orgId=1&left=%7B%22datasource%22%3A%22jaeger%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22queryType%22%3A%22search%22%2C%22service%22%3A%22${__field.labels.svc}%22%2C%22limit%22%3A20%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-30m%22%2C%22to%22%3A%22now%22%7D%7D", "targetBlank": true}]}, "overrides": [{"matcher": {"id": "byRegexp", "options": ".*400$"}, "properties": [{"id": "color", "value": {"fixedColor": "orange", "mode": "fixed"}}]}, {"matcher": {"id": "byRegexp", "options": ".*5[0-9]{2}$"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]}]}, "options": {"tooltip": {"mode": "multi"}}}, {"type": "stat", "title": "Error Rate %", "description": "Percentage of all banking requests returning 4xx/5xx", "gridPos": {"h": 8, "w": 8, "x": 16, "y": 16}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "sum(rate(speedscale_calls_total{status=~\"[45]..\", svc=~\"banking-.*\"}[5m])) / sum(rate(speedscale_calls_total{svc=~\"banking-.*\"}[5m])) * 100", "refId": "A"}], "fieldConfig": {"defaults": {"unit": "percent", "decimals": 1, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1}, {"color": "orange", "value": 3}, {"color": "red", "value": 5}]}, "color": {"mode": "thresholds"}}}, "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}}}, {"type": "row", "title": "Error Details", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 24}, "collapsed": true, "panels": [{"type": "logs", "title": "Error Traffic \u2014 Captured by eBPF", "description": "Structured traffic records from Speedscale capture. Service, status, endpoint, duration \u2014 but not request/response payloads.", "gridPos": {"h": 10, "w": 12, "x": 0, "y": 25}, "datasource": {"type": "loki", "uid": "loki"}, "targets": [{"expr": "{exporter=\"OTLP\", namespace=\"banking-app\"} |= \"400\" | json | body_status = \"400\" | line_format \"{{.body_service}} {{.body_command}} {{.body_location}} \u2192 {{.body_status}} ({{.body_duration}}ms)\"", "refId": "A"}], "options": {"showTime": true, "showLabels": false, "showCommonLabels": false, "wrapLogMessage": false, "prettifyLogMessage": false, "enableLogDetails": true, "sortOrder": "Descending", "dedupStrategy": "none"}}, {"type": "table", "title": "Recent Traces \u2014 API Gateway", "description": "Click a trace to see spans. Spans show timing and status \u2014 not payloads.", "gridPos": {"h": 10, "w": 12, "x": 12, "y": 25}, "datasource": {"type": "jaeger", "uid": "jaeger"}, "targets": [{"refId": "A", "datasource": {"type": "jaeger", "uid": "jaeger"}, "queryType": "search", "service": "api-gateway", "operation": "", "tags": "", "minDuration": "", "maxDuration": "", "limit": 20}], "options": {"showHeader": true, "cellHeight": "sm"}, "fieldConfig": {"defaults": {}, "overrides": []}}]}]}
+{
+  "annotations": {"list": []},
+  "title": "Banking Application — Health",
+  "uid": "banking-app-health",
+  "tags": ["banking-app", "health", "golden-signals"],
+  "editable": true,
+  "schemaVersion": 39,
+  "version": 10,
+  "time": {"from": "now-30m", "to": "now"},
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Latency — Front Door p95 / p50",
+      "description": "Response time at the API gateway — the user-facing entry point",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"api-gateway\"}[5m])))", "legendFormat": "p95", "refId": "A"},
+        {"expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"api-gateway\"}[5m])))", "legendFormat": "p50", "refId": "B"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "pointSize": 5, "showPoints": "never"},
+          "unit": "s",
+          "color": {"mode": "palette-classic"}
+        },
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "p95"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]},
+          {"matcher": {"id": "byName", "options": "p50"}, "properties": [{"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}]}
+        ]
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Throughput — Requests / sec (eBPF)",
+      "description": "HTTP throughput derived from Speedscale eBPF capture across all services",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "sum(rate(speedscale_calls_total[5m]))", "legendFormat": "total req/s", "refId": "A"},
+        {"expr": "sum by (svc) (rate(speedscale_calls_total[5m]))", "legendFormat": "{{svc}}", "refId": "B"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 15, "lineWidth": 1, "stacking": {"mode": "normal"}},
+          "unit": "reqps"
+        },
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "total req/s"}, "properties": [
+            {"id": "custom.stacking", "value": {"mode": "none"}},
+            {"id": "custom.lineWidth", "value": 3},
+            {"id": "custom.fillOpacity", "value": 0},
+            {"id": "color", "value": {"fixedColor": "white", "mode": "fixed"}}
+          ]}
+        ]
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Saturation — CPU",
+      "description": "Process CPU utilization per service (0–1 = one core)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "process_cpu_usage", "legendFormat": "{{job}}", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 20, "lineWidth": 1},
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Saturation — Memory",
+      "description": "JVM heap used vs max per service",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum by (job) (jvm_memory_used_bytes{area=\"heap\"})", "legendFormat": "{{job}} used", "refId": "A"},
+        {"expr": "sum by (job) (jvm_memory_max_bytes{area=\"heap\"})", "legendFormat": "{{job}} max", "refId": "B"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 15, "lineWidth": 1},
+          "unit": "bytes"
+        },
+        "overrides": [
+          {"matcher": {"id": "byRegexp", "options": ".* max"}, "properties": [
+            {"id": "custom.lineStyle", "value": {"fill": "dash", "dash": [10, 10]}},
+            {"id": "custom.fillOpacity", "value": 0},
+            {"id": "custom.lineWidth", "value": 1}
+          ]}
+        ]
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Error Rate — by Service & Status",
+      "description": "HTTP 4xx/5xx errors detected by Speedscale eBPF capture, by service and status code",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "sum by (svc, status) (rate(speedscale_calls_total{status=~\"[45]..\"}[5m]))", "legendFormat": "{{svc}} {{status}}", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "bars", "fillOpacity": 80, "lineWidth": 0, "stacking": {"mode": "normal"}},
+          "unit": "reqps",
+          "links": [
+            {"title": "View traces in Jaeger", "url": "/explore?schemaVersion=1&panes={%22j%22:{%22datasource%22:%22jaeger%22,%22queries%22:[{%22refId%22:%22A%22,%22queryType%22:%22search%22,%22limit%22:20}],%22range%22:{%22from%22:%22now-30m%22,%22to%22:%22now%22}}}", "targetBlank": true}
+          ]
+        },
+        "overrides": [
+          {"matcher": {"id": "byRegexp", "options": ".*400$"}, "properties": [{"id": "color", "value": {"fixedColor": "orange", "mode": "fixed"}}]},
+          {"matcher": {"id": "byRegexp", "options": ".*5[0-9]{2}$"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]}
+        ]
+      },
+      "options": {"tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "stat",
+      "title": "Error Rate %",
+      "description": "Percentage of all requests returning 4xx/5xx (from eBPF capture)",
+      "gridPos": {"h": 8, "w": 4, "x": 12, "y": 16},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "sum(rate(speedscale_calls_total{status=~\"[45]..\"}[5m])) / sum(rate(speedscale_calls_total[5m])) * 100", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 1},
+              {"color": "orange", "value": 3},
+              {"color": "red", "value": 5}
+            ]
+          },
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}}
+    },
+    {
+      "type": "timeseries",
+      "title": "eBPF Capture — Messages by Protocol",
+      "description": "Speedscale eBPF capture rate by protocol. Shows HTTP, Postgres, MongoDB, Kafka, Redis, gRPC traffic flowing through the pipeline.",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 16},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "sum by (protocol) (rate(messages_sent_total{component=\"forwarder\"}[5m]))", "legendFormat": "{{protocol}}", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 30, "lineWidth": 1, "stacking": {"mode": "normal"}},
+          "unit": "cps"
+        },
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "http"}, "properties": [{"id": "color", "value": {"fixedColor": "blue", "mode": "fixed"}}]},
+          {"matcher": {"id": "byName", "options": "postgres"}, "properties": [{"id": "color", "value": {"fixedColor": "semi-dark-purple", "mode": "fixed"}}]},
+          {"matcher": {"id": "byName", "options": "mongodb"}, "properties": [{"id": "color", "value": {"fixedColor": "dark-green", "mode": "fixed"}}]},
+          {"matcher": {"id": "byName", "options": "kafka"}, "properties": [{"id": "color", "value": {"fixedColor": "dark-orange", "mode": "fixed"}}]},
+          {"matcher": {"id": "byName", "options": "redis"}, "properties": [{"id": "color", "value": {"fixedColor": "dark-red", "mode": "fixed"}}]},
+          {"matcher": {"id": "byName", "options": "https"}, "properties": [{"id": "color", "value": {"fixedColor": "light-blue", "mode": "fixed"}}]}
+        ]
+      }
+    },
+    {
+      "type": "row",
+      "title": "Error Details",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 24},
+      "collapsed": true,
+      "panels": [
+        {
+          "type": "table",
+          "title": "Recent Traces — API Gateway",
+          "description": "Click a trace to see spans. Spans show timing and status — not payloads.",
+          "gridPos": {"h": 10, "w": 12, "x": 0, "y": 25},
+          "datasource": {"type": "jaeger", "uid": "jaeger"},
+          "targets": [
+            {"refId": "A", "datasource": {"type": "jaeger", "uid": "jaeger"}, "queryType": "search", "service": "api-gateway", "operation": "", "tags": "", "minDuration": "", "maxDuration": "", "limit": 20}
+          ],
+          "options": {"showHeader": true, "cellHeight": "sm"},
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": [
+              {
+                "matcher": {"id": "byName", "options": "Trace ID"},
+                "properties": [
+                  {
+                    "id": "links",
+                    "value": [
+                      {"title": "Open in Jaeger", "url": "/explore?schemaVersion=1&panes={%22j%22:{%22datasource%22:%22jaeger%22,%22queries%22:[{%22refId%22:%22A%22,%22query%22:%22${__value.text}%22}],%22range%22:{%22from%22:%22now-1h%22,%22to%22:%22now%22}}}", "targetBlank": true}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "type": "logs",
+          "title": "eBPF Traffic — Error Requests",
+          "description": "Structured traffic records from Speedscale eBPF capture. Service, status, endpoint, duration — metadata only, not request/response payloads. Open Speedscale for full payload inspection.",
+          "gridPos": {"h": 10, "w": 12, "x": 12, "y": 25},
+          "datasource": {"type": "loki", "uid": "loki"},
+          "targets": [
+            {"expr": "{exporter=\"OTLP\"} |= \"400\" | json | body_status = \"400\" | line_format \"{{.body_service}} {{.body_command}} {{.body_location}} → {{.body_status}} ({{.body_duration}}ms)\"", "refId": "A"}
+          ],
+          "options": {
+            "showTime": true,
+            "showLabels": false,
+            "showCommonLabels": false,
+            "wrapLogMessage": false,
+            "prettifyLogMessage": false,
+            "enableLogDetails": true,
+            "sortOrder": "Descending",
+            "dedupStrategy": "none"
+          }
+        }
+      ]
+    }
+  ]
+}
