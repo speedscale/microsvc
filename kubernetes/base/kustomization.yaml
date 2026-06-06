@@ -13,6 +13,10 @@ resources:
   - database/postgres-pvc.yaml
   - database/postgres-deployment.yaml
   - database/postgres-service.yaml
+  - database/redis-deployment.yaml
+  - database/redis-service.yaml
+  - database/mongodb-deployment.yaml
+  - database/mongodb-service.yaml
   
   # ConfigMaps and Secrets
   - configmaps/app-config.yaml

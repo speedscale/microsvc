@@ -79,13 +79,19 @@ func (r *RingBuffer) ForUser(userID string, n int) []*TransactionEvent {
 	return out
 }
 
-// Consumer reads from Kafka and populates the ring buffer.
+// Store persists events for durable retrieval.
+type Store interface {
+	Insert(ctx context.Context, evt *TransactionEvent) error
+}
+
+// Consumer reads from Kafka and populates both the ring buffer and a durable store.
 type Consumer struct {
 	reader *kafka.Reader
 	Buffer *RingBuffer
+	store  Store
 }
 
-func New(brokers []string, topic, groupID string) *Consumer {
+func New(brokers []string, topic, groupID string, store Store) *Consumer {
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:        brokers,
 		Topic:          topic,
@@ -97,6 +103,7 @@ func New(brokers []string, topic, groupID string) *Consumer {
 	return &Consumer{
 		reader: r,
 		Buffer: &RingBuffer{},
+		store:  store,
 	}
 }
 
@@ -129,6 +136,11 @@ func (c *Consumer) Run(ctx context.Context) {
 			evt.TransactionType, evt.Status, evt.Amount)
 		metrics.EventsConsumed.WithLabelValues(evt.TransactionType, evt.Status).Inc()
 		c.Buffer.Push(&evt)
+		if c.store != nil {
+			if err := c.store.Insert(ctx, &evt); err != nil {
+				log.Printf("mongo insert error: %v", err)
+			}
+		}
 	}
 }
 

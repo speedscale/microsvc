@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: banking-mongodb
+  namespace: banking-app
+spec:
+  selector:
+    app: mongodb
+  ports:
+    - name: mongo
+      port: 27017
+      targetPort: 27017
