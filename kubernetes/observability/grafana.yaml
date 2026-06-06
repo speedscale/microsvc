@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-datasources
-  namespace: byoc-grafana
+  namespace: banking-app
 data:
   datasources.yaml: |
     apiVersion: 1
@@ -11,32 +11,32 @@ data:
         uid: loki
         type: loki
         access: proxy
-        url: http://loki.byoc-grafana.svc.cluster.local:3100
+        url: http://loki:3100
         isDefault: true
       - name: Prometheus
         uid: prometheus
         type: prometheus
         access: proxy
-        url: http://prometheus.byoc-grafana.svc.cluster.local:9090
+        url: http://prometheus:9090
         isDefault: false
       - name: Prometheus (App)
         uid: prometheus-app
         type: prometheus
         access: proxy
-        url: http://prometheus.banking-app.svc.cluster.local:9090
+        url: http://prometheus:9090
         isDefault: false
       - name: Jaeger
         uid: jaeger
         type: jaeger
         access: proxy
-        url: http://jaeger.banking-app.svc.cluster.local:16686
+        url: http://jaeger:16686
         isDefault: false
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-dashboard-providers
-  namespace: byoc-grafana
+  namespace: banking-app
 data:
   providers.yaml: |
     apiVersion: 1
@@ -62,7 +62,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana
-  namespace: byoc-grafana
+  namespace: banking-app
   labels:
     app: grafana
 spec:
@@ -135,7 +135,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: grafana
-  namespace: byoc-grafana
+  namespace: banking-app
 spec:
   selector:
     app: grafana
@@ -148,7 +148,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: grafana-ingress
-  namespace: byoc-grafana
+  namespace: banking-app
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
