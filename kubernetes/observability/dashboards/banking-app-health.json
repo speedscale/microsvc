@@ -112,7 +112,7 @@
           "custom": {"drawStyle": "bars", "fillOpacity": 80, "lineWidth": 0, "stacking": {"mode": "normal"}},
           "unit": "reqps",
           "links": [
-            {"title": "View traces in Jaeger", "url": "/explore?schemaVersion=1&panes=%7B%22__all%22:%7B%22datasource%22:%22jaeger%22,%22queries%22:[%7B%22refId%22:%22A%22,%22queryType%22:%22search%22,%22limit%22:20%7D],%22range%22:%7B%22from%22:%22now-30m%22,%22to%22:%22now%22%7D%7D%7D", "targetBlank": true}
+            {"title": "View traces in Jaeger", "url": "https://jaeger-staging.trafficreplay.com/search?service=${__field.labels.svc}&limit=20&lookback=1h", "targetBlank": true}
           ]
         },
         "overrides": [
@@ -189,7 +189,22 @@
             {"refId": "A", "datasource": {"type": "jaeger", "uid": "jaeger"}, "queryType": "search", "service": "api-gateway", "operation": "", "tags": "", "minDuration": "", "maxDuration": "", "limit": 20}
           ],
           "options": {"showHeader": true, "cellHeight": "sm"},
-          "fieldConfig": {"defaults": {}, "overrides": []}
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": [
+              {
+                "matcher": {"id": "byName", "options": "Trace ID"},
+                "properties": [
+                  {
+                    "id": "links",
+                    "value": [
+                      {"title": "Open in Jaeger", "url": "https://jaeger-staging.trafficreplay.com/trace/${__value.text}", "targetBlank": true}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "type": "logs",
