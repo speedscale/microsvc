@@ -112,7 +112,7 @@
           "custom": {"drawStyle": "bars", "fillOpacity": 80, "lineWidth": 0, "stacking": {"mode": "normal"}},
           "unit": "reqps",
           "links": [
-            {"title": "View traces in Jaeger", "url": "https://jaeger-staging.trafficreplay.com/search?service=${__field.labels.svc}&limit=20&lookback=1h", "targetBlank": true}
+            {"title": "View traces in Jaeger", "url": "/explore?schemaVersion=1&panes={%22j%22:{%22datasource%22:%22jaeger%22,%22queries%22:[{%22refId%22:%22A%22,%22queryType%22:%22search%22,%22limit%22:20}],%22range%22:{%22from%22:%22now-30m%22,%22to%22:%22now%22}}}", "targetBlank": true}
           ]
         },
         "overrides": [
@@ -198,7 +198,7 @@
                   {
                     "id": "links",
                     "value": [
-                      {"title": "Open in Jaeger", "url": "https://jaeger-staging.trafficreplay.com/trace/${__value.text}", "targetBlank": true}
+                      {"title": "Open in Jaeger", "url": "/explore?schemaVersion=1&panes={%22j%22:{%22datasource%22:%22jaeger%22,%22queries%22:[{%22refId%22:%22A%22,%22query%22:%22${__value.text}%22}],%22range%22:{%22from%22:%22now-1h%22,%22to%22:%22now%22}}}", "targetBlank": true}
                     ]
                   }
                 ]
