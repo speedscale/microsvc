@@ -5,9 +5,6 @@ metadata:
   namespace: banking-app
   labels:
     app: prometheus
-    app.kubernetes.io/name: banking-app
-    app.kubernetes.io/component: observability
-    app.kubernetes.io/version: v1.0.0
 spec:
   replicas: 1
   selector:
@@ -17,53 +14,42 @@ spec:
     metadata:
       labels:
         app: prometheus
-        app.kubernetes.io/name: banking-app
-        app.kubernetes.io/component: observability
-        app.kubernetes.io/version: v1.0.0
     spec:
       containers:
-      - name: prometheus
-        image: prom/prometheus:v2.45.0
-        ports:
-        - containerPort: 9090
-          name: web
-        args:
-        - '--config.file=/etc/prometheus/prometheus.yml'
-        - '--storage.tsdb.path=/prometheus/'
-        - '--web.console.libraries=/etc/prometheus/console_libraries'
-        - '--web.console.templates=/etc/prometheus/consoles'
-        - '--storage.tsdb.retention.time=30d'
-        - '--web.enable-lifecycle'
-        volumeMounts:
-        - name: prometheus-config
-          mountPath: /etc/prometheus/
-        - name: prometheus-storage
-          mountPath: /prometheus/
-        resources:
-          limits:
-            cpu: 500m
-            memory: 1Gi
-          requests:
-            cpu: 100m
-            memory: 512Mi
-        readinessProbe:
-          httpGet:
-            path: /-/ready
-            port: 9090
-          initialDelaySeconds: 10
-          periodSeconds: 10
-        livenessProbe:
-          httpGet:
-            path: /-/healthy
-            port: 9090
-          initialDelaySeconds: 30
-          periodSeconds: 30
+        - name: prometheus
+          image: prom/prometheus:v2.54.1
+          ports:
+            - containerPort: 9090
+              name: web
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+            - --storage.tsdb.retention.time=24h
+            - --web.enable-remote-write-receiver
+            - --web.enable-lifecycle
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus
+            - name: prometheus-storage
+              mountPath: /prometheus
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 10
+            periodSeconds: 10
       volumes:
-      - name: prometheus-config
-        configMap:
-          name: prometheus-config
-      - name: prometheus-storage
-        emptyDir: {}
+        - name: prometheus-config
+          configMap:
+            name: prometheus-config
+        - name: prometheus-storage
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -72,14 +58,11 @@ metadata:
   namespace: banking-app
   labels:
     app: prometheus
-    app.kubernetes.io/name: banking-app
-    app.kubernetes.io/component: observability
-    app.kubernetes.io/version: v1.0.0
 spec:
   type: ClusterIP
   ports:
-  - port: 9090
-    targetPort: 9090
-    name: web
+    - port: 9090
+      targetPort: 9090
+      name: web
   selector:
     app: prometheus

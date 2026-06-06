@@ -10,9 +10,19 @@ resources:
   - prometheus-config.yaml
   - otel-collector.yaml
   - jaeger-deployment.yaml
+  - loki.yaml
+  - grafana.yaml
 
-labels:
-  - pairs:
-      app.kubernetes.io/name: banking-app
-      app.kubernetes.io/component: observability
-      app.kubernetes.io/version: v1.0.0
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: grafana-dashboards-app
+    namespace: banking-app
+    files:
+      - banking-app-health.json=dashboards/banking-app-health.json
+  - name: grafana-dashboards-byoc
+    namespace: banking-app
+    files:
+      - speedscale-byoc.json=dashboards/speedscale-byoc.json
+      - speedscale-traffic.json=dashboards/speedscale-traffic.json

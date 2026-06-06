@@ -3,9 +3,6 @@ kind: ConfigMap
 metadata:
   name: otel-collector-conf
   namespace: banking-app
-  labels:
-    app: opentelemetry
-    component: otel-collector-conf
 data:
   otel-collector-config.yaml: |
     receivers:
@@ -15,15 +12,37 @@ data:
             endpoint: 0.0.0.0:4317
           http:
             endpoint: 0.0.0.0:4318
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: speedscale-forwarder
+              scrape_interval: 30s
+              metrics_path: /metrics
+              static_configs:
+                - targets:
+                    - speedscale-forwarder-metrics.speedscale.svc.cluster.local:4145
+                  labels:
+                    service: speedscale
+                    component: forwarder
+            - job_name: speedscale-nettap
+              scrape_interval: 30s
+              metrics_path: /metrics
+              static_configs:
+                - targets:
+                    - speedscale-nettap-metrics.speedscale.svc.cluster.local:4145
+                  labels:
+                    service: speedscale
+                    component: nettap-ingest
 
     processors:
+      batch: {}
       filter:
         spans:
           exclude:
             match_type: strict
             span_names:
               - "security filterchain before"
-              - "security filterchain after" 
+              - "security filterchain after"
               - "authorize exchange"
               - "secured request"
             attributes:
@@ -35,19 +54,87 @@ data:
                 value: "/actuator/health"
               - key: http.url
                 value: "/actuator/prometheus"
+      attributes/loki-hints:
+        actions:
+          - key: loki.attribute.labels
+            value: service,namespace
+            action: insert
+      resource/loki-hints:
+        attributes:
+          - key: loki.resource.labels
+            value: cluster
+            action: insert
+      transform/rrpair-attrs:
+        log_statements:
+          - context: log
+            statements:
+              - set(attributes["svc"],         body["service"])
+              - set(attributes["status"],      body["status"])
+              - set(attributes["l7"],          body["l7protocol"])
+              - set(attributes["duration_ms"], Double(body["duration"]))
+      filter/http-only:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'attributes["l7"] != "http"'
+      deltatocumulative/traffic: {}
+
+    connectors:
+      count:
+        logs:
+          speedscale_calls:
+            description: "Total HTTP calls by service and status"
+            attributes:
+              - key: svc
+              - key: status
+      sum:
+        logs:
+          speedscale_request_duration_ms_sum:
+            description: "Sum of HTTP request duration (ms) by service"
+            source_attribute: duration_ms
+            attributes:
+              - key: svc
 
     exporters:
       otlp:
-        endpoint: "jaeger.banking-app.svc.cluster.local:4317"
+        endpoint: "jaeger:4317"
         tls:
           insecure: true
+      loki:
+        endpoint: http://loki:3100/loki/api/v1/push
+        default_labels_enabled:
+          exporter: true
+          job: true
+      prometheusremotewrite:
+        endpoint: http://prometheus:9090/api/v1/write
+        tls:
+          insecure: true
+      debug:
+        verbosity: basic
+
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
 
     service:
+      extensions: [health_check]
       pipelines:
         traces:
           receivers: [otlp]
           processors: [filter]
           exporters: [otlp]
+        logs:
+          receivers: [otlp]
+          processors: [resource/loki-hints, attributes/loki-hints, batch]
+          exporters: [loki, debug]
+        logs/metrics:
+          receivers: [otlp]
+          processors: [transform/rrpair-attrs, filter/http-only, batch]
+          exporters: [count, sum]
+        metrics:
+          receivers: [prometheus, count, sum]
+          processors: [deltatocumulative/traffic, batch]
+          exporters: [prometheusremotewrite, debug]
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -71,10 +158,9 @@ spec:
     spec:
       containers:
         - name: otel-collector
-          image: otel/opentelemetry-collector:0.153.0
-          command:
-            - "/otelcol"
-            - "--config=/conf/otel-collector-config.yaml"
+          image: otel/opentelemetry-collector-contrib:0.120.0
+          args:
+            - --config=/conf/otel-collector-config.yaml
           volumeMounts:
             - name: otel-collector-config-vol
               mountPath: /conf
@@ -83,6 +169,20 @@ spec:
               containerPort: 4317
             - name: otlp-http
               containerPort: 4318
+            - name: health
+              containerPort: 13133
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+            initialDelaySeconds: 5
+            periodSeconds: 10
       volumes:
         - name: otel-collector-config-vol
           configMap:
