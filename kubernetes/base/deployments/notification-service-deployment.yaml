@@ -41,6 +41,8 @@ spec:
           value: "transaction-events"
         - name: HTTP_PORT
           value: "8080"
+        - name: MONGO_URI
+          value: "mongodb://banking-mongodb:27017"
         envFrom:
         - configMapRef:
             name: app-config

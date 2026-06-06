@@ -11,18 +11,28 @@ import (
 
 	"github.com/speedscale/microsvc/notification-service/internal/api"
 	"github.com/speedscale/microsvc/notification-service/internal/consumer"
+	"github.com/speedscale/microsvc/notification-service/internal/store"
 )
 
 func main() {
 	port := envOrDefault("HTTP_PORT", "8080")
 	brokers := strings.Split(envOrDefault("KAFKA_BROKERS", "banking-kafka:9092"), ",")
 	topic := envOrDefault("KAFKA_TOPIC", "transaction-events")
-
-	c := consumer.New(brokers, topic, "notification-service")
-	defer c.Close()
+	mongoURI := envOrDefault("MONGO_URI", "mongodb://banking-mongodb:27017")
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
+
+	var mongoStore consumer.Store
+	ms, err := store.NewMongoStore(ctx, mongoURI, "notifications", "events")
+	if err != nil {
+		log.Printf("WARNING: MongoDB unavailable (%v), falling back to in-memory only", err)
+	} else {
+		mongoStore = ms
+	}
+
+	c := consumer.New(brokers, topic, "notification-service", mongoStore)
+	defer c.Close()
 
 	go c.Run(ctx)
 
