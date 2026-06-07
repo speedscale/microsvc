@@ -5,7 +5,7 @@
   "tags": ["banking-app", "health", "golden-signals"],
   "editable": true,
   "schemaVersion": 39,
-  "version": 13,
+  "version": 14,
   "time": {"from": "now-30m", "to": "now"},
   "refresh": "10s",
   "templating": {
@@ -192,9 +192,42 @@
       }
     },
     {
+      "type": "table",
+      "title": "Errors by Endpoint — which route is failing?",
+      "description": "Banking 4xx/5xx broken out by service, HTTP method and route. This is where you spot the failing endpoint — e.g. POST /api/transactions/create returning 400 — that the golden-signal panels only hint at.",
+      "gridPos": {"h": 9, "w": 24, "x": 0, "y": 24},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum by (job, method, uri, status) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m]))", "format": "table", "instant": true, "refId": "A"}
+      ],
+      "transformations": [
+        {"id": "organize", "options": {
+          "excludeByName": {"Time": true},
+          "renameByName": {"job": "Service", "method": "Method", "uri": "Endpoint", "status": "Status", "Value": "Errors/sec"}
+        }},
+        {"id": "sortBy", "options": {"fields": {}, "sort": [{"field": "Errors/sec", "desc": true}]}}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"align": "auto", "filterable": true, "cellOptions": {"type": "auto"}},
+          "decimals": 3
+        },
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "Errors/sec"}, "properties": [
+            {"id": "unit", "value": "reqps"},
+            {"id": "custom.cellOptions", "value": {"type": "color-background"}},
+            {"id": "color", "value": {"mode": "continuous-reds"}}
+          ]},
+          {"matcher": {"id": "byName", "options": "Status"}, "properties": [{"id": "custom.width", "value": 90}]},
+          {"matcher": {"id": "byName", "options": "Method"}, "properties": [{"id": "custom.width", "value": 90}]}
+        ]
+      },
+      "options": {"showHeader": true, "cellHeight": "sm", "footer": {"show": false}}
+    },
+    {
       "type": "row",
       "title": "Error Details",
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 24},
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 33},
       "collapsed": true,
       "panels": [
         {
