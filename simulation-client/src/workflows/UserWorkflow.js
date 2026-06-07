@@ -19,7 +19,10 @@ class UserWorkflow {
         await this.executeNewUserWorkflow(user);
       }
 
-      logger.info('Completed user session', { 
+      // Realistic unhappy-path traffic so the error-rate dashboard moves with load.
+      await this.generateErrorTraffic(user);
+
+      logger.info('Completed user session', {
         user: user.toLogData(),
         sessionDuration: user.getSessionDuration()
       });
@@ -499,6 +502,80 @@ class UserWorkflow {
       logger.warn('AI assistant request failed', {
         userId: user.id,
         error: error.message,
+      });
+    }
+  }
+
+  // Generate one realistic "unhappy path" request that the backend rejects with
+  // a 4xx. These are intentional and expected — they exist so the error-rate
+  // panels show non-zero, service-attributed errors that scale with traffic.
+  // Spread across services: user (401), gateway (401), accounts (404),
+  // transactions (400). 4xx responses are not retried by ApiClient.
+  async generateErrorTraffic(user) {
+    if (!config.simulation.errorInjection.enabled) return;
+    if (Math.random() >= config.simulation.errorInjection.probability) return;
+
+    const account = user.accounts && user.accounts.length > 0 ? user.accounts[0] : null;
+
+    // Only pick scenarios we can actually exercise for this user.
+    const scenarios = ['badLogin', 'expiredToken', 'missingAccount'];
+    if (account) {
+      scenarios.push('overdraw', 'invalidAmount');
+    }
+    const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+
+    try {
+      switch (scenario) {
+        case 'badLogin':
+          // Wrong password -> 401 at user-service.
+          await this.apiClient.login({
+            usernameOrEmail: user.username,
+            password: 'definitely-not-the-password',
+          });
+          break;
+
+        case 'expiredToken':
+          // Garbage bearer token -> 401 at the API gateway JWT filter.
+          await this.apiClient.getAccounts('invalid.expired.token');
+          break;
+
+        case 'missingAccount':
+          // Non-existent account id -> 404 at accounts-service.
+          await this.apiClient.getAccountBalance(999999999, user.token);
+          break;
+
+        case 'overdraw':
+          // Withdraw far beyond balance -> 4xx at transactions-service.
+          await this.apiClient.createTransaction({
+            type: 'WITHDRAWAL',
+            amount: 100000000,
+            accountId: account.id,
+            description: 'Simulated overdraw (expected failure)',
+          }, user.token);
+          break;
+
+        case 'invalidAmount':
+          // Negative amount -> 400 validation error at transactions-service.
+          await this.apiClient.createTransaction({
+            type: 'DEPOSIT',
+            amount: -100,
+            accountId: account.id,
+            description: 'Simulated invalid amount (expected failure)',
+          }, user.token);
+          break;
+      }
+
+      // Reached only if the backend unexpectedly accepted the bad request.
+      logger.debug('Error scenario did not produce an error', {
+        scenario,
+        userId: user.id,
+      });
+    } catch (error) {
+      // Expected path: this is intentional error traffic for observability.
+      logger.debug('Generated expected error traffic', {
+        scenario,
+        userId: user.id,
+        status: error.response?.status,
       });
     }
   }

@@ -47,7 +47,17 @@ const config = {
 
     // Retry settings
     maxRetries: parseInt(process.env.MAX_RETRIES) || 3,
-    retryDelayMs: parseInt(process.env.RETRY_DELAY) || 1000
+    retryDelayMs: parseInt(process.env.RETRY_DELAY) || 1000,
+
+    // Error injection: each session has a chance to run one realistic
+    // "unhappy path" (bad login, expired token, missing account, overdraw,
+    // invalid amount). Because burst mode scales the number of concurrent
+    // sessions, the absolute error rate rises and falls *with* throughput —
+    // which is what the Banking Health error panel is meant to show.
+    errorInjection: {
+      enabled: (process.env.ERROR_INJECTION_ENABLED || 'true') === 'true',
+      probability: parseFloat(process.env.ERROR_INJECTION_PROBABILITY) || 0.25
+    }
   },
 
   // Pre-existing user pool
