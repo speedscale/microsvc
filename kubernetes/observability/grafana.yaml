@@ -93,7 +93,7 @@ spec:
             - name: GF_USERS_VIEWERS_CAN_EDIT
               value: "true"
             - name: GF_SERVER_ROOT_URL
-              value: https://grafana-staging.trafficreplay.com
+              value: https://apex-grafana.trafficreplay.com
           volumeMounts:
             - name: data
               mountPath: /var/lib/grafana
@@ -156,7 +156,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: grafana-staging.trafficreplay.com
+    - host: apex-grafana.trafficreplay.com
       http:
         paths:
           - path: /
