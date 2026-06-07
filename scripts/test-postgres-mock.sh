@@ -38,7 +38,17 @@ if echo "$PM_VER_OUT" | grep -Fq "not initialized"; then
     echo "Skipping proxymock validation: not initialized and no API key (set PROXYMOCK_API_KEY)."
     exit 0
   fi
-  proxymock init -y --app-url app.speedscale.com --api-key "$PROXYMOCK_API_KEY"
+  for attempt in 1 2 3; do
+    if proxymock init -y --app-url app.speedscale.com --api-key "$PROXYMOCK_API_KEY"; then
+      break
+    fi
+    if [ "$attempt" -eq 3 ]; then
+      echo "error: proxymock init failed after 3 attempts"
+      exit 1
+    fi
+    echo "proxymock init attempt $attempt failed, retrying in 10s..."
+    sleep 10
+  done
 fi
 
 # Clean up any existing processes

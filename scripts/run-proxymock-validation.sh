@@ -38,7 +38,17 @@ if echo "$PM_VER_OUT" | grep -Fq "not initialized"; then
     echo "Set GitHub secret PROXYMOCK_API_KEY or run: proxymock init --api-key <key>"
     exit 0
   fi
-  proxymock init -y --app-url app.speedscale.com --api-key "$PROXYMOCK_API_KEY"
+  for attempt in 1 2 3; do
+    if proxymock init -y --app-url app.speedscale.com --api-key "$PROXYMOCK_API_KEY"; then
+      break
+    fi
+    if [ "$attempt" -eq 3 ]; then
+      echo "error: proxymock init failed after 3 attempts"
+      exit 1
+    fi
+    echo "proxymock init attempt $attempt failed, retrying in 10s..."
+    sleep 10
+  done
 fi
 
 # Fail fast if host port 5432 is taken (proxymock Postgres mock needs it); nc is optional.
