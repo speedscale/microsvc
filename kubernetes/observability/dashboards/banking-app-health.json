@@ -5,7 +5,7 @@
   "tags": ["banking-app", "health", "golden-signals"],
   "editable": true,
   "schemaVersion": 39,
-  "version": 10,
+  "version": 11,
   "time": {"from": "now-30m", "to": "now"},
   "refresh": "10s",
   "panels": [
@@ -33,13 +33,13 @@
     },
     {
       "type": "timeseries",
-      "title": "Throughput — Requests / sec (eBPF)",
-      "description": "HTTP throughput derived from Speedscale eBPF capture across all services",
+      "title": "Throughput — Requests / sec",
+      "description": "HTTP request rate per banking service (Spring http_server_requests; actuator/health excluded). Banking-app namespace only.",
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
-      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
-        {"expr": "sum(rate(speedscale_calls_total[5m]))", "legendFormat": "total req/s", "refId": "A"},
-        {"expr": "sum by (svc) (rate(speedscale_calls_total[5m]))", "legendFormat": "{{svc}}", "refId": "B"}
+        {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\", uri!~\"/actuator.*\"}[5m]))", "legendFormat": "total req/s", "refId": "A"},
+        {"expr": "sum by (job) (rate(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\", uri!~\"/actuator.*\"}[5m]))", "legendFormat": "{{job}}", "refId": "B"}
       ],
       "fieldConfig": {
         "defaults": {
@@ -101,11 +101,11 @@
     {
       "type": "timeseries",
       "title": "Error Rate — by Service & Status",
-      "description": "HTTP 4xx/5xx errors detected by Speedscale eBPF capture, by service and status code",
+      "description": "Banking-app HTTP 4xx/5xx by service and status code (Spring http_server_requests; actuator/health excluded).",
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
-      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
-        {"expr": "sum by (svc, status) (rate(speedscale_calls_total{status=~\"[45]..\"}[5m]))", "legendFormat": "{{svc}} {{status}}", "refId": "A"}
+        {"expr": "sum by (job, status) (rate(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m]))", "legendFormat": "{{job}} {{status}}", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
@@ -125,11 +125,11 @@
     {
       "type": "stat",
       "title": "Error Rate %",
-      "description": "Percentage of all requests returning 4xx/5xx (from eBPF capture)",
+      "description": "Percentage of banking-app requests returning 4xx/5xx (actuator/health excluded).",
       "gridPos": {"h": 8, "w": 4, "x": 12, "y": 16},
-      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
-        {"expr": "sum(rate(speedscale_calls_total{status=~\"[45]..\"}[5m])) / sum(rate(speedscale_calls_total[5m])) * 100", "refId": "A"}
+        {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m])) / sum(rate(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\", uri!~\"/actuator.*\"}[5m])) * 100", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
@@ -152,11 +152,11 @@
     {
       "type": "timeseries",
       "title": "eBPF Capture — Messages by Protocol",
-      "description": "Speedscale eBPF capture rate by protocol. Shows HTTP, Postgres, MongoDB, Kafka, Redis, gRPC traffic flowing through the pipeline.",
+      "description": "Speedscale eBPF capture rate by protocol for the banking-app namespace. Shows HTTP, Postgres, MongoDB, Kafka, Redis, gRPC traffic flowing through the pipeline.",
       "gridPos": {"h": 8, "w": 8, "x": 16, "y": 16},
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
-        {"expr": "sum by (protocol) (rate(messages_sent_total{component=\"forwarder\"}[5m]))", "legendFormat": "{{protocol}}", "refId": "A"}
+        {"expr": "sum by (protocol) (rate(messages_sent_total{component=\"forwarder\", k8sAppPodNamespace=\"banking-app\"}[5m]))", "legendFormat": "{{protocol}}", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
