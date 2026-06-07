@@ -15,7 +15,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_l7protocol, body_command, body_status, body_location | body_l7protocol=\"http\" | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [$__range]))",
+          "expr": "sum(count_over_time({service=~\"$service\", cluster=~\"$cluster\", service!~\"outerspace.*\"} | json | keep body_l7protocol, body_command, body_status, body_location | body_l7protocol=\"http\" | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [$__range]))",
           "refId": "A",
           "instant": true
         }
@@ -29,7 +29,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "100 * sum(count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_l7protocol, body_command, body_status, body_location | body_l7protocol=\"http\" | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | body_status=~\"[45]..\" [$__range])) / sum(count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_l7protocol, body_command, body_status, body_location | body_l7protocol=\"http\" | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [$__range]))",
+          "expr": "100 * sum(count_over_time({service=~\"$service\", cluster=~\"$cluster\", service!~\"outerspace.*\"} | json | keep body_l7protocol, body_command, body_status, body_location | body_l7protocol=\"http\" | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | body_status=~\"[45]..\" [$__range])) / sum(count_over_time({service=~\"$service\", cluster=~\"$cluster\", service!~\"outerspace.*\"} | json | keep body_l7protocol, body_command, body_status, body_location | body_l7protocol=\"http\" | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [$__range]))",
           "refId": "A",
           "instant": true
         }
@@ -50,7 +50,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "quantile_over_time(0.95, {service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_l7protocol, body_duration | body_l7protocol=\"http\" | unwrap body_duration [$__range])",
+          "expr": "quantile_over_time(0.95, {service=~\"$service\", cluster=~\"$cluster\", service!~\"outerspace.*\"} | json | keep body_l7protocol, body_duration | body_l7protocol=\"http\" | unwrap body_duration [$__range])",
           "refId": "A",
           "instant": true
         }
@@ -65,7 +65,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "count(count by (body_location) (count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_l7protocol, body_location | body_l7protocol=\"http\" [15m])))",
+          "expr": "count(count by (body_location) (count_over_time({service=~\"$service\", cluster=~\"$cluster\", service!~\"outerspace.*\"} | json | keep body_l7protocol, body_location | body_l7protocol=\"http\" [15m])))",
           "refId": "A",
           "instant": true
         }
@@ -79,7 +79,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum by (svc) (rate(speedscale_calls_total{svc=~\"$service\"}[5m]))",
+          "expr": "sum by (svc) (rate(speedscale_calls_total{svc=~\"$service\", svc!~\"outerspace.*\"}[5m]))",
           "legendFormat": "{{svc}}",
           "refId": "A"
         }
@@ -93,7 +93,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "rate(speedscale_request_duration_ms_sum_total{svc=~\"$service\"}[5m]) / sum by (svc) (rate(speedscale_calls_total{svc=~\"$service\"}[5m]))",
+          "expr": "rate(speedscale_request_duration_ms_sum_total{svc=~\"$service\", svc!~\"outerspace.*\"}[5m]) / sum by (svc) (rate(speedscale_calls_total{svc=~\"$service\", svc!~\"outerspace.*\"}[5m]))",
           "legendFormat": "{{svc}}",
           "refId": "A"
         }
@@ -107,7 +107,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum by (status) (increase(speedscale_calls_total{svc=~\"$service\"}[$__range]))",
+          "expr": "sum by (status) (increase(speedscale_calls_total{svc=~\"$service\", svc!~\"outerspace.*\"}[$__range]))",
           "legendFormat": "{{status}}",
           "refId": "A",
           "instant": true
@@ -129,7 +129,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "topk(20, sum by (service, body_location) (count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_l7protocol, service, body_location | body_l7protocol=\"http\" [15m])))",
+          "expr": "topk(20, sum by (service, body_location) (count_over_time({service=~\"$service\", cluster=~\"$cluster\", service!~\"outerspace.*\"} | json | keep body_l7protocol, service, body_location | body_l7protocol=\"http\" [15m])))",
           "refId": "A",
           "instant": true,
           "format": "table"
@@ -155,7 +155,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{service=~\"$service\", cluster=~\"$cluster\"} | json | keep cluster, service, body_command, body_status, body_duration, body_location, body_dlpModified, body_l7protocol | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | line_format \"{{.cluster}}/{{.service}}  {{.body_command}} {{.body_status}} {{ printf \\\"%4s\\\" .body_duration }}ms  {{.body_location}}  {{ if eq .body_dlpModified \\\"true\\\" }}[dlp]{{end}}\"",
+          "expr": "{service=~\"$service\", cluster=~\"$cluster\", service!~\"outerspace.*\"} | json | keep cluster, service, body_command, body_status, body_duration, body_location, body_dlpModified, body_l7protocol | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | line_format \"{{.cluster}}/{{.service}}  {{.body_command}} {{.body_status}} {{ printf \\\"%4s\\\" .body_duration }}ms  {{.body_location}}  {{ if eq .body_dlpModified \\\"true\\\" }}[dlp]{{end}}\"",
           "refId": "A"
         }
       ],
