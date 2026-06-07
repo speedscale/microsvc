@@ -148,15 +148,26 @@ jobs:
     - name: Get version
       id: version
       run: |
-        VERSION=$(./scripts/version.sh get)
-        SIMPLE_TAG=$(./scripts/version.sh tag)
-        SHA_TAG=$(./scripts/version.sh tag-sha)
+        if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+          # On master: auto-increment patch unless VERSION was manually bumped
+          if git diff HEAD~1 --name-only 2>/dev/null | grep -q '^VERSION$'; then
+            echo "VERSION manually bumped in this commit, using as-is"
+            VERSION=$(./scripts/version.sh get)
+          else
+            CURRENT=$(./scripts/version.sh get)
+            IFS='.' read -r major minor patch <<< "$CURRENT"
+            VERSION="${major}.${minor}.$((patch + 1))"
+            echo "Auto-incrementing to $VERSION for deploy"
+          fi
+        else
+          VERSION=$(./scripts/version.sh get)
+        fi
+        SIMPLE_TAG="v${VERSION}"
+        SHA_TAG="v${VERSION}-$(git rev-parse --short HEAD)"
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "simple_tag=$SIMPLE_TAG" >> $GITHUB_OUTPUT
         echo "sha_tag=$SHA_TAG" >> $GITHUB_OUTPUT
-        echo "Current version: $VERSION"
-        echo "Simple tag: $SIMPLE_TAG"
-        echo "SHA tag: $SHA_TAG"
+        echo "Building version: $SIMPLE_TAG ($SHA_TAG)"
     
     - name: Extract metadata
       id: meta
@@ -197,30 +208,45 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
     
-    - name: Get version
-      id: version
+    - name: Auto-bump and sync all versions
       run: |
-        SIMPLE_TAG=$(./scripts/version.sh tag)
-        echo "simple_tag=$SIMPLE_TAG" >> $GITHUB_OUTPUT
-        echo "Simple tag: $SIMPLE_TAG"
-    
-    - name: Update Kubernetes manifests, frontend, and backend versions
-      run: |
+        # Auto-increment patch unless VERSION was manually bumped in this merge
+        if git diff HEAD~1 --name-only 2>/dev/null | grep -q '^VERSION$'; then
+          echo "VERSION manually bumped in this commit, syncing manifests only"
+        else
+          ./scripts/version.sh bump patch
+        fi
+
+        NEW_TAG=$(./scripts/version.sh tag)
+        echo "Releasing $NEW_TAG"
+
         make update-k8s-version
         make update-frontend-version
         make update-backend-version
-        if [ -n "$(git diff)" ]; then
-          echo "Versions updated to ${{ steps.version.outputs.simple_tag }}"
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add kubernetes/base/deployments/ frontend/package.json simulation-client/package.json backend/*/pom.xml
-          git commit -m "CI: sync versions to ${{ steps.version.outputs.simple_tag }}
 
-          Automated by GitHub Actions CI workflow."
-          git push
-        else
-          echo "No version changes to sync"
+        # Always commit — the bump itself guarantees a diff
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add VERSION kubernetes/base/deployments/ frontend/package.json simulation-client/package.json backend/*/pom.xml
+
+        if git diff --cached --quiet; then
+          echo "No changes to commit (manifests already at $NEW_TAG)"
+          exit 0
         fi
+
+        git commit -m "CI: release $NEW_TAG [skip ci]"
+
+        # Retry with rebase if another merge landed between build and now
+        for i in 1 2 3; do
+          if git push; then
+            echo "Released $NEW_TAG"
+            exit 0
+          fi
+          echo "Push conflicted, rebasing (attempt $i/3)..."
+          git pull --rebase origin master
+        done
+        echo "Failed to push after 3 attempts"
+        exit 1
 
   e2e-test:
     needs: [build-and-push]
