@@ -11,37 +11,49 @@ data:
   NODE_ENV: "production"
   LOG_LEVEL: "info"
   LOG_FORMAT: "json"
-  
+
   # Target application settings
   TARGET_BASE_URL: "http://banking-frontend:80"
   NOTIFICATION_SERVICE_URL: "http://banking-notification:80"
-  REQUEST_TIMEOUT: "10000"
-  
-  # Simulation settings
+  REQUEST_TIMEOUT: "15000"
+
+  # Simulation settings — burst mode produces spiky, realistic traffic
   CONCURRENT_USERS: "5"
   EXISTING_USER_PERCENTAGE: "80"
-  SESSION_DURATION_MS: "300000"  # 5 minutes
-  MIN_ACTION_DELAY: "1000"       # 1 second
-  MAX_ACTION_DELAY: "5000"       # 5 seconds
-  NEW_USER_DELAY: "2000"         # 2 seconds
+  SESSION_DURATION_MS: "300000"
+  MIN_ACTION_DELAY: "1500"
+  MAX_ACTION_DELAY: "6000"
+  NEW_USER_DELAY: "3000"
   MAX_RETRIES: "3"
   RETRY_DELAY: "1000"
-  
+
+  # Burst mode: quiet baseline with periodic traffic spikes
+  BURST_ENABLED: "true"
+  BURST_BASE_USERS: "2"           # quiet: 2 concurrent users
+  BURST_PEAK_USERS: "12"          # spike: 12 concurrent users
+  BURST_INTERVAL_MS: "180000"     # ~3 min between bursts
+  BURST_DURATION_MS: "30000"      # each burst lasts ~30s
+  BURST_JITTER_MS: "60000"        # ±60s randomness on interval
+
   # User pool configuration
   USER_PREFIX: "sim_user_"
   TOTAL_USERS: "1000"
-  
+
   # Transaction simulation settings
-  DEPOSIT_PROBABILITY: "0.3"
-  WITHDRAWAL_PROBABILITY: "0.2"
-  TRANSFER_PROBABILITY: "0.1"
+  DEPOSIT_PROBABILITY: "0.4"
+  WITHDRAWAL_PROBABILITY: "0.15"
+  TRANSFER_PROBABILITY: "0.05"
   MIN_DEPOSIT: "10.00"
   MAX_DEPOSIT: "1000.00"
   MIN_WITHDRAWAL: "5.00"
   MAX_WITHDRAWAL: "500.00"
   MIN_TRANSFER: "10.00"
   MAX_TRANSFER: "250.00"
-  
+
+  # Feature toggles — disable endpoints that lack backend support
+  AI_CHAT_ENABLED: "false"
+  EXPORT_STATEMENT_ENABLED: "false"
+
   # OpenTelemetry configuration
   OTEL_SERVICE_NAME: "simulation-client"
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
@@ -52,6 +64,6 @@ data:
   OTEL_TRACES_SAMPLER: "always_on"
   OTEL_PROPAGATORS: "tracecontext"
   OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app"
-  
+
   # Metrics reporting
-  METRICS_INTERVAL: "30000"      # 30 seconds
+  METRICS_INTERVAL: "30000"
