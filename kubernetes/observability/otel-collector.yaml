@@ -36,24 +36,28 @@ data:
 
     processors:
       batch: {}
+      # Drop actuator probe/scrape spans and noisy Spring Security internal
+      # spans. Uses OTTL `traces.span` conditions, which are OR-ed: a span is
+      # dropped if ANY condition is true. (The previous MatchProperties form
+      # AND-ed span_names with the attribute list, so it matched nothing and
+      # actuator traces leaked through to Jaeger.)
       filter:
-        spans:
-          exclude:
-            match_type: strict
-            span_names:
-              - "security filterchain before"
-              - "security filterchain after"
-              - "authorize exchange"
-              - "secured request"
-            attributes:
-              - key: http.target
-                value: "/actuator/health"
-              - key: http.target
-                value: "/actuator/prometheus"
-              - key: http.url
-                value: "/actuator/health"
-              - key: http.url
-                value: "/actuator/prometheus"
+        error_mode: ignore
+        traces:
+          span:
+            # Actuator health/liveness/readiness/prometheus probes — match on
+            # span name (e.g. "http get /actuator/health") and on whichever
+            # URL attribute the instrumentation emits.
+            - 'IsMatch(name, "(?i)actuator")'
+            - 'IsMatch(attributes["http.url"], "/actuator")'
+            - 'IsMatch(attributes["http.target"], "/actuator")'
+            - 'IsMatch(attributes["url.path"], "/actuator")'
+            - 'IsMatch(attributes["http.route"], "/actuator")'
+            # Noisy Spring Security internal spans.
+            - 'name == "security filterchain before"'
+            - 'name == "security filterchain after"'
+            - 'name == "authorize exchange"'
+            - 'name == "secured request"'
       attributes/loki-hints:
         actions:
           - key: loki.attribute.labels
