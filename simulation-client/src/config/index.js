@@ -35,14 +35,21 @@ const config = {
     // Delay between starting new user sessions
     newUserDelayMs: parseInt(process.env.NEW_USER_DELAY) || 2000,
 
-    // Burst mode: alternate between quiet baseline and traffic spikes
+    // Organic traffic model: concurrency follows a mean-reverting random walk
+    // (Ornstein–Uhlenbeck) with occasional random-height spikes, instead of a
+    // fixed on/off burst. This makes throughput look like real, noisy
+    // production traffic rather than a periodic square-wave pulse.
     burst: {
       enabled: (process.env.BURST_ENABLED || 'true') === 'true',
-      baseConcurrentUsers: parseInt(process.env.BURST_BASE_USERS) || 2,
-      burstConcurrentUsers: parseInt(process.env.BURST_PEAK_USERS) || 12,
-      intervalMs: parseInt(process.env.BURST_INTERVAL_MS) || 180000,       // 3 min between bursts
-      durationMs: parseInt(process.env.BURST_DURATION_MS) || 30000,        // 30s burst
-      intervalJitterMs: parseInt(process.env.BURST_JITTER_MS) || 60000     // ±60s jitter
+      baseConcurrentUsers: parseInt(process.env.BURST_BASE_USERS) || 2,    // floor
+      burstConcurrentUsers: parseInt(process.env.BURST_PEAK_USERS) || 14,  // ceiling
+      meanConcurrentUsers: parseInt(process.env.TRAFFIC_MEAN_USERS) || 5,  // level it reverts toward
+      reversion: parseFloat(process.env.TRAFFIC_REVERSION) || 0.25,        // pull toward mean (0–1)
+      volatility: parseFloat(process.env.TRAFFIC_VOLATILITY) || 2.2,       // random step size per update
+      updateMs: parseInt(process.env.TRAFFIC_UPDATE_MS) || 5000,           // how often the level changes
+      updateJitter: parseFloat(process.env.TRAFFIC_UPDATE_JITTER) || 0.5,  // ±50% on update cadence
+      spikeChance: parseFloat(process.env.TRAFFIC_SPIKE_CHANCE) || 0.07,   // per-update prob of a spike
+      spikeMagnitude: parseInt(process.env.TRAFFIC_SPIKE_MAG) || 8         // max extra users on a spike
     },
 
     // Retry settings
