@@ -10,6 +10,8 @@ class SimulationManager {
     this.isRunning = false;
     this.activeSessions = new Map();
     this.burstActive = false;
+    // Continuously-varying concurrency target for the organic traffic model.
+    this.concurrencyLevel = config.simulation.burst.meanConcurrentUsers;
     this.metrics = {
       totalSessions: 0,
       successfulSessions: 0,
@@ -31,11 +33,10 @@ class SimulationManager {
     this.metrics.startTime = new Date();
 
     logger.info('Starting user simulation', {
-      burstMode: config.simulation.burst.enabled,
-      baseConcurrency: config.simulation.burst.baseConcurrentUsers,
-      burstConcurrency: config.simulation.burst.burstConcurrentUsers,
-      burstInterval: `${config.simulation.burst.intervalMs / 1000}s`,
-      burstDuration: `${config.simulation.burst.durationMs / 1000}s`,
+      trafficModel: config.simulation.burst.enabled ? 'organic-random-walk' : 'fixed',
+      minConcurrency: config.simulation.burst.baseConcurrentUsers,
+      meanConcurrency: config.simulation.burst.meanConcurrentUsers,
+      maxConcurrency: config.simulation.burst.burstConcurrentUsers,
       targetUrl: config.target.baseUrl
     });
 
@@ -43,7 +44,7 @@ class SimulationManager {
     this.startMetricsReporting();
 
     if (config.simulation.burst.enabled) {
-      this.startBurstCycle();
+      this.startTrafficModel();
     }
 
     this.startUserSessionGeneration();
@@ -67,69 +68,79 @@ class SimulationManager {
     });
   }
 
-  // Burst cycle: alternate between quiet periods and traffic spikes.
-  // Adds jitter so bursts don't land on exact clock boundaries.
-  startBurstCycle() {
-    const scheduleBurst = () => {
+  // Organic traffic model. Instead of toggling between a fixed quiet level and
+  // a fixed burst level on a periodic timer (which graphs as a square wave),
+  // the concurrency target drifts continuously via a mean-reverting random
+  // walk (Ornstein–Uhlenbeck) with occasional random-height spikes. The update
+  // cadence is itself jittered, so nothing about the pattern is periodic — it
+  // looks like real, noisy production traffic.
+  startTrafficModel() {
+    const u = config.simulation.burst;
+
+    const step = () => {
       if (!this.isRunning) return;
 
-      const jitter = (Math.random() - 0.5) * config.simulation.burst.intervalJitterMs * 2;
-      const nextBurstIn = config.simulation.burst.intervalMs + jitter;
+      // Mean-reverting random walk: pull toward the mean, plus Gaussian noise.
+      const drift = u.reversion * (u.meanConcurrentUsers - this.concurrencyLevel);
+      const noise = this.gaussian() * u.volatility;
+      this.concurrencyLevel += drift + noise;
 
-      setTimeout(async () => {
-        if (!this.isRunning) return;
+      // Occasional organic spike of random height (Poisson-like arrival, not
+      // on a fixed schedule).
+      if (Math.random() < u.spikeChance) {
+        this.concurrencyLevel += Math.random() * u.spikeMagnitude;
+      }
 
-        const durationJitter = (Math.random() - 0.5) * config.simulation.burst.durationMs * 0.4;
-        const burstDuration = config.simulation.burst.durationMs + durationJitter;
+      // Keep within sane bounds.
+      this.concurrencyLevel = Math.min(
+        u.burstConcurrentUsers,
+        Math.max(u.baseConcurrentUsers, this.concurrencyLevel)
+      );
 
-        this.burstActive = true;
-        logger.info('Burst started', {
-          concurrency: config.simulation.burst.burstConcurrentUsers,
-          plannedDuration: `${Math.round(burstDuration / 1000)}s`
-        });
+      // Surface a coarse "busy" flag for logs/metrics (not used for control).
+      this.burstActive = this.concurrencyLevel >= u.meanConcurrentUsers +
+        (u.burstConcurrentUsers - u.meanConcurrentUsers) / 2;
 
-        setTimeout(() => {
-          this.burstActive = false;
-          logger.info('Burst ended, returning to base traffic');
-          scheduleBurst();
-        }, burstDuration);
+      logger.debug('Traffic level updated', {
+        level: Math.round(this.concurrencyLevel),
+        busy: this.burstActive
+      });
 
-      }, nextBurstIn);
+      // Jittered cadence so even the update interval isn't periodic.
+      const next = u.updateMs * (1 + (Math.random() - 0.5) * 2 * u.updateJitter);
+      setTimeout(step, Math.max(1000, next));
     };
 
-    // First burst after a shorter initial wait (30-90s) so the demo isn't boring
-    const initialDelay = 30000 + Math.random() * 60000;
-    setTimeout(() => {
-      if (!this.isRunning) return;
-      this.burstActive = true;
-      logger.info('Initial burst started');
+    setTimeout(step, 2000);
+  }
 
-      const dur = config.simulation.burst.durationMs * (0.5 + Math.random() * 0.5);
-      setTimeout(() => {
-        this.burstActive = false;
-        logger.info('Initial burst ended');
-        scheduleBurst();
-      }, dur);
-    }, initialDelay);
+  // Standard normal sample via Box–Muller (Math.random is uniform).
+  gaussian() {
+    let a = 0, b = 0;
+    while (a === 0) a = Math.random();
+    while (b === 0) b = Math.random();
+    return Math.sqrt(-2 * Math.log(a)) * Math.cos(2 * Math.PI * b);
   }
 
   getCurrentConcurrency() {
     if (!config.simulation.burst.enabled) {
       return config.simulation.concurrentUsers;
     }
-    return this.burstActive
-      ? config.simulation.burst.burstConcurrentUsers
-      : config.simulation.burst.baseConcurrentUsers;
+    return Math.max(1, Math.round(this.concurrencyLevel));
   }
 
   getCurrentDelay() {
     if (!config.simulation.burst.enabled) {
       return config.simulation.newUserDelayMs;
     }
-    // During bursts: faster session starts. During quiet: slower.
-    return this.burstActive
-      ? Math.max(200, config.simulation.newUserDelayMs / 4)
-      : config.simulation.newUserDelayMs * 2;
+    // Session-start delay scales inversely with the current level, so the
+    // request rate (not just the concurrency cap) also varies organically.
+    const u = config.simulation.burst;
+    const frac = (this.concurrencyLevel - u.baseConcurrentUsers) /
+      Math.max(1, u.burstConcurrentUsers - u.baseConcurrentUsers); // 0..1
+    const fast = Math.max(200, config.simulation.newUserDelayMs / 4);
+    const slow = config.simulation.newUserDelayMs * 2;
+    return Math.round(slow - frac * (slow - fast));
   }
 
   async startHealthChecks() {
