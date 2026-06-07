@@ -5,9 +5,27 @@
   "tags": ["banking-app", "health", "golden-signals"],
   "editable": true,
   "schemaVersion": 39,
-  "version": 12,
+  "version": 13,
   "time": {"from": "now-30m", "to": "now"},
   "refresh": "10s",
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "label": "Service",
+        "type": "query",
+        "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+        "definition": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\"}, job)",
+        "query": {"qryType": 1, "query": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\"}, job)", "refId": "PrometheusVariableQueryEditor-VariableQuery"},
+        "includeAll": true,
+        "multi": true,
+        "allValue": null,
+        "current": {"text": ["All"], "value": ["$__all"]},
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
+  },
   "panels": [
     {
       "type": "timeseries",
@@ -38,8 +56,8 @@
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
       "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
-        {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "total req/s", "refId": "A"},
-        {"expr": "sum by (job) (rate(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "{{job}}", "refId": "B"}
+        {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "total req/s", "refId": "A"},
+        {"expr": "sum by (job) (rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "{{job}}", "refId": "B"}
       ],
       "fieldConfig": {
         "defaults": {
@@ -63,7 +81,7 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
       "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
-        {"expr": "process_cpu_usage", "legendFormat": "{{job}}", "refId": "A"}
+        {"expr": "process_cpu_usage{job=~\"$service\"}", "legendFormat": "{{job}}", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
@@ -81,8 +99,8 @@
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
       "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
-        {"expr": "sum by (job) (jvm_memory_used_bytes{area=\"heap\"})", "legendFormat": "{{job}} used", "refId": "A"},
-        {"expr": "sum by (job) (jvm_memory_max_bytes{area=\"heap\"})", "legendFormat": "{{job}} max", "refId": "B"}
+        {"expr": "sum by (job) (jvm_memory_used_bytes{area=\"heap\", job=~\"$service\"})", "legendFormat": "{{job}} used", "refId": "A"},
+        {"expr": "sum by (job) (jvm_memory_max_bytes{area=\"heap\", job=~\"$service\"})", "legendFormat": "{{job}} max", "refId": "B"}
       ],
       "fieldConfig": {
         "defaults": {
@@ -105,7 +123,7 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
       "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
-        {"expr": "sum by (job, status) (rate(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "{{job}} {{status}}", "refId": "A"}
+        {"expr": "sum by (job, status) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "{{job}} {{status}}", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
@@ -129,7 +147,7 @@
       "gridPos": {"h": 8, "w": 4, "x": 12, "y": 16},
       "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
-        {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m])) / sum(rate(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\", uri!~\"/actuator.*\"}[5m])) * 100", "refId": "A"}
+        {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m])) / sum(rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[5m])) * 100", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
