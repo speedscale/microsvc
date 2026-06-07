@@ -21,7 +21,7 @@ spec:
             name: banking-frontend
             port:
               number: 80
-  - host: banking-staging.trafficreplay.com
+  - host: apex-banking.trafficreplay.com
     http:
       paths:
       - path: /
