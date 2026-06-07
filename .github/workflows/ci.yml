@@ -335,3 +335,29 @@ jobs:
           frontend/playwright-report/
           frontend/test-results/
         retention-days: 30
+
+  # Single aggregate check for branch protection. Require ONLY this context on
+  # master instead of every test + per-service build matrix leg — it stays green
+  # only if all of them pass, and automatically covers services added later.
+  ci-gate:
+    needs:
+      - test-backend
+      - test-frontend
+      - test-go-services
+      - proxymock-validation
+      - build-and-push
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any required job did not succeed
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: |
+          echo "One or more required jobs failed or were cancelled:"
+          echo "  test-backend=${{ needs.test-backend.result }}"
+          echo "  test-frontend=${{ needs.test-frontend.result }}"
+          echo "  test-go-services=${{ needs.test-go-services.result }}"
+          echo "  proxymock-validation=${{ needs.proxymock-validation.result }}"
+          echo "  build-and-push=${{ needs.build-and-push.result }}"
+          exit 1
+      - name: All required checks passed
+        run: echo "All required jobs succeeded."
