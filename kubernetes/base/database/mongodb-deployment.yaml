@@ -21,12 +21,16 @@ spec:
           ports:
             - containerPort: 27017
               name: mongo
+          env:
+            - name: MONGO_WIREDTIGER_CACHE_SIZE_GB
+              value: "0.25"
+          command: ["mongod", "--wiredTigerCacheSizeGB", "0.25"]
           resources:
             requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
+              cpu: 100m
               memory: 256Mi
+            limits:
+              memory: 512Mi
           readinessProbe:
             exec:
               command: ["mongosh", "--eval", "db.adminCommand('ping')"]
