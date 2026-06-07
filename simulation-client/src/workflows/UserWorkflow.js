@@ -55,7 +55,7 @@ class UserWorkflow {
     await this.randomDelay();
 
     // Step 4b: Occasionally export a statement to S3
-    if (Math.random() < 0.1 && user.accounts && user.accounts.length > 0) {
+    if (config.features.exportStatementEnabled && Math.random() < 0.1 && user.accounts && user.accounts.length > 0) {
       await this.exportStatement(user, user.accounts);
       await this.randomDelay();
     }
@@ -70,7 +70,7 @@ class UserWorkflow {
     await this.randomDelay();
 
     // Step 7: 30% chance of asking the AI assistant a question
-    if (Math.random() < 0.3) {
+    if (config.features.aiChatEnabled && Math.random() < 0.3) {
       await this.askAIAssistant(user);
       await this.randomDelay();
     }
