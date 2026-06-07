@@ -33,14 +33,14 @@ spec:
             - name: SPAN_STORAGE_TYPE
               value: "memory"
             - name: MEMORY_MAX_TRACES
-              value: "50000"
+              value: "30000"
           resources:
             requests:
               cpu: 100m
               memory: 256Mi
             limits:
               cpu: 500m
-              memory: 512Mi
+              memory: 2Gi
           readinessProbe:
             httpGet:
               path: /
