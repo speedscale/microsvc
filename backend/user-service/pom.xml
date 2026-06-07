@@ -14,7 +14,7 @@
 
     <groupId>com.banking</groupId>
     <artifactId>user-service</artifactId>
-    <version>1.4.14</version>
+    <version>1.4.15</version>
     <packaging>jar</packaging>
 
     <name>user-service</name>
