@@ -1,0 +1,240 @@
+{
+  "annotations": {"list": []},
+  "title": "Banking Application — Errors",
+  "uid": "banking-app-errors",
+  "tags": ["banking-app", "errors"],
+  "editable": true,
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {"from": "now-30m", "to": "now"},
+  "refresh": "10s",
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "label": "Service",
+        "type": "query",
+        "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+        "definition": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\"}, job)",
+        "query": {"qryType": 1, "query": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\"}, job)", "refId": "PrometheusVariableQueryEditor-VariableQuery"},
+        "includeAll": true,
+        "multi": true,
+        "allValue": null,
+        "current": {"text": ["All"], "value": ["$__all"]},
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
+  },
+  "links": [
+    {"title": "← Overview", "icon": "arrow-left", "type": "link", "url": "/d/banking-app-health/overview?${__url_time_range}&var-service=${service}", "targetBlank": false}
+  ],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Total Errors",
+      "description": "Total 4xx + 5xx errors in the selected time range",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum(increase(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[30m]))", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "yellow", "value": 50},
+            {"color": "red", "value": 200}
+          ]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "type": "stat",
+      "title": "Error %",
+      "description": "Percentage of requests returning 4xx/5xx",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m])) / sum(rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[5m])) * 100", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "yellow", "value": 1},
+            {"color": "orange", "value": 3},
+            {"color": "red", "value": 5}
+          ]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "type": "stat",
+      "title": "4xx Errors/s",
+      "description": "Client error rate",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"4..\", uri!~\"/actuator.*\"}[1m]))", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "decimals": 2,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "orange", "value": 0.1}
+          ]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "type": "stat",
+      "title": "5xx Errors/s",
+      "description": "Server error rate",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"5..\", uri!~\"/actuator.*\"}[1m]))", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "decimals": 2,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "red", "value": 0.01}
+          ]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "type": "timeseries",
+      "title": "Error Rate by Service",
+      "description": "4xx/5xx rate per service over time",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum by (job) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "{{job}}", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "bars", "fillOpacity": 80, "lineWidth": 0, "stacking": {"mode": "normal"}},
+          "unit": "reqps"
+        }
+      },
+      "options": {"tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Error Rate by Status Code",
+      "description": "Split by HTTP status code",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum by (status) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "{{status}}", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "bars", "fillOpacity": 80, "lineWidth": 0, "stacking": {"mode": "normal"}},
+          "unit": "reqps"
+        },
+        "overrides": [
+          {"matcher": {"id": "byRegexp", "options": "^4..$"}, "properties": [{"id": "color", "value": {"fixedColor": "orange", "mode": "fixed"}}]},
+          {"matcher": {"id": "byRegexp", "options": "^5..$"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]}
+        ]
+      },
+      "options": {"tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "table",
+      "title": "Errors by Endpoint",
+      "description": "Which route is failing and why",
+      "gridPos": {"h": 9, "w": 24, "x": 0, "y": 12},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum by (job, method, uri, status) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m]))", "format": "table", "instant": true, "refId": "A"}
+      ],
+      "transformations": [
+        {"id": "organize", "options": {
+          "excludeByName": {"Time": true},
+          "renameByName": {"job": "Service", "method": "Method", "uri": "Endpoint", "status": "Status", "Value": "Errors/sec"}
+        }},
+        {"id": "sortBy", "options": {"fields": {}, "sort": [{"field": "Errors/sec", "desc": true}]}}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"align": "auto", "filterable": true, "cellOptions": {"type": "auto"}},
+          "decimals": 3
+        },
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "Errors/sec"}, "properties": [
+            {"id": "unit", "value": "reqps"},
+            {"id": "custom.cellOptions", "value": {"type": "color-background"}},
+            {"id": "color", "value": {"mode": "continuous-reds"}}
+          ]},
+          {"matcher": {"id": "byName", "options": "Status"}, "properties": [{"id": "custom.width", "value": 90}]},
+          {"matcher": {"id": "byName", "options": "Method"}, "properties": [{"id": "custom.width", "value": 90}]}
+        ]
+      },
+      "options": {"showHeader": true, "cellHeight": "sm", "footer": {"show": false}}
+    },
+    {
+      "type": "table",
+      "title": "Recent Traces",
+      "description": "Click a trace ID to view spans in Jaeger",
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 21},
+      "datasource": {"type": "jaeger", "uid": "jaeger"},
+      "targets": [
+        {"refId": "A", "datasource": {"type": "jaeger", "uid": "jaeger"}, "queryType": "search", "service": "api-gateway", "operation": "", "tags": "", "minDuration": "", "maxDuration": "", "limit": 20}
+      ],
+      "options": {"showHeader": true, "cellHeight": "sm"},
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Trace ID"},
+            "properties": [
+              {"id": "links", "value": [
+                {"title": "Open in Jaeger", "url": "/explore?schemaVersion=1&panes={%22j%22:{%22datasource%22:%22jaeger%22,%22queries%22:[{%22refId%22:%22A%22,%22query%22:%22${__value.text}%22}],%22range%22:{%22from%22:%22now-1h%22,%22to%22:%22now%22}}}", "targetBlank": true}
+              ]}
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "logs",
+      "title": "eBPF Traffic — Error Requests",
+      "description": "Speedscale eBPF-captured requests returning errors. Full payload inspection requires Speedscale / proxymock.",
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 21},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {"expr": "{exporter=\"OTLP\"} |= \"400\" | json | body_status = \"400\" | line_format \"{{.body_service}} {{.body_command}} {{.body_location}} → {{.body_status}} ({{.body_duration}}ms)\"", "refId": "A"}
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": false,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      }
+    }
+  ]
+}

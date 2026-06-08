@@ -1,0 +1,239 @@
+{
+  "annotations": {"list": []},
+  "title": "Banking Application — Infrastructure",
+  "uid": "banking-app-infra",
+  "tags": ["banking-app", "infrastructure", "resources"],
+  "editable": true,
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {"from": "now-30m", "to": "now"},
+  "refresh": "10s",
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "label": "Service",
+        "type": "query",
+        "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+        "definition": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\"}, job)",
+        "query": {"qryType": 1, "query": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\"}, job)", "refId": "PrometheusVariableQueryEditor-VariableQuery"},
+        "includeAll": true,
+        "multi": true,
+        "allValue": null,
+        "current": {"text": ["All"], "value": ["$__all"]},
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
+  },
+  "links": [
+    {"title": "← Overview", "icon": "arrow-left", "type": "link", "url": "/d/banking-app-health/overview?${__url_time_range}&var-service=${service}", "targetBlank": false}
+  ],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Peak CPU",
+      "description": "Highest process CPU across services",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "max(process_cpu_usage{job=~\"$service\"})", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit", "decimals": 0,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 0.5}, {"color": "red", "value": 0.9}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "type": "stat",
+      "title": "Heap Used",
+      "description": "Total JVM heap in use across all services",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum(jvm_memory_used_bytes{area=\"heap\", job=~\"$service\"})", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes", "decimals": 0,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "type": "stat",
+      "title": "GC Overhead",
+      "description": "Maximum GC overhead across services",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "max(jvm_gc_overhead_percent{job=~\"$service\"})", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "decimals": 1,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 5}, {"color": "red", "value": 15}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "type": "stat",
+      "title": "DB Connections",
+      "description": "Total active HikariCP connections",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum(hikaricp_connections_active{job=~\"$service\"})", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short", "decimals": 0,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 8}, {"color": "red", "value": 10}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU by Service",
+      "description": "Process CPU utilization per service (0-1 = one core)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "process_cpu_usage{job=~\"$service\"}", "legendFormat": "{{job}}", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "showPoints": "never"},
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "color": {"mode": "palette-classic"}
+        }
+      },
+      "options": {"tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory by Service — Heap Used vs Max",
+      "description": "JVM heap used (solid) vs max (dashed) per service",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum by (job) (jvm_memory_used_bytes{area=\"heap\", job=~\"$service\"})", "legendFormat": "{{job}} used", "refId": "A"},
+        {"expr": "sum by (job) (jvm_memory_max_bytes{area=\"heap\", job=~\"$service\"})", "legendFormat": "{{job}} max", "refId": "B"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "showPoints": "never"},
+          "unit": "bytes"
+        },
+        "overrides": [
+          {"matcher": {"id": "byRegexp", "options": ".* max"}, "properties": [
+            {"id": "custom.lineStyle", "value": {"fill": "dash", "dash": [10, 10]}},
+            {"id": "custom.fillOpacity", "value": 0},
+            {"id": "custom.lineWidth", "value": 1}
+          ]}
+        ]
+      },
+      "options": {"tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "timeseries",
+      "title": "GC Pause Duration",
+      "description": "Garbage collection pause rate per service",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "rate(jvm_gc_pause_seconds_sum{job=~\"$service\"}[5m])", "legendFormat": "{{job}} {{action}} {{cause}}", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 20, "lineWidth": 1, "showPoints": "never"},
+          "unit": "s",
+          "color": {"mode": "palette-classic"}
+        }
+      },
+      "options": {"tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Connection Pools",
+      "description": "HikariCP and JDBC connection states",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "hikaricp_connections_active{job=~\"$service\"}", "legendFormat": "{{job}} active", "refId": "A"},
+        {"expr": "hikaricp_connections_idle{job=~\"$service\"}", "legendFormat": "{{job}} idle", "refId": "B"},
+        {"expr": "hikaricp_connections_max{job=~\"$service\"}", "legendFormat": "{{job}} max", "refId": "C"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 1, "showPoints": "never"},
+          "unit": "short"
+        },
+        "overrides": [
+          {"matcher": {"id": "byRegexp", "options": ".* max"}, "properties": [
+            {"id": "custom.lineStyle", "value": {"fill": "dash", "dash": [10, 10]}},
+            {"id": "custom.fillOpacity", "value": 0}
+          ]},
+          {"matcher": {"id": "byRegexp", "options": ".* idle"}, "properties": [
+            {"id": "custom.fillOpacity", "value": 5}
+          ]}
+        ]
+      },
+      "options": {"tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "timeseries",
+      "title": "JVM Threads",
+      "description": "Live thread count per service",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "jvm_threads_live_threads{job=~\"$service\"}", "legendFormat": "{{job}} live", "refId": "A"},
+        {"expr": "jvm_threads_peak_threads{job=~\"$service\"}", "legendFormat": "{{job}} peak", "refId": "B"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 1, "showPoints": "never"},
+          "unit": "short"
+        },
+        "overrides": [
+          {"matcher": {"id": "byRegexp", "options": ".* peak"}, "properties": [
+            {"id": "custom.lineStyle", "value": {"fill": "dash", "dash": [10, 10]}},
+            {"id": "custom.fillOpacity", "value": 0}
+          ]}
+        ]
+      },
+      "options": {"tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Loaded Classes",
+      "description": "JVM loaded class count per service",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "jvm_classes_loaded_classes{job=~\"$service\"}", "legendFormat": "{{job}}", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 1, "showPoints": "never"},
+          "unit": "short",
+          "color": {"mode": "palette-classic"}
+        }
+      },
+      "options": {"tooltip": {"mode": "multi"}}
+    }
+  ]
+}
