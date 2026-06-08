@@ -35,6 +35,7 @@ resources:
   - deployments/transactions-service-deployment.yaml
   - deployments/fraud-service-deployment.yaml
   - deployments/notification-service-deployment.yaml
+  - deployments/ai-service-deployment.yaml
   - deployments/api-gateway-deployment.yaml
   - deployments/frontend-deployment.yaml
   - deployments/simulation-client-deployment.yaml
@@ -46,6 +47,7 @@ resources:
   - services/transactions-service-service.yaml
   - services/fraud-service-service.yaml
   - services/notification-service-service.yaml
+  - services/ai-service-service.yaml
   - services/api-gateway-service.yaml
   - services/frontend-service.yaml
   - services/frontend-service-nodeport.yaml

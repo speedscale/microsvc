@@ -68,17 +68,15 @@ jobs:
   proxymock-validation:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
+
+    - name: Set up .NET 8
+      uses: actions/setup-dotnet@v4
       with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: maven
-    
+        dotnet-version: '8.0.x'
+
     - name: Proxymock validation (install, init, build, mock+replay)
       env:
         PROXYMOCK_API_KEY: ${{ secrets.PROXYMOCK_API_KEY }}
@@ -128,6 +126,7 @@ jobs:
           - accounts-service
           - transactions-service
           - api-gateway
+          - ai-service
           - frontend
           - simulation-client
           - fraud-service

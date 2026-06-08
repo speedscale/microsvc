@@ -52,21 +52,18 @@ if echo "$PM_VER_OUT" | grep -Fq "not initialized"; then
 fi
 
 # Clean up any existing processes
-pkill -f user-service 2>/dev/null || true
+pkill -f user-service-dotnet 2>/dev/null || true
 pkill -f proxymock 2>/dev/null || true
 
+PROXYMOCK_PID=""
+
 cleanup() {
-  unset JAVA_TOOL_OPTIONS
-  unset OTEL_SDK_DISABLED
-  unset OTEL_TRACES_EXPORTER OTEL_METRICS_EXPORTER OTEL_LOGS_EXPORTER
-  unset SPRING_DATASOURCE_URL SPRING_DATASOURCE_DRIVER_CLASS_NAME
   if [ -n "$PROXYMOCK_PID" ]; then
     kill $PROXYMOCK_PID 2>/dev/null || true
   fi
-  pkill -f "java -jar target/user-service" 2>/dev/null || true
+  pkill -f "user-service-dotnet" 2>/dev/null || true
   pkill -f "proxymock mock" 2>/dev/null || true
-  
-  # proxymock often sends app output to app.log (--app-log-to); keep both for CI debugging
+
   for logf in proxymock-startup.log app.log proxymock.log; do
     if [ -f "$logf" ]; then
       echo ""
@@ -76,39 +73,25 @@ cleanup() {
   done
 }
 
-# Start proxymock with user-service
-# Flyway off: ddl-auto=create on empty DB avoids schema *update* JDBC metadata (pg_catalog) that proxymock recordings rarely match.
-# Use plain PostgreSQL JDBC (not jdbc:otel + OpenTelemetryDriver) so the app can talk to proxymock's Postgres mock.
-# Disable OTel SDK for this isolated run (no collector in CI). Health probes are enabled in application.yml.
-# -Dspring.profiles.active: proxymock must be set as a JVM flag so the child process spawned by proxymock inherits it (env-only SPRING_PROFILES_ACTIVE is not always forwarded).
-# application-proxymock.yml: disable JDBC metadata queries that proxymock cannot match to old recordings.
-export JAVA_TOOL_OPTIONS="-Dspring.flyway.enabled=false -Dspring.jpa.hibernate.ddl-auto=create -Dotel.sdk.disabled=true -Dspring.profiles.active=proxymock -Dserver.address=127.0.0.1"
-export OTEL_SDK_DISABLED=true
-export OTEL_TRACES_EXPORTER=none
-export OTEL_METRICS_EXPORTER=none
-export OTEL_LOGS_EXPORTER=none
-# Use IPv4 loopback: on Linux, "localhost" often resolves to ::1 first; proxymock Postgres listens on 127.0.0.1:5432 only.
+trap cleanup EXIT
+
 export DB_HOST="${DB_HOST:-127.0.0.1}"
-# Postgres wire protocol is served on 127.0.0.1:5432 by proxymock mock (see proxymock.log: "postgres server listening").
-# Do not use --map 65432=... for JDBC: that port is an HTTP reverse proxy to :5432, not the PostgreSQL protocol.
 export DB_PORT=5432
-export DB_NAME=banking_app
-# Mock does not implement SSL negotiation the JDBC driver expects with sslmode=prefer; disable for local mock.
-export SPRING_DATASOURCE_URL="jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable"
-export SPRING_DATASOURCE_DRIVER_CLASS_NAME="org.postgresql.Driver"
+export DB_NAME=banking
+export DB_USERNAME=user_service
+export DB_PASSWORD=password
+export ASPNETCORE_URLS="http://127.0.0.1:8080"
 
 echo "Database configuration:"
 echo "  DB_HOST=$DB_HOST"
 echo "  DB_PORT=$DB_PORT"
 echo "  DB_NAME=$DB_NAME"
-echo "  SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL"
 
 # Make PROXYMOCK_DIR absolute if it's relative
 if [[ ! "$PROXYMOCK_DIR" = /* ]]; then
   PROXYMOCK_DIR="$(pwd)/$PROXYMOCK_DIR"
 fi
 
-# Check if proxymock recording directory exists
 if [ ! -d "$PROXYMOCK_DIR" ]; then
   echo "Error: Proxymock recording directory not found: $PROXYMOCK_DIR"
   echo "Current directory: $(pwd)"
@@ -119,33 +102,31 @@ fi
 
 echo "Using proxymock recordings from: $PROXYMOCK_DIR"
 
-# Find the JAR file dynamically
-JAR_FILE=$(find target/ -name "user-service-*.jar" -not -name "*original*" | head -1)
-if [ -z "$JAR_FILE" ] || [ ! -f "$JAR_FILE" ]; then
-  echo "Error: user-service JAR not found"
-  echo "Available files in target:"
-  ls -la target/ 2>/dev/null || echo "No target directory found"
+# Find the published .NET app
+PUBLISH_DIR="publish"
+DLL_FILE="${PUBLISH_DIR}/user-service-dotnet.dll"
+if [ ! -f "$DLL_FILE" ]; then
+  echo "Error: user-service-dotnet.dll not found in $PUBLISH_DIR"
+  echo "Available files:"
+  ls -la "$PUBLISH_DIR"/ 2>/dev/null || echo "No publish directory found"
   exit 1
 fi
 
-echo "Using JAR file: $JAR_FILE"
+echo "Using .NET app: $DLL_FILE"
 
-# Check proxymock version (subcommand, not --version flag)
 echo "Proxymock version:"
 proxymock version || echo "Failed to get proxymock version"
 
-# Start proxymock in the background and capture output
 proxymock mock \
   --verbose \
   --in $PROXYMOCK_DIR/ \
   --no-out \
   --log-to proxymock.log \
   --app-log-to app.log \
-  -- java -jar "$JAR_FILE" > proxymock-startup.log 2>&1 &
+  -- dotnet "$DLL_FILE" > proxymock-startup.log 2>&1 &
 
 PROXYMOCK_PID=$!
 
-# Give proxymock time to start and check if it's still running
 sleep 5
 
 if ! kill -0 $PROXYMOCK_PID 2>/dev/null; then
@@ -154,20 +135,12 @@ if ! kill -0 $PROXYMOCK_PID 2>/dev/null; then
   echo ""
   echo "Proxymock log:"
   cat proxymock.log 2>/dev/null || echo "No proxymock log found"
-  cleanup
-  exit 1
-fi
-
-# Continue waiting for JVM to bind :8080 (faster than fixed sleeps on slow CI)
-if ! kill -0 $PROXYMOCK_PID 2>/dev/null; then
-  echo "Failed to start proxymock with user-service"
-  cleanup
   exit 1
 fi
 
 wait_for_tcp_8080() {
   local n=0
-  while [ "$n" -lt 180 ]; do
+  while [ "$n" -lt 60 ]; do
     if command -v nc >/dev/null 2>&1 && nc -z 127.0.0.1 8080 2>/dev/null; then
       return 0
     fi
@@ -182,42 +155,26 @@ wait_for_tcp_8080() {
 
 if ! wait_for_tcp_8080; then
   echo "Timed out waiting for something to listen on 127.0.0.1:8080"
-  cleanup
   exit 1
 fi
 
-# Prefer liveness (200 without aggregate DB noise); fall back to aggregate /actuator/health
-http_200() {
-  local url=$1
-  local code
-  code=$(curl -sS -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo 000)
-  [ "$code" = "200" ]
-}
-
-HEALTH_LIVENESS="${HEALTH_LIVENESS:-http://127.0.0.1:8080/actuator/health/liveness}"
-HEALTH_AGG="${HEALTH_AGG:-http://127.0.0.1:8080/actuator/health}"
+HEALTH_URL="http://127.0.0.1:8080/actuator/health"
 READY=false
-for _i in $(seq 1 60); do
-  if http_200 "$HEALTH_LIVENESS"; then
+for _i in $(seq 1 30); do
+  code=$(curl -sS -o /dev/null -w "%{http_code}" "$HEALTH_URL" 2>/dev/null || echo 000)
+  if [ "$code" = "200" ]; then
     READY=true
-    echo "Health OK: $HEALTH_LIVENESS"
+    echo "Health OK: $HEALTH_URL"
     break
   fi
-  if http_200 "$HEALTH_AGG"; then
-    READY=true
-    echo "Health OK: $HEALTH_AGG"
-    break
-  fi
-  sleep 2
+  sleep 1
 done
 
 if [ "$READY" != true ]; then
-  echo "Service failed to become ready (tried $HEALTH_LIVENESS and $HEALTH_AGG)"
-  cleanup
+  echo "Service failed to become ready (tried $HEALTH_URL)"
   exit 1
 fi
 
-# Replay: optional latency gate via PROXYMOCK_REPLAY_FAIL_IF; --rewrite-host helps Host header mismatches
 REPLAY_FAIL_IF="${PROXYMOCK_REPLAY_FAIL_IF:-}"
 REPLAY_EXTRA=()
 if [ -n "$REPLAY_FAIL_IF" ]; then
@@ -228,7 +185,6 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
   REPLAY_V="-v"
 fi
 
-# Replay is HTTP-only; Postgres-only snapshots have nothing to replay (proxymock would error on empty cache).
 REPLAY_SUCCESS=false
 if grep -rq '"l7protocol": "http' "$PROXYMOCK_DIR" --include='*.json' 2>/dev/null; then
   if proxymock replay $REPLAY_V \
@@ -241,15 +197,13 @@ if grep -rq '"l7protocol": "http' "$PROXYMOCK_DIR" --include='*.json' 2>/dev/nul
     REPLAY_SUCCESS=true
   fi
 else
-  echo "Skipping proxymock replay: no HTTP rrpairs under $PROXYMOCK_DIR (mock phase already validated JDBC + startup)."
+  echo "Skipping proxymock replay: no HTTP rrpairs under $PROXYMOCK_DIR (mock phase already validated startup)."
   REPLAY_SUCCESS=true
 fi
 
-cleanup
-
 echo ""
 if [ "$REPLAY_SUCCESS" != true ]; then
-  echo "❌ Replay failed"
+  echo "Replay failed"
   echo ""
   echo "=== App Logs ==="
   tail -20 app.log 2>/dev/null || echo "No app log file found"

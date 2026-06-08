@@ -5,7 +5,7 @@ REGISTRY ?= ghcr.io/speedscale/microsvc
 IMAGE_TAG ?= $(shell ./scripts/version.sh tag)
 NAMESPACE ?= banking-app
 KUSTOMIZE_DIR ?= kubernetes/base
-SERVICES = user-service accounts-service transactions-service api-gateway
+SERVICES = accounts-service transactions-service api-gateway
 
 # Default target
 .PHONY: help

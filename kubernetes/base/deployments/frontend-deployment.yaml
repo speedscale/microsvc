@@ -35,31 +35,8 @@ spec:
         - configMapRef:
             name: banking-frontend-config
         env:
-        - name: AI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: ai-api-key
-              key: AI_API_KEY
-        - name: OPENAI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: ai-api-key
-              key: OPENAI_API_KEY
-        - name: GEMINI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: ai-api-key
-              key: GEMINI_API_KEY
-        - name: XAI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: ai-api-key
-              key: XAI_API_KEY
-        - name: OPENROUTER_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: ai-api-key
-              key: OPENROUTER_API_KEY
+        - name: AI_SERVICE_URL
+          value: "http://banking-ai:8080"
         resources:
           requests:
             memory: "128Mi"

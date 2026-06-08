@@ -1,61 +1,71 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: banking-user
+  name: banking-ai
   namespace: banking-app
   labels:
     app.kubernetes.io/name: banking-app
     app.kubernetes.io/component: microservice
-    app.kubernetes.io/service: user-service
+    app.kubernetes.io/service: ai-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: banking-user
+      app: banking-ai
       app.kubernetes.io/name: banking-app
       app.kubernetes.io/component: microservice
   template:
     metadata:
       labels:
-        app: banking-user
+        app: banking-ai
         app.kubernetes.io/name: banking-app
         app.kubernetes.io/component: microservice
-        app.kubernetes.io/service: user-service
+        app.kubernetes.io/service: ai-service
     spec:
       serviceAccountName: banking-app-sa
       containers:
-      - name: user-service
-        image: ghcr.io/speedscale/microsvc/user-service:v1.4.19
+      - name: ai-service
+        image: ghcr.io/speedscale/microsvc/ai-service:v1.4.18
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
           name: http
         env:
-        - name: DB_PASSWORD
+        - name: AI_API_KEY
           valueFrom:
             secretKeyRef:
-              name: banking-db-credentials
-              key: user-service-password
-        - name: JWT_SECRET
+              name: ai-api-key
+              key: AI_API_KEY
+        - name: OPENAI_API_KEY
           valueFrom:
             secretKeyRef:
-              name: banking-jwt-secret
-              key: secret
-        envFrom:
-        - configMapRef:
-            name: app-config
-        - configMapRef:
-            name: banking-user-config
+              name: ai-api-key
+              key: OPENAI_API_KEY
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-api-key
+              key: GEMINI_API_KEY
+        - name: XAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-api-key
+              key: XAI_API_KEY
+        - name: OPENROUTER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-api-key
+              key: OPENROUTER_API_KEY
         resources:
           requests:
-            memory: "128Mi"
+            memory: "64Mi"
             cpu: "50m"
           limits:
-            memory: "512Mi"
+            memory: "256Mi"
             cpu: "500m"
         readinessProbe:
           httpGet:
-            path: /actuator/health
+            path: /health
             port: 8080
           initialDelaySeconds: 5
           periodSeconds: 10
@@ -63,13 +73,9 @@ spec:
           failureThreshold: 3
         livenessProbe:
           httpGet:
-            path: /actuator/health
+            path: /health
             port: 8080
           initialDelaySeconds: 10
           periodSeconds: 30
           timeoutSeconds: 3
           failureThreshold: 3
-      initContainers:
-      - name: wait-for-postgres
-        image: postgres:15-alpine
-        command: ['sh', '-c', 'echo "[user-service] Waiting for PostgreSQL..."; until pg_isready -h banking-postgres -p 5432 -q; do sleep 1; done; echo "[user-service] PostgreSQL ready!"']
