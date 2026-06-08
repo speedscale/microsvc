@@ -5,49 +5,38 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { TokenManager } from '@/lib/auth/token';
 
+interface ProviderResult {
+  provider: string;
+  name: string;
+  model: string;
+  message: string;
+  error?: string;
+  durationMs: number;
+}
+
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
-  provider?: string;
-  model?: string;
+  results?: ProviderResult[];
 }
 
-interface ProviderInfo {
-  id: string;
-  name: string;
-}
-
-const PROVIDER_COLORS: Record<string, string> = {
-  anthropic: 'bg-orange-100 text-orange-800',
-  openai: 'bg-green-100 text-green-800',
-  gemini: 'bg-blue-100 text-blue-800',
-  xai: 'bg-purple-100 text-purple-800',
-  openrouter: 'bg-pink-100 text-pink-800',
+const PROVIDER_COLORS: Record<string, { bg: string; border: string; badge: string }> = {
+  anthropic: { bg: 'bg-orange-50', border: 'border-orange-200', badge: 'bg-orange-100 text-orange-800' },
+  openai: { bg: 'bg-green-50', border: 'border-green-200', badge: 'bg-green-100 text-green-800' },
+  gemini: { bg: 'bg-blue-50', border: 'border-blue-200', badge: 'bg-blue-100 text-blue-800' },
+  xai: { bg: 'bg-purple-50', border: 'border-purple-200', badge: 'bg-purple-100 text-purple-800' },
+  openrouter: { bg: 'bg-pink-50', border: 'border-pink-200', badge: 'bg-pink-100 text-pink-800' },
 };
 
 const AIAssistantPage: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [providers, setProviders] = useState<ProviderInfo[]>([]);
-  const [selectedProvider, setSelectedProvider] = useState('anthropic');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  useEffect(() => {
-    fetch('/api/ai/chat')
-      .then(res => res.json())
-      .then(data => {
-        if (data.providers?.length > 0) {
-          setProviders(data.providers);
-          setSelectedProvider(data.providers[0].id);
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   const sendMessage = async () => {
     const trimmed = input.trim();
@@ -66,18 +55,24 @@ const AIAssistantPage: React.FC = () => {
           'Content-Type': 'application/json',
           ...(token && { Authorization: `Bearer ${token}` }),
         },
-        body: JSON.stringify({ message: trimmed, provider: selectedProvider }),
+        body: JSON.stringify({ message: trimmed }),
       });
 
       const data = await res.json();
 
-      const assistantMessage: ChatMessage = {
-        role: 'assistant',
-        content: res.ok ? data.message : (data.error || 'Something went wrong. Please try again.'),
-        provider: data.provider,
-        model: data.model,
-      };
-      setMessages(prev => [...prev, assistantMessage]);
+      if (data.results) {
+        const assistantMessage: ChatMessage = {
+          role: 'assistant',
+          content: '',
+          results: data.results,
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+      } else {
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: data.error || 'Something went wrong.' },
+        ]);
+      }
     } catch {
       setMessages(prev => [
         ...prev,
@@ -98,10 +93,10 @@ const AIAssistantPage: React.FC = () => {
   return (
     <ProtectedRoute requireAuth={true}>
       <AuthenticatedLayout>
-        <div className="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
+        <div className="max-w-5xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
           <div className="mb-4">
             <h1 className="text-2xl font-bold text-gray-900">AI Banking Assistant</h1>
-            <p className="text-sm text-gray-600">Ask questions about your accounts and transactions</p>
+            <p className="text-sm text-gray-600">Ask a question — all configured LLM providers respond simultaneously</p>
           </div>
 
           <div className="flex-1 overflow-y-auto bg-white shadow rounded-lg p-4 mb-4 space-y-4">
@@ -113,38 +108,51 @@ const AIAssistantPage: React.FC = () => {
             )}
 
             {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className={`max-w-[75%] ${msg.role === 'user' ? '' : 'space-y-1'}`}>
-                  <div
-                    className={`rounded-lg px-4 py-2 text-sm whitespace-pre-wrap ${
-                      msg.role === 'user'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-900'
-                    }`}
-                  >
-                    {msg.content}
-                  </div>
-                  {msg.role === 'assistant' && msg.provider && (
-                    <div className="flex items-center gap-2 px-1">
-                      <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${PROVIDER_COLORS[msg.provider] || 'bg-gray-100 text-gray-600'}`}>
-                        {msg.provider}
-                      </span>
-                      {msg.model && (
-                        <span className="text-xs text-gray-400">{msg.model}</span>
-                      )}
+              <div key={i}>
+                {msg.role === 'user' ? (
+                  <div className="flex justify-end">
+                    <div className="max-w-[75%] rounded-lg px-4 py-2 text-sm whitespace-pre-wrap bg-blue-600 text-white">
+                      {msg.content}
                     </div>
-                  )}
-                </div>
+                  </div>
+                ) : msg.results ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {msg.results.map((r, j) => {
+                      const colors = PROVIDER_COLORS[r.provider] || { bg: 'bg-gray-50', border: 'border-gray-200', badge: 'bg-gray-100 text-gray-600' };
+                      return (
+                        <div key={j} className={`rounded-lg border ${colors.border} ${colors.bg} p-3 text-sm`}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${colors.badge}`}>
+                              {r.name}
+                            </span>
+                            <span className="text-xs text-gray-400">{r.durationMs}ms</span>
+                          </div>
+                          {r.error ? (
+                            <div className="text-red-600 text-xs">
+                              <span className="font-medium">Error:</span> {r.error}
+                            </div>
+                          ) : (
+                            <div className="text-gray-900 whitespace-pre-wrap">{r.message}</div>
+                          )}
+                          <div className="mt-2 text-xs text-gray-400">{r.model}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex justify-start">
+                    <div className="max-w-[75%] rounded-lg px-4 py-2 text-sm whitespace-pre-wrap bg-gray-100 text-gray-900">
+                      {msg.content}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
 
             {isLoading && (
               <div className="flex justify-start">
                 <div className="bg-gray-100 rounded-lg px-4 py-2 text-sm text-gray-500">
-                  Thinking...
+                  Querying all providers...
                 </div>
               </div>
             )}
@@ -152,18 +160,7 @@ const AIAssistantPage: React.FC = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="flex gap-2 items-center">
-            {providers.length > 1 && (
-              <select
-                value={selectedProvider}
-                onChange={e => setSelectedProvider(e.target.value)}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {providers.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-            )}
+          <div className="flex gap-2">
             <input
               type="text"
               value={input}
