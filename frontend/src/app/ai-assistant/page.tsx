@@ -21,6 +21,8 @@ const PROVIDER_COLORS: Record<string, string> = {
   anthropic: 'bg-orange-100 text-orange-800',
   openai: 'bg-green-100 text-green-800',
   gemini: 'bg-blue-100 text-blue-800',
+  xai: 'bg-purple-100 text-purple-800',
+  openrouter: 'bg-pink-100 text-pink-800',
 };
 
 const AIAssistantPage: React.FC = () => {

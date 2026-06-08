@@ -50,6 +50,16 @@ spec:
             secretKeyRef:
               name: ai-api-key
               key: GEMINI_API_KEY
+        - name: XAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-api-key
+              key: XAI_API_KEY
+        - name: OPENROUTER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-api-key
+              key: OPENROUTER_API_KEY
         resources:
           requests:
             memory: "128Mi"
