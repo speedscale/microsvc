@@ -13,23 +13,11 @@ data:
         access: proxy
         url: http://loki:3100
         isDefault: true
-      - name: Loki (Speedscale)
-        uid: loki-speedscale
-        type: loki
-        access: proxy
-        url: http://loki.byoc-grafana.svc.cluster.local:3100
-        isDefault: false
       - name: Prometheus
         uid: prometheus
         type: prometheus
         access: proxy
         url: http://prometheus:9090
-        isDefault: false
-      - name: Prometheus (Speedscale)
-        uid: prometheus-speedscale
-        type: prometheus
-        access: proxy
-        url: http://prometheus.byoc-grafana.svc.cluster.local:9090
         isDefault: false
       - name: Prometheus (App)
         uid: prometheus-app

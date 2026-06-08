@@ -12,7 +12,7 @@
       "type": "stat",
       "title": "Requests",
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
-      "datasource": { "type": "loki", "uid": "loki-speedscale" },
+      "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
           "expr": "sum(count_over_time({service=~\"$service\", cluster=~\"$cluster\", service!~\"outerspace.*\"} | json | keep body_l7protocol, body_command, body_status, body_location | body_l7protocol=\"http\" | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [$__range]))",
@@ -26,7 +26,7 @@
       "type": "stat",
       "title": "Error rate (4xx/5xx)",
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
-      "datasource": { "type": "loki", "uid": "loki-speedscale" },
+      "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
           "expr": "100 * sum(count_over_time({service=~\"$service\", cluster=~\"$cluster\", service!~\"outerspace.*\"} | json | keep body_l7protocol, body_command, body_status, body_location | body_l7protocol=\"http\" | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | body_status=~\"[45]..\" [$__range])) / sum(count_over_time({service=~\"$service\", cluster=~\"$cluster\", service!~\"outerspace.*\"} | json | keep body_l7protocol, body_command, body_status, body_location | body_l7protocol=\"http\" | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [$__range]))",
@@ -47,7 +47,7 @@
       "type": "stat",
       "title": "p95 latency",
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
-      "datasource": { "type": "loki", "uid": "loki-speedscale" },
+      "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
           "expr": "quantile_over_time(0.95, {service=~\"$service\", cluster=~\"$cluster\", service!~\"outerspace.*\"} | json | keep body_l7protocol, body_duration | body_l7protocol=\"http\" | unwrap body_duration [$__range])",
@@ -62,7 +62,7 @@
       "type": "stat",
       "title": "Distinct endpoints",
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
-      "datasource": { "type": "loki", "uid": "loki-speedscale" },
+      "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
           "expr": "count(count by (body_location) (count_over_time({service=~\"$service\", cluster=~\"$cluster\", service!~\"outerspace.*\"} | json | keep body_l7protocol, body_location | body_l7protocol=\"http\" [15m])))",
@@ -76,7 +76,7 @@
       "type": "timeseries",
       "title": "Request rate by service",
       "gridPos": { "h": 9, "w": 12, "x": 0, "y": 4 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-speedscale" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "sum by (svc) (rate(speedscale_calls_total{svc=~\"$service\", svc!~\"outerspace.*\"}[5m]))",
@@ -90,7 +90,7 @@
       "type": "timeseries",
       "title": "Avg latency by service (ms)",
       "gridPos": { "h": 9, "w": 12, "x": 12, "y": 4 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-speedscale" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "rate(speedscale_request_duration_ms_sum_total{svc=~\"$service\", svc!~\"outerspace.*\"}[5m]) / sum by (svc) (rate(speedscale_calls_total{svc=~\"$service\", svc!~\"outerspace.*\"}[5m]))",
@@ -104,7 +104,7 @@
       "type": "piechart",
       "title": "Status code distribution",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-speedscale" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "sum by (status) (increase(speedscale_calls_total{svc=~\"$service\", svc!~\"outerspace.*\"}[$__range]))",
@@ -126,7 +126,7 @@
       "type": "table",
       "title": "Top endpoints by request count",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
-      "datasource": { "type": "loki", "uid": "loki-speedscale" },
+      "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
           "expr": "topk(20, sum by (service, body_location) (count_over_time({service=~\"$service\", cluster=~\"$cluster\", service!~\"outerspace.*\"} | json | keep body_l7protocol, service, body_location | body_l7protocol=\"http\" [15m])))",
@@ -152,7 +152,7 @@
       "title": "Recent traffic (filtered)",
       "description": "One line per request: cluster/app, method, status, latency (ms), endpoint, then a [dlp] hint when DLP modified the record. Click a row to expand the full RRPair JSON including request/response bodies (base64).",
       "gridPos": { "h": 14, "w": 24, "x": 0, "y": 21 },
-      "datasource": { "type": "loki", "uid": "loki-speedscale" },
+      "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
           "expr": "{service=~\"$service\", cluster=~\"$cluster\", service!~\"outerspace.*\"} | json | keep cluster, service, body_command, body_status, body_duration, body_location, body_dlpModified, body_l7protocol | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | line_format \"{{.cluster}}/{{.service}}  {{.body_command}} {{.body_status}} {{ printf \\\"%4s\\\" .body_duration }}ms  {{.body_location}}  {{ if eq .body_dlpModified \\\"true\\\" }}[dlp]{{end}}\"",
@@ -178,7 +178,7 @@
         "name": "cluster",
         "label": "Cluster",
         "type": "query",
-        "datasource": { "type": "loki", "uid": "loki-speedscale" },
+        "datasource": { "type": "loki", "uid": "loki" },
         "query": { "label": "cluster", "stream": "", "type": 1 },
         "refresh": 2,
         "includeAll": true,
@@ -189,7 +189,7 @@
         "name": "service",
         "label": "App / Service",
         "type": "query",
-        "datasource": { "type": "loki", "uid": "loki-speedscale" },
+        "datasource": { "type": "loki", "uid": "loki" },
         "query": { "label": "service", "stream": "{cluster=~\"$cluster\"}", "type": 1 },
         "refresh": 2,
         "includeAll": true,
