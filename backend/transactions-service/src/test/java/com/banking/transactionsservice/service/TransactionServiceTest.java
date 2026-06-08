@@ -45,6 +45,9 @@ class TransactionServiceTest {
     private TransactionEventProducer transactionEventProducer;
 
     @Mock
+    private PaymentComplianceService paymentComplianceService;
+
+    @Mock
     private DoubleHistogram depositAmountHistogram;
 
     @Mock
