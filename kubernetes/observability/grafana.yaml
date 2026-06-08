@@ -57,6 +57,14 @@ data:
         editable: true
         options:
           path: /var/lib/grafana/dashboards/app
+      - name: banking-app-details
+        orgId: 1
+        folder: 'Banking App — Drilldowns'
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/app-details
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -94,6 +102,8 @@ spec:
               value: "true"
             - name: GF_SERVER_ROOT_URL
               value: https://apex-grafana.trafficreplay.com
+            - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
+              value: /var/lib/grafana/dashboards/app/banking-app-health.json
           volumeMounts:
             - name: data
               mountPath: /var/lib/grafana
@@ -105,6 +115,8 @@ spec:
               mountPath: /var/lib/grafana/dashboards/byoc
             - name: dashboards-app
               mountPath: /var/lib/grafana/dashboards/app
+            - name: dashboards-app-details
+              mountPath: /var/lib/grafana/dashboards/app-details
           resources:
             requests:
               cpu: 100m
@@ -132,6 +144,9 @@ spec:
         - name: dashboards-app
           configMap:
             name: grafana-dashboards-app
+        - name: dashboards-app-details
+          configMap:
+            name: grafana-dashboards-app-details
 ---
 apiVersion: v1
 kind: Service
