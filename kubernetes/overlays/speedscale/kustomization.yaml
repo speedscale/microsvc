@@ -21,6 +21,7 @@ patches:
 - path: user-service-annotations.yaml
 - path: accounts-service-annotations.yaml
 - path: transactions-service-annotations.yaml
+- path: ai-service-annotations.yaml
 - path: api-gateway-annotations.yaml
 - path: frontend-annotations.yaml
 - path: simulation-client-annotations.yaml
