@@ -149,6 +149,10 @@ data:
   # name here makes every /api/* call fail with ENOTFOUND -> HTTP 500.
   API_GATEWAY_URL: "http://banking-gateway:80"
   BACKEND_API_URL: "http://banking-gateway:80"
+
+  # AI chat — point at the Speedscale responder serving mock Anthropic responses.
+  # The responder accepts any API key and returns pre-recorded LLM responses.
+  ANTHROPIC_API_URL: "http://speedscale-responder-banking-frontend-anthropic-mock:4145/v1/messages"
   
   # OpenTelemetry configuration
   OTEL_SERVICE_NAME: "frontend"

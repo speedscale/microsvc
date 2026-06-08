@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 
 const AI_API_KEY = process.env.AI_API_KEY || '';
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
+const ANTHROPIC_API_URL = process.env.ANTHROPIC_API_URL || 'https://api.anthropic.com/v1/messages';
 const MODEL = 'claude-sonnet-4-20250514';
 const SYSTEM_PROMPT = 'You are a helpful banking assistant. Answer questions about the user\'s accounts and transactions. Be concise.';
 

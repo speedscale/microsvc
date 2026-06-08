@@ -1,0 +1,23 @@
+apiVersion: speedscale.com/v1
+kind: TrafficReplay
+metadata:
+  name: anthropic-mock
+  namespace: banking-app
+spec:
+  mode: responder-only
+  snapshotID: "d4a02604-5854-41ec-964d-83a4fae3aeda"
+  testConfigID: "decoy-mock"
+  cleanup: inventory
+  workloadRef:
+    kind: Deployment
+    name: banking-frontend
+  workloads:
+    - ref:
+        kind: Deployment
+        name: banking-frontend
+        namespace: banking-app
+      mocks:
+        - "*"
+  sidecar:
+    tls:
+      out: true
