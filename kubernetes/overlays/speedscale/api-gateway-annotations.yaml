@@ -6,3 +6,4 @@ metadata:
   annotations:
     sidecar.speedscale.com/inject: "false"
     capture.speedscale.com/enabled: "true"
+    capture.speedscale.com/java-agent: "true"
