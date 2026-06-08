@@ -76,7 +76,7 @@
       "type": "timeseries",
       "title": "Request rate by service",
       "gridPos": { "h": 9, "w": 12, "x": 0, "y": 4 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-speedscale" },
       "targets": [
         {
           "expr": "sum by (svc) (rate(speedscale_calls_total{svc=~\"$service\", svc!~\"outerspace.*\"}[5m]))",
@@ -90,7 +90,7 @@
       "type": "timeseries",
       "title": "Avg latency by service (ms)",
       "gridPos": { "h": 9, "w": 12, "x": 12, "y": 4 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-speedscale" },
       "targets": [
         {
           "expr": "rate(speedscale_request_duration_ms_sum_total{svc=~\"$service\", svc!~\"outerspace.*\"}[5m]) / sum by (svc) (rate(speedscale_calls_total{svc=~\"$service\", svc!~\"outerspace.*\"}[5m]))",
@@ -104,7 +104,7 @@
       "type": "piechart",
       "title": "Status code distribution",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-speedscale" },
       "targets": [
         {
           "expr": "sum by (status) (increase(speedscale_calls_total{svc=~\"$service\", svc!~\"outerspace.*\"}[$__range]))",
