@@ -14,9 +14,10 @@ type Checker struct {
 }
 
 // CheckTransaction applies rule-based fraud detection and records metrics.
-func (c *Checker) CheckTransaction(_ context.Context, req *fraudv1.TransactionRequest) (*fraudv1.FraudCheckResponse, error) {
+func (c *Checker) CheckTransaction(ctx context.Context, req *fraudv1.TransactionRequest) (*fraudv1.FraudCheckResponse, error) {
 	start := time.Now()
 	resp := evaluate(req)
+	fanOutExternalChecks(ctx, req)
 	metrics.Observe(resp.GetApproved(), resp.GetReason(), time.Since(start), float64(resp.GetRiskScore()))
 	return resp, nil
 }
