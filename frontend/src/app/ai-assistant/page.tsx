@@ -8,17 +8,44 @@ import { TokenManager } from '@/lib/auth/token';
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  provider?: string;
+  model?: string;
 }
+
+interface ProviderInfo {
+  id: string;
+  name: string;
+}
+
+const PROVIDER_COLORS: Record<string, string> = {
+  anthropic: 'bg-orange-100 text-orange-800',
+  openai: 'bg-green-100 text-green-800',
+  gemini: 'bg-blue-100 text-blue-800',
+};
 
 const AIAssistantPage: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [providers, setProviders] = useState<ProviderInfo[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState('anthropic');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    fetch('/api/ai/chat')
+      .then(res => res.json())
+      .then(data => {
+        if (data.providers?.length > 0) {
+          setProviders(data.providers);
+          setSelectedProvider(data.providers[0].id);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const sendMessage = async () => {
     const trimmed = input.trim();
@@ -37,7 +64,7 @@ const AIAssistantPage: React.FC = () => {
           'Content-Type': 'application/json',
           ...(token && { Authorization: `Bearer ${token}` }),
         },
-        body: JSON.stringify({ message: trimmed }),
+        body: JSON.stringify({ message: trimmed, provider: selectedProvider }),
       });
 
       const data = await res.json();
@@ -45,6 +72,8 @@ const AIAssistantPage: React.FC = () => {
       const assistantMessage: ChatMessage = {
         role: 'assistant',
         content: res.ok ? data.message : (data.error || 'Something went wrong. Please try again.'),
+        provider: data.provider,
+        model: data.model,
       };
       setMessages(prev => [...prev, assistantMessage]);
     } catch {
@@ -86,14 +115,26 @@ const AIAssistantPage: React.FC = () => {
                 key={i}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div
-                  className={`max-w-[75%] rounded-lg px-4 py-2 text-sm whitespace-pre-wrap ${
-                    msg.role === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-900'
-                  }`}
-                >
-                  {msg.content}
+                <div className={`max-w-[75%] ${msg.role === 'user' ? '' : 'space-y-1'}`}>
+                  <div
+                    className={`rounded-lg px-4 py-2 text-sm whitespace-pre-wrap ${
+                      msg.role === 'user'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-900'
+                    }`}
+                  >
+                    {msg.content}
+                  </div>
+                  {msg.role === 'assistant' && msg.provider && (
+                    <div className="flex items-center gap-2 px-1">
+                      <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${PROVIDER_COLORS[msg.provider] || 'bg-gray-100 text-gray-600'}`}>
+                        {msg.provider}
+                      </span>
+                      {msg.model && (
+                        <span className="text-xs text-gray-400">{msg.model}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -109,7 +150,18 @@ const AIAssistantPage: React.FC = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            {providers.length > 1 && (
+              <select
+                value={selectedProvider}
+                onChange={e => setSelectedProvider(e.target.value)}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {providers.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            )}
             <input
               type="text"
               value={input}

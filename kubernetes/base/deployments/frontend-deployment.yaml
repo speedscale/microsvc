@@ -40,6 +40,16 @@ spec:
             secretKeyRef:
               name: ai-api-key
               key: AI_API_KEY
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-api-key
+              key: OPENAI_API_KEY
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-api-key
+              key: GEMINI_API_KEY
         resources:
           requests:
             memory: "128Mi"
