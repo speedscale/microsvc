@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Same flow as GitHub Actions job "proxymock-validation": install proxymock (if needed),
-# build user-service, run scripts/test-postgres-mock.sh.
+# build user-service (.NET 8), run scripts/test-postgres-mock.sh.
 #
 # Local: ensure proxymock is initialized (once per machine) or set an API key env var
 # so init can run non-interactively. Port 127.0.0.1:5432 must be free (proxymock binds it).
@@ -30,7 +30,7 @@ if ! command -v proxymock >/dev/null 2>&1; then
   exit 1
 fi
 
-# Skip before a long Maven build when CI has no API key (e.g. fork PRs) or local dev without Speedscale.
+# Skip before a long build when CI has no API key (e.g. fork PRs) or local dev without Speedscale.
 PM_VER_OUT=$(proxymock version 2>&1) || true
 if echo "$PM_VER_OUT" | grep -Fq "not initialized"; then
   if [ -z "${PROXYMOCK_API_KEY:-}" ]; then
@@ -51,7 +51,6 @@ if echo "$PM_VER_OUT" | grep -Fq "not initialized"; then
   done
 fi
 
-# Fail fast if host port 5432 is taken (proxymock Postgres mock needs it); nc is optional.
 if command -v nc >/dev/null 2>&1; then
   if nc -z 127.0.0.1 5432 2>/dev/null; then
     echo "error: port 127.0.0.1:5432 is in use. Stop local Postgres or run: make proxymock-validation-docker"
@@ -59,10 +58,9 @@ if command -v nc >/dev/null 2>&1; then
   fi
 fi
 
-echo "Building user-service JAR..."
+echo "Building user-service (.NET 8)..."
 cd "${ROOT}/backend/user-service"
-chmod +x ./mvnw
-./mvnw clean package -DskipTests
+dotnet publish -c Release -o publish
 
 cd "${ROOT}"
 exec "${ROOT}/scripts/test-postgres-mock.sh"

@@ -34,6 +34,13 @@ target/
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.properties
 
+# .NET
+bin/
+obj/
+publish/
+*.user
+*.suo
+
 # Node.js/NPM
 node_modules/
 npm-debug.log*
@@ -52,6 +59,13 @@ dist/
 
 # Docker
 .dockerignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
 
 # Test coverage
 coverage/

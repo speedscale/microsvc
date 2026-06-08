@@ -1,23 +1,13 @@
-FROM --platform=$BUILDPLATFORM maven:3-amazoncorretto-17 AS build
-WORKDIR /app
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+COPY *.csproj .
+RUN dotnet restore
 COPY . .
-RUN mvn clean package -DskipTests
+RUN dotnet publish -c Release -o /app
 
-FROM --platform=$TARGETPLATFORM amazoncorretto:17-alpine
-COPY --from=build /app/target/user-service-*.jar /app/user-service.jar
-RUN addgroup -g 1001 spring && \
-    adduser -D -s /bin/sh -u 1001 -G spring spring && \
-    chown -R spring:spring /app
-USER spring
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
+WORKDIR /app
+COPY --from=build /app .
+ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
-ENTRYPOINT ["java", \
-    "-XX:+UseContainerSupport", \
-    "-XX:MaxRAMPercentage=75.0", \
-    "-XX:+UseSerialGC", \
-    "-XX:MaxMetaspaceSize=96m", \
-    "-XX:ReservedCodeCacheSize=32m", \
-    "-XX:+UseStringDeduplication", \
-    "-XX:+OptimizeStringConcat", \
-    "-Djava.security.egd=file:/dev/./urandom", \
-    "-Dspring.main.lazy-initialization=true", \
-    "-jar", "/app/user-service.jar"]
+ENTRYPOINT ["dotnet", "user-service-dotnet.dll"]

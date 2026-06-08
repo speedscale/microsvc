@@ -24,7 +24,6 @@ services:
     depends_on:
       - postgres
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_NAME=banking_app
