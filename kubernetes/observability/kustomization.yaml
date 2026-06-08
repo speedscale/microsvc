@@ -22,6 +22,9 @@ configMapGenerator:
     namespace: banking-app
     files:
       - banking-app-health.json=dashboards/banking-app-health.json
+  - name: grafana-dashboards-app-details
+    namespace: banking-app
+    files:
       - banking-app-errors.json=dashboards/banking-app-errors.json
       - banking-app-perf.json=dashboards/banking-app-perf.json
       - banking-app-infra.json=dashboards/banking-app-infra.json

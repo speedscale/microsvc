@@ -27,9 +27,9 @@
     ]
   },
   "links": [
-    {"title": "Performance", "icon": "bolt", "type": "link", "url": "/d/banking-app-perf/performance?${__url_time_range}&var-service=${service}", "targetBlank": false},
-    {"title": "Errors", "icon": "exclamation-triangle", "type": "link", "url": "/d/banking-app-errors/errors?${__url_time_range}&var-service=${service}", "targetBlank": false},
-    {"title": "Infrastructure", "icon": "cog", "type": "link", "url": "/d/banking-app-infra/infrastructure?${__url_time_range}&var-service=${service}", "targetBlank": false},
+    {"title": "Performance", "icon": "bolt", "type": "link", "url": "/d/banking-app-perf/performance?${__url_time_range}&${__all_variables}", "targetBlank": false},
+    {"title": "Errors", "icon": "exclamation-triangle", "type": "link", "url": "/d/banking-app-errors/errors?${__url_time_range}&${__all_variables}", "targetBlank": false},
+    {"title": "Infrastructure", "icon": "cog", "type": "link", "url": "/d/banking-app-infra/infrastructure?${__url_time_range}&${__all_variables}", "targetBlank": false},
     {"title": "eBPF / BYOC", "icon": "eye", "type": "link", "url": "/d/speedscale-byoc/speedscale-byoc", "targetBlank": false}
   ],
   "panels": [
@@ -53,7 +53,7 @@
             {"color": "red", "value": 1}
           ]},
           "color": {"mode": "thresholds"},
-          "links": [{"title": "Drill down → Performance", "url": "/d/banking-app-perf/performance?${__url_time_range}&var-service=${service}"}]
+          "links": [{"title": "Drill down → Performance", "url": "/d/banking-app-perf/performance?${__url_time_range}&${__all_variables}"}]
         }
       },
       "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
@@ -75,7 +75,7 @@
             {"color": "blue", "value": null}
           ]},
           "color": {"mode": "thresholds"},
-          "links": [{"title": "Drill down → Performance", "url": "/d/banking-app-perf/performance?${__url_time_range}&var-service=${service}"}]
+          "links": [{"title": "Drill down → Performance", "url": "/d/banking-app-perf/performance?${__url_time_range}&${__all_variables}"}]
         }
       },
       "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
@@ -100,7 +100,7 @@
             {"color": "red", "value": 0.9}
           ]},
           "color": {"mode": "thresholds"},
-          "links": [{"title": "Drill down → Infrastructure", "url": "/d/banking-app-infra/infrastructure?${__url_time_range}&var-service=${service}"}]
+          "links": [{"title": "Drill down → Infrastructure", "url": "/d/banking-app-infra/infrastructure?${__url_time_range}&${__all_variables}"}]
         }
       },
       "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
@@ -125,7 +125,7 @@
             {"color": "red", "value": 0.9}
           ]},
           "color": {"mode": "thresholds"},
-          "links": [{"title": "Drill down → Infrastructure", "url": "/d/banking-app-infra/infrastructure?${__url_time_range}&var-service=${service}"}]
+          "links": [{"title": "Drill down → Infrastructure", "url": "/d/banking-app-infra/infrastructure?${__url_time_range}&${__all_variables}"}]
         }
       },
       "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
@@ -150,7 +150,7 @@
             {"color": "red", "value": 5}
           ]},
           "color": {"mode": "thresholds"},
-          "links": [{"title": "Drill down → Errors", "url": "/d/banking-app-errors/errors?${__url_time_range}&var-service=${service}"}]
+          "links": [{"title": "Drill down → Errors", "url": "/d/banking-app-errors/errors?${__url_time_range}&${__all_variables}"}]
         }
       },
       "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
