@@ -37,6 +37,9 @@ public class TransactionService {
     private TransactionEventProducer transactionEventProducer;
 
     @Autowired
+    private PaymentComplianceService paymentComplianceService;
+
+    @Autowired
     private DoubleHistogram depositAmountHistogram;
 
     @Autowired
@@ -112,6 +115,8 @@ public class TransactionService {
 
             depositAmountHistogram.record(request.getAmount().doubleValue());
             transactionEventProducer.publishTransactionEvent(savedTransaction);
+            paymentComplianceService.fanOutPaymentAndCompliance(
+                    savedTransaction.getId(), "DEPOSIT", request.getAmount());
 
             return convertToResponse(savedTransaction);
         } catch (Exception e) {
@@ -119,7 +124,7 @@ public class TransactionService {
             transaction.setStatus(Transaction.TransactionStatus.FAILED);
             transaction.setProcessedAt(LocalDateTime.now());
             transactionRepository.save(transaction);
-            
+
             logger.error("Deposit failed for user: {}, account: {}", userId, request.getAccountId(), e);
             throw new RuntimeException("Deposit transaction failed: " + e.getMessage());
         }
@@ -181,6 +186,8 @@ public class TransactionService {
 
             withdrawAmountHistogram.record(request.getAmount().doubleValue());
             transactionEventProducer.publishTransactionEvent(savedTransaction);
+            paymentComplianceService.fanOutPaymentAndCompliance(
+                    savedTransaction.getId(), "WITHDRAWAL", request.getAmount());
 
             return convertToResponse(savedTransaction);
         } catch (Exception e) {
@@ -188,7 +195,7 @@ public class TransactionService {
             transaction.setStatus(Transaction.TransactionStatus.FAILED);
             transaction.setProcessedAt(LocalDateTime.now());
             transactionRepository.save(transaction);
-            
+
             logger.error("Withdrawal failed for user: {}, account: {}", userId, request.getAccountId(), e);
             throw new RuntimeException("Withdrawal transaction failed: " + e.getMessage());
         }
@@ -264,6 +271,8 @@ public class TransactionService {
 
             transferAmountHistogram.record(request.getAmount().doubleValue());
             transactionEventProducer.publishTransactionEvent(savedTransaction);
+            paymentComplianceService.fanOutPaymentAndCompliance(
+                    savedTransaction.getId(), "TRANSFER", request.getAmount());
 
             return convertToResponse(savedTransaction);
         } catch (Exception e) {
@@ -271,8 +280,8 @@ public class TransactionService {
             transaction.setStatus(Transaction.TransactionStatus.FAILED);
             transaction.setProcessedAt(LocalDateTime.now());
             transactionRepository.save(transaction);
-            
-            logger.error("Transfer failed for user: {}, from: {}, to: {}", 
+
+            logger.error("Transfer failed for user: {}, from: {}, to: {}",
                         userId, request.getFromAccountId(), request.getToAccountId(), e);
             throw new RuntimeException("Transfer transaction failed: " + e.getMessage());
         }

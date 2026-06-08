@@ -5,6 +5,7 @@ import com.banking.accountsservice.dto.AccountResponse;
 import com.banking.accountsservice.dto.BalanceResponse;
 import com.banking.accountsservice.security.UserAuthenticationDetails;
 import com.banking.accountsservice.service.AccountService;
+import com.banking.accountsservice.service.FinancialDataService;
 import com.banking.accountsservice.service.StatementExportService;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
@@ -31,6 +32,9 @@ public class AccountController {
     
     @Autowired
     private AccountService accountService;
+
+    @Autowired
+    private FinancialDataService financialDataService;
 
     @Autowired
     private StatementExportService statementExportService;
@@ -119,10 +123,11 @@ public class AccountController {
             logger.info("Fetching balance for account {} for user: {}", accountId, userId);
             
             BalanceResponse balance = accountService.getAccountBalance(accountId, userId);
+            financialDataService.enrichAsync(balance.getAccountNumber());
             span.setAttribute("user.id", userId);
             span.setAttribute("account.id", accountId);
             span.setAttribute("account.number", balance.getAccountNumber());
-            
+
             return ResponseEntity.ok(balance);
         } catch (RuntimeException e) {
             span.recordException(e);

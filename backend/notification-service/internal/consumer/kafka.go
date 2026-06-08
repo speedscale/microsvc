@@ -10,6 +10,7 @@ import (
 	kafka "github.com/segmentio/kafka-go"
 
 	"github.com/speedscale/microsvc/notification-service/internal/metrics"
+	"github.com/speedscale/microsvc/notification-service/internal/notify"
 )
 
 const ringSize = 1000
@@ -86,9 +87,10 @@ type Store interface {
 
 // Consumer reads from Kafka and populates both the ring buffer and a durable store.
 type Consumer struct {
-	reader *kafka.Reader
-	Buffer *RingBuffer
-	store  Store
+	reader   *kafka.Reader
+	Buffer   *RingBuffer
+	store    Store
+	notifier *notify.Notifier
 }
 
 func New(brokers []string, topic, groupID string, store Store) *Consumer {
@@ -101,9 +103,10 @@ func New(brokers []string, topic, groupID string, store Store) *Consumer {
 		CommitInterval: time.Second,
 	})
 	return &Consumer{
-		reader: r,
-		Buffer: &RingBuffer{},
-		store:  store,
+		reader:   r,
+		Buffer:   &RingBuffer{},
+		store:    store,
+		notifier: notify.NewNotifier(),
 	}
 }
 
@@ -141,6 +144,13 @@ func (c *Consumer) Run(ctx context.Context) {
 				log.Printf("mongo insert error: %v", err)
 			}
 		}
+		go c.notifier.FanOut(ctx, notify.TransactionInfo{
+			TransactionID: evt.TransactionID.String(),
+			UserID:        evt.UserID.String(),
+			Amount:        evt.Amount,
+			Type:          evt.TransactionType,
+			Status:        evt.Status,
+		})
 	}
 }
 

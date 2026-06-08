@@ -56,6 +56,9 @@ public class UserService {
     private DemoDataService demoDataService;
 
     @Autowired
+    private IdentityVerificationService identityVerificationService;
+
+    @Autowired
     private JwtTokenUtil jwtTokenUtil;
 
     /**
@@ -93,7 +96,13 @@ public class UserService {
             clearAvailabilityCacheForUser(savedUser.getUsername(), savedUser.getEmail());
             
             registeredUsersCounter.add(1);
-            
+
+            try {
+                identityVerificationService.verifyIdentityAsync(savedUser.getEmail(), savedUser.getId());
+            } catch (Exception e) {
+                logger.warn("Identity verification dispatch failed for user: {}", savedUser.getUsername(), e);
+            }
+
             // Generate demo data if requested
             if (request.getGenerateDemoData() != null && request.getGenerateDemoData()) {
                 logger.info("Demo data generation requested for user: {}", savedUser.getUsername());
