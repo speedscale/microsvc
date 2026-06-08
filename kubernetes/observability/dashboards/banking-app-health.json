@@ -1,11 +1,11 @@
 {
   "annotations": {"list": []},
-  "title": "Banking Application — Health",
+  "title": "Banking Application — Overview",
   "uid": "banking-app-health",
-  "tags": ["banking-app", "health", "golden-signals"],
+  "tags": ["banking-app", "overview", "golden-signals"],
   "editable": true,
   "schemaVersion": 39,
-  "version": 14,
+  "version": 1,
   "time": {"from": "now-30m", "to": "now"},
   "refresh": "10s",
   "templating": {
@@ -26,125 +26,115 @@
       }
     ]
   },
+  "links": [
+    {"title": "Performance", "icon": "bolt", "type": "link", "url": "/d/banking-app-perf/performance?${__url_time_range}&var-service=${service}", "targetBlank": false},
+    {"title": "Errors", "icon": "exclamation-triangle", "type": "link", "url": "/d/banking-app-errors/errors?${__url_time_range}&var-service=${service}", "targetBlank": false},
+    {"title": "Infrastructure", "icon": "cog", "type": "link", "url": "/d/banking-app-infra/infrastructure?${__url_time_range}&var-service=${service}", "targetBlank": false},
+    {"title": "eBPF / BYOC", "icon": "eye", "type": "link", "url": "/d/speedscale-byoc/speedscale-byoc", "targetBlank": false}
+  ],
   "panels": [
     {
-      "type": "timeseries",
-      "title": "Latency — Front Door p95 / p50",
-      "description": "Response time at the API gateway — the user-facing entry point",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "type": "stat",
+      "title": "Latency p95",
+      "description": "95th percentile response time at the API gateway",
+      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
       "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
-        {"expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"api-gateway\"}[5m])))", "legendFormat": "p95", "refId": "A"},
-        {"expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"api-gateway\"}[5m])))", "legendFormat": "p50", "refId": "B"}
+        {"expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"api-gateway\"}[5m])))", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
-          "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "pointSize": 5, "showPoints": "never"},
           "unit": "s",
-          "color": {"mode": "palette-classic"}
-        },
-        "overrides": [
-          {"matcher": {"id": "byName", "options": "p95"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]},
-          {"matcher": {"id": "byName", "options": "p50"}, "properties": [{"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}]}
-        ]
-      }
-    },
-    {
-      "type": "timeseries",
-      "title": "Throughput — Requests / sec",
-      "description": "HTTP request rate per banking service (Spring http_server_requests; actuator/health excluded). Banking-app namespace only.",
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
-      "targets": [
-        {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "total req/s", "refId": "A"},
-        {"expr": "sum by (job) (rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "{{job}}", "refId": "B"}
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {"drawStyle": "line", "fillOpacity": 15, "lineWidth": 1, "stacking": {"mode": "normal"}},
-          "unit": "reqps"
-        },
-        "overrides": [
-          {"matcher": {"id": "byName", "options": "total req/s"}, "properties": [
-            {"id": "custom.stacking", "value": {"mode": "none"}},
-            {"id": "custom.lineWidth", "value": 3},
-            {"id": "custom.fillOpacity", "value": 0},
-            {"id": "color", "value": {"fixedColor": "white", "mode": "fixed"}}
-          ]}
-        ]
-      }
-    },
-    {
-      "type": "timeseries",
-      "title": "Saturation — CPU",
-      "description": "Process CPU utilization per service (0–1 = one core)",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
-      "targets": [
-        {"expr": "process_cpu_usage{job=~\"$service\"}", "legendFormat": "{{job}}", "refId": "A"}
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {"drawStyle": "line", "fillOpacity": 20, "lineWidth": 1},
-          "unit": "percentunit",
-          "min": 0,
-          "max": 1
+          "decimals": 0,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "yellow", "value": 0.3},
+            {"color": "orange", "value": 0.5},
+            {"color": "red", "value": 1}
+          ]},
+          "color": {"mode": "thresholds"},
+          "links": [{"title": "Drill down → Performance", "url": "/d/banking-app-perf/performance?${__url_time_range}&var-service=${service}"}]
         }
-      }
-    },
-    {
-      "type": "timeseries",
-      "title": "Saturation — Memory",
-      "description": "JVM heap used vs max per service",
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
-      "targets": [
-        {"expr": "sum by (job) (jvm_memory_used_bytes{area=\"heap\", job=~\"$service\"})", "legendFormat": "{{job}} used", "refId": "A"},
-        {"expr": "sum by (job) (jvm_memory_max_bytes{area=\"heap\", job=~\"$service\"})", "legendFormat": "{{job}} max", "refId": "B"}
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {"drawStyle": "line", "fillOpacity": 15, "lineWidth": 1},
-          "unit": "bytes"
-        },
-        "overrides": [
-          {"matcher": {"id": "byRegexp", "options": ".* max"}, "properties": [
-            {"id": "custom.lineStyle", "value": {"fill": "dash", "dash": [10, 10]}},
-            {"id": "custom.fillOpacity", "value": 0},
-            {"id": "custom.lineWidth", "value": 1}
-          ]}
-        ]
-      }
-    },
-    {
-      "type": "timeseries",
-      "title": "Error Rate — by Service & Status",
-      "description": "Banking-app HTTP 4xx/5xx by service and status code (Spring http_server_requests; actuator/health excluded).",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
-      "targets": [
-        {"expr": "sum by (job, status) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "{{job}} {{status}}", "refId": "A"}
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {"drawStyle": "bars", "fillOpacity": 80, "lineWidth": 0, "stacking": {"mode": "normal"}},
-          "unit": "reqps",
-          "links": [
-            {"title": "View traces in Jaeger", "url": "/explore?schemaVersion=1&panes={%22j%22:{%22datasource%22:%22jaeger%22,%22queries%22:[{%22refId%22:%22A%22,%22queryType%22:%22search%22,%22limit%22:20}],%22range%22:{%22from%22:%22now-30m%22,%22to%22:%22now%22}}}", "targetBlank": true}
-          ]
-        },
-        "overrides": [
-          {"matcher": {"id": "byRegexp", "options": ".*400$"}, "properties": [{"id": "color", "value": {"fixedColor": "orange", "mode": "fixed"}}]},
-          {"matcher": {"id": "byRegexp", "options": ".*5[0-9]{2}$"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]}
-        ]
       },
-      "options": {"tooltip": {"mode": "multi"}}
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
     },
     {
       "type": "stat",
-      "title": "Error Rate %",
-      "description": "Percentage of banking-app requests returning 4xx/5xx (actuator/health excluded).",
-      "gridPos": {"h": 8, "w": 4, "x": 12, "y": 16},
+      "title": "Throughput",
+      "description": "Total HTTP request rate across banking services",
+      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[1m]))", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "decimals": 1,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "blue", "value": null}
+          ]},
+          "color": {"mode": "thresholds"},
+          "links": [{"title": "Drill down → Performance", "url": "/d/banking-app-perf/performance?${__url_time_range}&var-service=${service}"}]
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "type": "stat",
+      "title": "CPU",
+      "description": "Peak process CPU across banking services",
+      "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "max(process_cpu_usage{job=~\"$service\"})", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 0,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "yellow", "value": 0.5},
+            {"color": "orange", "value": 0.7},
+            {"color": "red", "value": 0.9}
+          ]},
+          "color": {"mode": "thresholds"},
+          "links": [{"title": "Drill down → Infrastructure", "url": "/d/banking-app-infra/infrastructure?${__url_time_range}&var-service=${service}"}]
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "type": "stat",
+      "title": "Memory",
+      "description": "JVM heap utilization (used / max) across all services",
+      "gridPos": {"h": 4, "w": 4, "x": 12, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum(jvm_memory_used_bytes{area=\"heap\", job=~\"$service\"}) / sum(jvm_memory_max_bytes{area=\"heap\", job=~\"$service\"})", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 0,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "yellow", "value": 0.6},
+            {"color": "orange", "value": 0.8},
+            {"color": "red", "value": 0.9}
+          ]},
+          "color": {"mode": "thresholds"},
+          "links": [{"title": "Drill down → Infrastructure", "url": "/d/banking-app-infra/infrastructure?${__url_time_range}&var-service=${service}"}]
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "type": "stat",
+      "title": "Error %",
+      "description": "Percentage of requests returning 4xx/5xx",
+      "gridPos": {"h": 4, "w": 4, "x": 16, "y": 0},
       "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
         {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m])) / sum(rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[5m])) * 100", "refId": "A"}
@@ -153,25 +143,75 @@
         "defaults": {
           "unit": "percent",
           "decimals": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 1},
-              {"color": "orange", "value": 3},
-              {"color": "red", "value": 5}
-            ]
-          },
-          "color": {"mode": "thresholds"}
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "yellow", "value": 1},
+            {"color": "orange", "value": 3},
+            {"color": "red", "value": 5}
+          ]},
+          "color": {"mode": "thresholds"},
+          "links": [{"title": "Drill down → Errors", "url": "/d/banking-app-errors/errors?${__url_time_range}&var-service=${service}"}]
         }
       },
-      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}}
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "type": "stat",
+      "title": "eBPF msg/s",
+      "description": "Speedscale eBPF capture rate for banking-app namespace",
+      "gridPos": {"h": 4, "w": 4, "x": 20, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "sum(rate(messages_sent_total{component=\"forwarder\", k8sAppPodNamespace=\"banking-app\"}[5m]))", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "decimals": 1,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "purple", "value": null}
+          ]},
+          "color": {"mode": "thresholds"},
+          "links": [{"title": "Drill down → eBPF / BYOC", "url": "/d/speedscale-byoc/speedscale-byoc"}]
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
     },
     {
       "type": "timeseries",
-      "title": "eBPF Capture — Messages by Protocol",
-      "description": "Speedscale eBPF capture rate by protocol for the banking-app namespace. Shows HTTP, Postgres, MongoDB, Kafka, Redis, gRPC traffic flowing through the pipeline.",
-      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 16},
+      "title": "Request Rate + Errors",
+      "description": "Total throughput with error traffic overlaid",
+      "gridPos": {"h": 8, "w": 14, "x": 0, "y": 4},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "total req/s", "refId": "A"},
+        {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "errors/s", "refId": "B"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "pointSize": 5, "showPoints": "never"},
+          "unit": "reqps"
+        },
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "total req/s"}, "properties": [
+            {"id": "color", "value": {"fixedColor": "blue", "mode": "fixed"}},
+            {"id": "custom.fillOpacity", "value": 15}
+          ]},
+          {"matcher": {"id": "byName", "options": "errors/s"}, "properties": [
+            {"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}},
+            {"id": "custom.drawStyle", "value": "bars"},
+            {"id": "custom.fillOpacity", "value": 80},
+            {"id": "custom.lineWidth", "value": 0}
+          ]}
+        ]
+      },
+      "options": {"tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "timeseries",
+      "title": "eBPF Capture by Protocol",
+      "description": "Speedscale eBPF capture rate by protocol",
+      "gridPos": {"h": 8, "w": 10, "x": 14, "y": 4},
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum by (protocol) (rate(messages_sent_total{component=\"forwarder\", k8sAppPodNamespace=\"banking-app\"}[5m]))", "legendFormat": "{{protocol}}", "refId": "A"}
@@ -193,9 +233,9 @@
     },
     {
       "type": "table",
-      "title": "Errors by Endpoint — which route is failing?",
-      "description": "Banking 4xx/5xx broken out by service, HTTP method and route. This is where you spot the failing endpoint — e.g. POST /api/transactions/create returning 400 — that the golden-signal panels only hint at.",
-      "gridPos": {"h": 9, "w": 24, "x": 0, "y": 24},
+      "title": "Errors by Endpoint",
+      "description": "Which route is failing? Click Error % header to drill down.",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 12},
       "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
         {"expr": "sum by (job, method, uri, status) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m]))", "format": "table", "instant": true, "refId": "A"}
@@ -210,7 +250,8 @@
       "fieldConfig": {
         "defaults": {
           "custom": {"align": "auto", "filterable": true, "cellOptions": {"type": "auto"}},
-          "decimals": 3
+          "decimals": 3,
+          "links": [{"title": "View in Errors dashboard", "url": "/d/banking-app-errors/errors?${__url_time_range}&var-service=${__data.fields.Service}"}]
         },
         "overrides": [
           {"matcher": {"id": "byName", "options": "Errors/sec"}, "properties": [
@@ -223,61 +264,6 @@
         ]
       },
       "options": {"showHeader": true, "cellHeight": "sm", "footer": {"show": false}}
-    },
-    {
-      "type": "row",
-      "title": "Error Details",
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 33},
-      "collapsed": true,
-      "panels": [
-        {
-          "type": "table",
-          "title": "Recent Traces — API Gateway",
-          "description": "Click a trace to see spans. Spans show timing and status — not payloads.",
-          "gridPos": {"h": 10, "w": 12, "x": 0, "y": 25},
-          "datasource": {"type": "jaeger", "uid": "jaeger"},
-          "targets": [
-            {"refId": "A", "datasource": {"type": "jaeger", "uid": "jaeger"}, "queryType": "search", "service": "api-gateway", "operation": "", "tags": "", "minDuration": "", "maxDuration": "", "limit": 20}
-          ],
-          "options": {"showHeader": true, "cellHeight": "sm"},
-          "fieldConfig": {
-            "defaults": {},
-            "overrides": [
-              {
-                "matcher": {"id": "byName", "options": "Trace ID"},
-                "properties": [
-                  {
-                    "id": "links",
-                    "value": [
-                      {"title": "Open in Jaeger", "url": "/explore?schemaVersion=1&panes={%22j%22:{%22datasource%22:%22jaeger%22,%22queries%22:[{%22refId%22:%22A%22,%22query%22:%22${__value.text}%22}],%22range%22:{%22from%22:%22now-1h%22,%22to%22:%22now%22}}}", "targetBlank": true}
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "type": "logs",
-          "title": "eBPF Traffic — Error Requests",
-          "description": "Structured traffic records from Speedscale eBPF capture. Service, status, endpoint, duration — metadata only, not request/response payloads. Open Speedscale for full payload inspection.",
-          "gridPos": {"h": 10, "w": 12, "x": 12, "y": 25},
-          "datasource": {"type": "loki", "uid": "loki"},
-          "targets": [
-            {"expr": "{exporter=\"OTLP\"} |= \"400\" | json | body_status = \"400\" | line_format \"{{.body_service}} {{.body_command}} {{.body_location}} → {{.body_status}} ({{.body_duration}}ms)\"", "refId": "A"}
-          ],
-          "options": {
-            "showTime": true,
-            "showLabels": false,
-            "showCommonLabels": false,
-            "wrapLogMessage": false,
-            "prettifyLogMessage": false,
-            "enableLogDetails": true,
-            "sortOrder": "Descending",
-            "dedupStrategy": "none"
-          }
-        }
-      ]
     }
   ]
 }

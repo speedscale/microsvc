@@ -1,0 +1,228 @@
+{
+  "annotations": {"list": []},
+  "title": "Banking Application — Performance",
+  "uid": "banking-app-perf",
+  "tags": ["banking-app", "performance", "latency"],
+  "editable": true,
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {"from": "now-30m", "to": "now"},
+  "refresh": "10s",
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "label": "Service",
+        "type": "query",
+        "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+        "definition": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\"}, job)",
+        "query": {"qryType": 1, "query": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\"}, job)", "refId": "PrometheusVariableQueryEditor-VariableQuery"},
+        "includeAll": true,
+        "multi": true,
+        "allValue": null,
+        "current": {"text": ["All"], "value": ["$__all"]},
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
+  },
+  "links": [
+    {"title": "← Overview", "icon": "arrow-left", "type": "link", "url": "/d/banking-app-health/overview?${__url_time_range}&var-service=${service}", "targetBlank": false}
+  ],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Latency p95",
+      "description": "95th percentile at the API gateway",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"api-gateway\"}[5m])))", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s", "decimals": 0,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 0.3}, {"color": "red", "value": 1}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "type": "stat",
+      "title": "Latency p50",
+      "description": "Median response time at the API gateway",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"api-gateway\"}[5m])))", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s", "decimals": 0,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 0.2}, {"color": "red", "value": 0.5}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "type": "stat",
+      "title": "Throughput",
+      "description": "Total request rate",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[1m]))", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps", "decimals": 1,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "type": "stat",
+      "title": "Avg Duration",
+      "description": "Average request duration across all services",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum(rate(http_server_requests_seconds_sum{job=~\"$service\", uri!~\"/actuator.*\"}[5m])) / sum(rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[5m]))", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s", "decimals": 0,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 0.1}, {"color": "red", "value": 0.5}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency by Service — p95",
+      "description": "95th percentile response time per service",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_requests_seconds_bucket{job=~\"$service\", uri!~\"/actuator.*\"}[5m])))", "legendFormat": "{{job}}", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never"},
+          "unit": "s",
+          "color": {"mode": "palette-classic"}
+        }
+      },
+      "options": {"tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Throughput by Service",
+      "description": "Request rate per service (stacked)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum by (job) (rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "{{job}}", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 20, "lineWidth": 1, "stacking": {"mode": "normal"}},
+          "unit": "reqps"
+        }
+      },
+      "options": {"tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "table",
+      "title": "Latency by Endpoint",
+      "description": "Average and p95 latency per endpoint",
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 12},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum by (job, uri) (rate(http_server_requests_seconds_sum{job=~\"$service\", uri!~\"/actuator.*\"}[5m])) / sum by (job, uri) (rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[5m]))", "format": "table", "instant": true, "refId": "A"}
+      ],
+      "transformations": [
+        {"id": "organize", "options": {
+          "excludeByName": {"Time": true},
+          "renameByName": {"job": "Service", "uri": "Endpoint", "Value": "Avg Latency"}
+        }},
+        {"id": "sortBy", "options": {"fields": {}, "sort": [{"field": "Avg Latency", "desc": true}]}}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"align": "auto", "filterable": true},
+          "decimals": 3
+        },
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "Avg Latency"}, "properties": [
+            {"id": "unit", "value": "s"},
+            {"id": "custom.cellOptions", "value": {"type": "color-background"}},
+            {"id": "color", "value": {"mode": "continuous-blues"}}
+          ]}
+        ]
+      },
+      "options": {"showHeader": true, "cellHeight": "sm", "footer": {"show": false}}
+    },
+    {
+      "type": "table",
+      "title": "Throughput by Endpoint",
+      "description": "Request rate per endpoint",
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 12},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum by (job, method, uri) (rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[5m]))", "format": "table", "instant": true, "refId": "A"}
+      ],
+      "transformations": [
+        {"id": "organize", "options": {
+          "excludeByName": {"Time": true},
+          "renameByName": {"job": "Service", "method": "Method", "uri": "Endpoint", "Value": "Req/sec"}
+        }},
+        {"id": "sortBy", "options": {"fields": {}, "sort": [{"field": "Req/sec", "desc": true}]}}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"align": "auto", "filterable": true},
+          "decimals": 3
+        },
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "Req/sec"}, "properties": [
+            {"id": "unit", "value": "reqps"},
+            {"id": "custom.cellOptions", "value": {"type": "color-background"}},
+            {"id": "color", "value": {"mode": "continuous-greens"}}
+          ]},
+          {"matcher": {"id": "byName", "options": "Method"}, "properties": [{"id": "custom.width", "value": 90}]}
+        ]
+      },
+      "options": {"showHeader": true, "cellHeight": "sm", "footer": {"show": false}}
+    },
+    {
+      "type": "table",
+      "title": "Recent Traces",
+      "description": "Click a trace ID to view spans in Jaeger",
+      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 21},
+      "datasource": {"type": "jaeger", "uid": "jaeger"},
+      "targets": [
+        {"refId": "A", "datasource": {"type": "jaeger", "uid": "jaeger"}, "queryType": "search", "service": "api-gateway", "operation": "", "tags": "", "minDuration": "", "maxDuration": "", "limit": 20}
+      ],
+      "options": {"showHeader": true, "cellHeight": "sm"},
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Trace ID"},
+            "properties": [
+              {"id": "links", "value": [
+                {"title": "Open in Jaeger", "url": "/explore?schemaVersion=1&panes={%22j%22:{%22datasource%22:%22jaeger%22,%22queries%22:[{%22refId%22:%22A%22,%22query%22:%22${__value.text}%22}],%22range%22:{%22from%22:%22now-1h%22,%22to%22:%22now%22}}}", "targetBlank": true}
+              ]}
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
