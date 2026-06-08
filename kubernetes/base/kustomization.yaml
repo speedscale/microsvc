@@ -52,9 +52,6 @@ resources:
   - services/frontend-service.yaml
   - services/frontend-service-nodeport.yaml
 
-  # Ingress
-  - ingress/frontend-ingress.yaml
-
   # Demo data seeding
   - jobs/seed-demo-user.yaml
 
