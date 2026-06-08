@@ -27,7 +27,7 @@
     ]
   },
   "links": [
-    {"title": "← Overview", "icon": "arrow-left", "type": "link", "url": "/d/banking-app-health/overview?${__url_time_range}&var-service=${service}", "targetBlank": false}
+    {"title": "← Overview", "icon": "arrow-left", "type": "link", "url": "/d/banking-app-health/overview?${__url_time_range}&${__all_variables}", "targetBlank": false}
   ],
   "panels": [
     {
