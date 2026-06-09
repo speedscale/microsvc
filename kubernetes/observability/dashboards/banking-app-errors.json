@@ -223,7 +223,7 @@
       "gridPos": {"h": 10, "w": 12, "x": 12, "y": 21},
       "datasource": {"type": "loki", "uid": "loki"},
       "targets": [
-        {"expr": "{exporter=\"OTLP\"} |= \"400\" | json | body_status = \"400\" | line_format \"{{.body_service}} {{.body_command}} {{.body_location}} → {{.body_status}} ({{.body_duration}}ms)\"", "refId": "A"}
+        {"expr": "{exporter=\"OTLP\"} | json | body_l7protocol = \"http\" | body_status >= 400 | line_format \"{{.body_service}} {{.body_command}} {{.body_location}} → {{.body_status}} ({{.body_duration}}ms)\"", "refId": "A"}
       ],
       "options": {
         "showTime": true,
