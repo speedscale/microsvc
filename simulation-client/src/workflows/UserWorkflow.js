@@ -213,8 +213,8 @@ class UserWorkflow {
         // Get balance for each account
         for (const account of accounts) {
           try {
-            const balance = await this.apiClient.getAccountBalance(account.id, user.token);
-            account.balance = balance;
+            const balanceResp = await this.apiClient.getAccountBalance(account.id, user.token);
+            account.balance = typeof balanceResp === 'object' ? balanceResp.balance : balanceResp;
           } catch (error) {
             logger.warn('Failed to get account balance', {
               accountId: account.id,

@@ -63,7 +63,7 @@ const config = {
     // which is what the Banking Health error panel is meant to show.
     errorInjection: {
       enabled: (process.env.ERROR_INJECTION_ENABLED || 'true') === 'true',
-      probability: parseFloat(process.env.ERROR_INJECTION_PROBABILITY) || 0.25
+      probability: parseFloat(process.env.ERROR_INJECTION_PROBABILITY) || 0.05
     }
   },
 
