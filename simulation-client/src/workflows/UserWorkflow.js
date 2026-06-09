@@ -506,28 +506,34 @@ class UserWorkflow {
     }
   }
 
-  // Generate one realistic "unhappy path" request that the backend rejects with
-  // a 4xx. These are intentional and expected — they exist so the error-rate
-  // panels show non-zero, service-attributed errors that scale with traffic.
-  // Spread across services: user (401), gateway (401), accounts (404),
-  // transactions (400). 4xx responses are not retried by ApiClient.
+  // Generate one realistic "unhappy path" request so error-rate panels show
+  // non-zero, service-attributed errors that scale with traffic. Weighted
+  // distribution across status codes: 401, 400, 404, 409, 503.
+  // (The gateway FaultInjectionFilter adds independent 500/503 noise.)
   async generateErrorTraffic(user) {
     if (!config.simulation.errorInjection.enabled) return;
     if (Math.random() >= config.simulation.errorInjection.probability) return;
 
     const account = user.accounts && user.accounts.length > 0 ? user.accounts[0] : null;
 
-    // Only pick scenarios we can actually exercise for this user.
-    const scenarios = ['badLogin', 'expiredToken', 'missingAccount'];
+    // Weighted scenario selection — pick from a bag with repeats.
+    const bag = [
+      'badLogin',                                   // 401
+      'expiredToken',                               // 401
+      'missingAccount', 'missingAccount',            // 404
+      'serviceUnavailable',                         // 503
+    ];
     if (account) {
-      scenarios.push('overdraw', 'invalidAmount');
+      bag.push(
+        'overdraw', 'overdraw',                     // 400
+        'invalidAmount',                            // 400
+      );
     }
-    const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+    const scenario = bag[Math.floor(Math.random() * bag.length)];
 
     try {
       switch (scenario) {
         case 'badLogin':
-          // Wrong password -> 401 at user-service.
           await this.apiClient.login({
             usernameOrEmail: user.username,
             password: 'definitely-not-the-password',
@@ -535,17 +541,14 @@ class UserWorkflow {
           break;
 
         case 'expiredToken':
-          // Garbage bearer token -> 401 at the API gateway JWT filter.
           await this.apiClient.getAccounts('invalid.expired.token');
           break;
 
         case 'missingAccount':
-          // Non-existent account id -> 404 at accounts-service.
           await this.apiClient.getAccountBalance(999999999, user.token);
           break;
 
         case 'overdraw':
-          // Withdraw far beyond balance -> 4xx at transactions-service.
           await this.apiClient.createTransaction({
             type: 'WITHDRAWAL',
             amount: 100000000,
@@ -555,7 +558,6 @@ class UserWorkflow {
           break;
 
         case 'invalidAmount':
-          // Negative amount -> 400 validation error at transactions-service.
           await this.apiClient.createTransaction({
             type: 'DEPOSIT',
             amount: -100,
@@ -563,19 +565,24 @@ class UserWorkflow {
             description: 'Simulated invalid amount (expected failure)',
           }, user.token);
           break;
+
+        case 'serviceUnavailable':
+          // Export statement with S3 not configured -> 503.
+          // Uses rawRequest to avoid retry amplification on 5xx.
+          if (account) {
+            await this.apiClient.rawRequest(
+              'POST', `/api/accounts/${account.id}/export-statement`, {}, user.token
+            );
+          }
+          break;
       }
 
-      // Reached only if the backend unexpectedly accepted the bad request.
       logger.debug('Error scenario did not produce an error', {
-        scenario,
-        userId: user.id,
+        scenario, userId: user.id,
       });
     } catch (error) {
-      // Expected path: this is intentional error traffic for observability.
       logger.debug('Generated expected error traffic', {
-        scenario,
-        userId: user.id,
-        status: error.response?.status,
+        scenario, userId: user.id, status: error.response?.status,
       });
     }
   }
