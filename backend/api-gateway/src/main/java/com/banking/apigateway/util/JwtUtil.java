@@ -31,6 +31,10 @@ public class JwtUtil {
     }
 
     public boolean isInvalid(String token) {
-        return this.isTokenExpired(token);
+        try {
+            return this.isTokenExpired(token);
+        } catch (Exception e) {
+            return true;
+        }
     }
 }
