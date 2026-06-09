@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: prometheus-config
-  namespace: banking-app
+  namespace: observability
   labels:
     app: prometheus
     app.kubernetes.io/name: banking-app
@@ -22,36 +22,36 @@ data:
       # Services were renamed with the banking- prefix and all expose port 80.
       - job_name: 'user-service'
         static_configs:
-          - targets: ['banking-user:80']
+          - targets: ['banking-user.banking-app:80']
         metrics_path: '/actuator/prometheus'
         scrape_interval: 30s
 
       - job_name: 'accounts-service'
         static_configs:
-          - targets: ['banking-accounts:80']
+          - targets: ['banking-accounts.banking-app:80']
         metrics_path: '/actuator/prometheus'
         scrape_interval: 30s
 
       - job_name: 'transactions-service'
         static_configs:
-          - targets: ['banking-transactions:80']
+          - targets: ['banking-transactions.banking-app:80']
         metrics_path: '/actuator/prometheus'
         scrape_interval: 30s
 
       - job_name: 'api-gateway'
         static_configs:
-          - targets: ['banking-gateway:80']
+          - targets: ['banking-gateway.banking-app:80']
         metrics_path: '/actuator/prometheus'
         scrape_interval: 30s
 
       - job_name: 'fraud-service'
         static_configs:
-          - targets: ['banking-fraud:9091']
+          - targets: ['banking-fraud.banking-app:9091']
         metrics_path: '/metrics'
         scrape_interval: 30s
 
       - job_name: 'notification-service'
         static_configs:
-          - targets: ['banking-notification:80']
+          - targets: ['banking-notification.banking-app:80']
         metrics_path: '/metrics'
         scrape_interval: 30s

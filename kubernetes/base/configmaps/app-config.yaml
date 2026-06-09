@@ -22,7 +22,7 @@ data:
   KAFKA_BROKERS: "banking-kafka:9092"
 
   # Observability (language-agnostic OTel)
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability:4317"
   OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
   OTEL_TRACES_EXPORTER: "otlp"
   OTEL_METRICS_EXPORTER: "otlp"
@@ -45,7 +45,7 @@ data:
   DB_SCHEMA: "user_service"
   SERVER_PORT: "8080"
   OTEL_SERVICE_NAME: "user-service"
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability:4317"
   OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
   OTEL_TRACES_EXPORTER: "otlp"
   OTEL_METRICS_EXPORTER: "otlp"
@@ -74,7 +74,7 @@ data:
   LOGGING_LEVEL_COM_BANKING: "DEBUG"
   LOGGING_LEVEL_IO_OPENTELEMETRY: "DEBUG"
   OTEL_SERVICE_NAME: "accounts-service"
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability:4317"
   OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
   OTEL_TRACES_EXPORTER: "otlp"
   OTEL_METRICS_EXPORTER: "otlp"
@@ -103,7 +103,7 @@ data:
   LOGGING_LEVEL_COM_BANKING: "DEBUG"
   LOGGING_LEVEL_IO_OPENTELEMETRY: "DEBUG"
   OTEL_SERVICE_NAME: "transactions-service"
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability:4317"
   OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
   OTEL_TRACES_EXPORTER: "otlp"
   OTEL_METRICS_EXPORTER: "otlp"
@@ -132,7 +132,7 @@ data:
   LOGGING_LEVEL_COM_BANKING: "DEBUG"
   LOGGING_LEVEL_IO_OPENTELEMETRY: "DEBUG"
   OTEL_SERVICE_NAME: "api-gateway"
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability:4317"
   OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
   OTEL_TRACES_EXPORTER: "otlp"
   OTEL_METRICS_EXPORTER: "otlp"
@@ -159,7 +159,7 @@ data:
   
   # OpenTelemetry configuration
   OTEL_SERVICE_NAME: "frontend"
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318/v1/traces"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability:4318/v1/traces"
   OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
   OTEL_TRACES_EXPORTER: "otlp"
   OTEL_METRICS_EXPORTER: "otlp"

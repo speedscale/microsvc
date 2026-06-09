@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-datasources
-  namespace: banking-app
+  namespace: observability
 data:
   datasources.yaml: |
     apiVersion: 1
@@ -36,7 +36,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-dashboard-providers
-  namespace: banking-app
+  namespace: observability
 data:
   providers.yaml: |
     apiVersion: 1
@@ -70,7 +70,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana
-  namespace: banking-app
+  namespace: observability
   labels:
     app: grafana
 spec:
@@ -152,7 +152,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: grafana
-  namespace: banking-app
+  namespace: observability
 spec:
   selector:
     app: grafana
