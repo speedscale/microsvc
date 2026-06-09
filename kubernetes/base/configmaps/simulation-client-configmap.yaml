@@ -56,7 +56,7 @@ data:
 
   # OpenTelemetry configuration
   OTEL_SERVICE_NAME: "simulation-client"
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability:4317"
   OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
   OTEL_TRACES_EXPORTER: "otlp"
   OTEL_METRICS_EXPORTER: "otlp"
