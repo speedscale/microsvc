@@ -104,9 +104,10 @@ spring-shell.log
 application-local.yml
 application-local.properties
 
-# proxymock results (generated output, not source)
-proxymock/results/
+# proxymock (results and logs — recordings used by CI stay tracked)
 **/proxymock/results/
+**/*proxymock*.log
+**/*.log
 
 # Claude Code
 .claude/
