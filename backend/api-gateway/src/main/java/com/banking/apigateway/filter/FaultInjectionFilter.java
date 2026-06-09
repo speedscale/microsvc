@@ -24,7 +24,7 @@ public class FaultInjectionFilter implements GlobalFilter, Ordered {
     };
 
     public FaultInjectionFilter(
-            @Value("${fault.injection.rate:0.008}") double faultRate) {
+            @Value("${fault.injection.rate:0.003}") double faultRate) {
         this.faultRate = faultRate;
     }
 
