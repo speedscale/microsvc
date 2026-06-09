@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: otel-collector-conf
-  namespace: banking-app
+  namespace: observability
 data:
   otel-collector-config.yaml: |
     receivers:
@@ -144,7 +144,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: otel-collector
-  namespace: banking-app
+  namespace: observability
   labels:
     app: opentelemetry
     component: otel-collector
@@ -196,7 +196,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: otel-collector
-  namespace: banking-app
+  namespace: observability
 spec:
   selector:
     component: otel-collector

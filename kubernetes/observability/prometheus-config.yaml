@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: prometheus-config
-  namespace: banking-app
+  namespace: observability
   labels:
     app: prometheus
     app.kubernetes.io/name: banking-app
