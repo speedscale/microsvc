@@ -37,7 +37,7 @@
       "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
       "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
-        {"expr": "sum(increase(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[30m]))", "refId": "A"}
+        {"expr": "sum(increase(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[$__range]))", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
@@ -79,20 +79,20 @@
     },
     {
       "type": "stat",
-      "title": "4xx Errors/s",
-      "description": "Client error rate",
+      "title": "4xx Errors",
+      "description": "Client errors in selected time range",
       "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
       "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
-        {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"4..\", uri!~\"/actuator.*\"}[1m]))", "refId": "A"}
+        {"expr": "sum(increase(http_server_requests_seconds_count{job=~\"$service\", status=~\"4..\", uri!~\"/actuator.*\"}[$__range]))", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps",
-          "decimals": 2,
+          "unit": "short",
+          "decimals": 0,
           "thresholds": {"mode": "absolute", "steps": [
             {"color": "green", "value": null},
-            {"color": "orange", "value": 0.1}
+            {"color": "orange", "value": 10}
           ]},
           "color": {"mode": "thresholds"}
         }
@@ -101,20 +101,20 @@
     },
     {
       "type": "stat",
-      "title": "5xx Errors/s",
-      "description": "Server error rate",
+      "title": "5xx Errors",
+      "description": "Server errors in selected time range",
       "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
       "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
-        {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"5..\", uri!~\"/actuator.*\"}[1m]))", "refId": "A"}
+        {"expr": "sum(increase(http_server_requests_seconds_count{job=~\"$service\", status=~\"5..\", uri!~\"/actuator.*\"}[$__range]))", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps",
-          "decimals": 2,
+          "unit": "short",
+          "decimals": 0,
           "thresholds": {"mode": "absolute", "steps": [
             {"color": "green", "value": null},
-            {"color": "red", "value": 0.01}
+            {"color": "red", "value": 1}
           ]},
           "color": {"mode": "thresholds"}
         }
@@ -124,33 +124,35 @@
     {
       "type": "timeseries",
       "title": "Error Rate by Service",
-      "description": "4xx/5xx rate per service over time",
+      "description": "4xx/5xx error percentage per service over time",
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
       "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
-        {"expr": "sum by (job) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "{{job}}", "refId": "A"}
+        {"expr": "sum by (job) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[1m])) / sum by (job) (rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[1m])) * 100", "legendFormat": "{{job}}", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
-          "custom": {"drawStyle": "bars", "fillOpacity": 80, "lineWidth": 0, "stacking": {"mode": "normal"}},
-          "unit": "reqps"
+          "custom": {"drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "pointSize": 5, "showPoints": "auto"},
+          "unit": "percent",
+          "min": 0
         }
       },
       "options": {"tooltip": {"mode": "multi"}}
     },
     {
       "type": "timeseries",
-      "title": "Error Rate by Status Code",
-      "description": "Split by HTTP status code",
+      "title": "Errors by Status Code",
+      "description": "Error count per status code over time",
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
       "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
-        {"expr": "sum by (status) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "{{status}}", "refId": "A"}
+        {"expr": "sum by (status) (increase(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "{{status}}", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
           "custom": {"drawStyle": "bars", "fillOpacity": 80, "lineWidth": 0, "stacking": {"mode": "normal"}},
-          "unit": "reqps"
+          "unit": "short",
+          "decimals": 0
         },
         "overrides": [
           {"matcher": {"id": "byRegexp", "options": "^4..$"}, "properties": [{"id": "color", "value": {"fixedColor": "orange", "mode": "fixed"}}]},
@@ -162,27 +164,30 @@
     {
       "type": "table",
       "title": "Errors by Endpoint",
-      "description": "Which route is failing and why",
+      "description": "Error rate as percentage of each endpoint's total traffic",
       "gridPos": {"h": 9, "w": 24, "x": 0, "y": 12},
       "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
-        {"expr": "sum by (job, method, uri, status) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m]))", "format": "table", "instant": true, "refId": "A"}
+        {
+          "expr": "100 * sum by (job, method, uri, status) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m])) / on(job, uri) group_left(method, status) sum by (job, uri) (rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[5m]))",
+          "format": "table", "instant": true, "refId": "A"
+        }
       ],
       "transformations": [
         {"id": "organize", "options": {
           "excludeByName": {"Time": true},
-          "renameByName": {"job": "Service", "method": "Method", "uri": "Endpoint", "status": "Status", "Value": "Errors/sec"}
+          "renameByName": {"job": "Service", "method": "Method", "uri": "Endpoint", "status": "Status", "Value": "Error %"}
         }},
-        {"id": "sortBy", "options": {"fields": {}, "sort": [{"field": "Errors/sec", "desc": true}]}}
+        {"id": "sortBy", "options": {"fields": {}, "sort": [{"field": "Error %", "desc": true}]}}
       ],
       "fieldConfig": {
         "defaults": {
           "custom": {"align": "auto", "filterable": true, "cellOptions": {"type": "auto"}},
-          "decimals": 3
+          "decimals": 1
         },
         "overrides": [
-          {"matcher": {"id": "byName", "options": "Errors/sec"}, "properties": [
-            {"id": "unit", "value": "reqps"},
+          {"matcher": {"id": "byName", "options": "Error %"}, "properties": [
+            {"id": "unit", "value": "percent"},
             {"id": "custom.cellOptions", "value": {"type": "color-background"}},
             {"id": "color", "value": {"mode": "continuous-reds"}}
           ]},
