@@ -178,6 +178,10 @@
           "excludeByName": {"Time": true},
           "renameByName": {"job": "Service", "method": "Method", "uri": "Endpoint", "status": "Status", "Value": "Error %"}
         }},
+        {"id": "filterByValue", "options": {
+          "type": "include",
+          "filters": [{"fieldName": "Error %", "config": {"id": "isNotNull"}}]
+        }},
         {"id": "sortBy", "options": {"fields": {}, "sort": [{"field": "Error %", "desc": true}]}}
       ],
       "fieldConfig": {
