@@ -17,7 +17,26 @@ type Checker struct {
 func (c *Checker) CheckTransaction(ctx context.Context, req *fraudv1.TransactionRequest) (*fraudv1.FraudCheckResponse, error) {
 	start := time.Now()
 	resp := evaluate(req)
-	fanOutExternalChecks(ctx, req)
+	results := fanOutExternalChecks(ctx, req)
+
+	allFailed := true
+	for _, r := range results {
+		if r.OK() {
+			allFailed = false
+			break
+		}
+	}
+
+	// Medium-risk transactions that pass rule-based scoring still need
+	// external provider verification. Reject them when all providers are down.
+	if allFailed && resp.GetApproved() && resp.GetRiskScore() > 0.3 {
+		resp = &fraudv1.FraudCheckResponse{
+			Approved:  false,
+			RiskScore: resp.GetRiskScore() + 0.3,
+			Reason:    "external-verification-unavailable",
+		}
+	}
+
 	metrics.Observe(resp.GetApproved(), resp.GetReason(), time.Since(start), float64(resp.GetRiskScore()))
 	return resp, nil
 }
