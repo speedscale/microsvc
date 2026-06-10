@@ -5,7 +5,9 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "links": [],
+  "links": [
+    {"title": "← BYOC Infrastructure", "icon": "arrow-left", "type": "link", "url": "/d/speedscale-byoc/speedscale-byoc?${__url_time_range}", "targetBlank": false}
+  ],
   "liveNow": false,
   "panels": [
     {
