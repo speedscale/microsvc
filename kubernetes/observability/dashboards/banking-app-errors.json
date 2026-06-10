@@ -198,10 +198,56 @@
       "options": {"showHeader": true, "cellHeight": "sm", "footer": {"show": false}}
     },
     {
+      "type": "timeseries",
+      "title": "Third-party API Health (fraud-service)",
+      "description": "Outbound calls from fraud-service to Stripe, Sift, and MaxMind. Non-2xx responses indicate provider issues or bad credentials.",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 21},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum by (provider, status) (rate(fraud_external_requests_total{status!~\"2..\"}[1m]))", "legendFormat": "{{provider}} {{status}}", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "bars", "fillOpacity": 80, "lineWidth": 0, "stacking": {"mode": "normal"}},
+          "unit": "reqps",
+          "decimals": 2
+        },
+        "overrides": [
+          {"matcher": {"id": "byRegexp", "options": "stripe"}, "properties": [{"id": "color", "value": {"fixedColor": "purple", "mode": "fixed"}}]},
+          {"matcher": {"id": "byRegexp", "options": "sift"}, "properties": [{"id": "color", "value": {"fixedColor": "orange", "mode": "fixed"}}]},
+          {"matcher": {"id": "byRegexp", "options": "maxmind"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]}
+        ]
+      },
+      "options": {"tooltip": {"mode": "multi"}}
+    },
+    {
+      "type": "stat",
+      "title": "Fraud Check Rejections",
+      "description": "Transactions rejected by fraud-service, by reason",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 21},
+      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "targets": [
+        {"expr": "sum by (reason) (increase(fraud_checks_total{approved=\"false\"}[$__range]))", "legendFormat": "{{reason}}", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "yellow", "value": 10},
+            {"color": "red", "value": 50}
+          ]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
       "type": "table",
       "title": "Recent Traces",
       "description": "Click a trace ID to view spans in Jaeger",
-      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 21},
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 29},
       "datasource": {"type": "jaeger", "uid": "jaeger"},
       "targets": [
         {"refId": "A", "datasource": {"type": "jaeger", "uid": "jaeger"}, "queryType": "search", "service": "api-gateway", "operation": "", "tags": "", "minDuration": "", "maxDuration": "", "limit": 20}
@@ -225,7 +271,7 @@
       "type": "logs",
       "title": "eBPF Traffic — Error Requests",
       "description": "Speedscale eBPF-captured requests returning errors. Full payload inspection requires Speedscale / proxymock.",
-      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 21},
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 29},
       "datasource": {"type": "loki", "uid": "loki"},
       "targets": [
         {"expr": "{exporter=\"OTLP\"} | json | body_l7protocol = \"http\" | body_status >= 400 | line_format \"{{.body_service}} {{.body_command}} {{.body_location}} → {{.body_status}} ({{.body_duration}}ms)\"", "refId": "A"}
