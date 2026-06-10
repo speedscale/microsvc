@@ -134,7 +134,8 @@
         "defaults": {
           "custom": {"drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "pointSize": 5, "showPoints": "auto"},
           "unit": "percent",
-          "min": 0
+          "min": 0,
+          "links": [{"title": "View traces in Jaeger", "url": "/explore?schemaVersion=1&panes={%22j%22:{%22datasource%22:%22jaeger%22,%22queries%22:[{%22refId%22:%22A%22,%22queryType%22:%22search%22,%22service%22:%22${__series.name}%22,%22tags%22:%22error%3Dtrue%22}],%22range%22:{%22from%22:%22${__url_time_range}%22,%22to%22:%22${__url_time_range}%22}}}", "targetBlank": true}]
         }
       },
       "options": {"tooltip": {"mode": "multi"}}
@@ -190,6 +191,9 @@
             {"id": "unit", "value": "percent"},
             {"id": "custom.cellOptions", "value": {"type": "color-background"}},
             {"id": "color", "value": {"mode": "continuous-reds"}}
+          ]},
+          {"matcher": {"id": "byName", "options": "Service"}, "properties": [
+            {"id": "links", "value": [{"title": "View traces in Jaeger", "url": "/explore?schemaVersion=1&panes={%22j%22:{%22datasource%22:%22jaeger%22,%22queries%22:[{%22refId%22:%22A%22,%22queryType%22:%22search%22,%22service%22:%22${__value.text}%22,%22tags%22:%22error%3Dtrue%22}],%22range%22:{%22from%22:%22now-30m%22,%22to%22:%22now%22}}}", "targetBlank": true}]}
           ]},
           {"matcher": {"id": "byName", "options": "Status"}, "properties": [{"id": "custom.width", "value": 90}]},
           {"matcher": {"id": "byName", "options": "Method"}, "properties": [{"id": "custom.width", "value": 90}]}
