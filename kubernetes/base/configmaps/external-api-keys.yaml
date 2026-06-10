@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: external-api-keys
+  namespace: banking-app
+  labels:
+    app.kubernetes.io/name: banking-app
+    app.kubernetes.io/component: secrets
+type: Opaque
+stringData:
+  # ── fraud-service (Go) ──────────────────────────────────────────────
+  STRIPE_API_KEY: "sk_test_REPLACE_ME"
+  SIFT_API_KEY: "REPLACE_ME"
+  MAXMIND_ACCOUNT_ID: "REPLACE_ME"
+  MAXMIND_LICENSE_KEY: "REPLACE_ME"
+
+  # ── transactions-service (Java) ─────────────────────────────────────
+  # Spring property overrides via env var naming convention
+  PAYMENT_STRIPE_API_KEY: "sk_test_REPLACE_ME"
+  PAYMENT_PAYPAL_ACCESS_TOKEN: "REPLACE_ME"
+  PAYMENT_COMPLY_API_KEY: "REPLACE_ME"
+
+  # ── accounts-service (Java) ─────────────────────────────────────────
+  PLAID_CLIENT_ID: "REPLACE_ME"
+  PLAID_SECRET: "REPLACE_ME"
+  EXCHANGE_RATES_APP_ID: "REPLACE_ME"
+  MOODYS_API_KEY: "REPLACE_ME"
+
+  # ── notification-service (Go) ───────────────────────────────────────
+  SENDGRID_API_KEY: "SG.REPLACE_ME"
+  TWILIO_ACCOUNT_SID: "REPLACE_ME"
+  TWILIO_AUTH_TOKEN: "REPLACE_ME"
+  SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/REPLACE_ME"
+
+  # ── user-service (C#/.NET) ──────────────────────────────────────────
+  SOCURE_API_KEY: "REPLACE_ME"
+  JUMIO_API_TOKEN: "REPLACE_ME"
+  HIBP_API_KEY: "REPLACE_ME"
+
+  # ── S3 for statement export (accounts-service) ──────────────────────
+  AWS_S3_BUCKET: "banking-app-statements"
+  AWS_REGION: "us-east-1"

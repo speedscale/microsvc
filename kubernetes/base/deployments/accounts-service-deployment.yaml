@@ -45,19 +45,13 @@ spec:
               key: secret
         - name: JAVA_OPTS
           value: "-Xms64m -Xmx128m -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m -XX:MaxDirectMemorySize=16m -XX:+UseSerialGC -XX:+UseStringDeduplication -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom -Dspring.main.lazy-initialization=true"
-        - name: AWS_S3_BUCKET
-          value: "banking-app-statements"
-        - name: AWS_REGION
-          value: "us-east-1"
-        - name: AWS_ACCESS_KEY_ID
-          value: "AKIAIOSFODNN7EXAMPLE"
-        - name: AWS_SECRET_ACCESS_KEY
-          value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
         envFrom:
         - configMapRef:
             name: app-config
         - configMapRef:
             name: banking-accounts-config
+        - secretRef:
+            name: external-api-keys
         resources:
           requests:
             memory: "256Mi"

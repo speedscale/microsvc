@@ -46,6 +46,8 @@ spec:
             name: app-config
         - configMapRef:
             name: banking-user-config
+        - secretRef:
+            name: external-api-keys
         resources:
           requests:
             memory: "128Mi"

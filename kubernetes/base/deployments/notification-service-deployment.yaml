@@ -46,6 +46,8 @@ spec:
         envFrom:
         - configMapRef:
             name: app-config
+        - secretRef:
+            name: external-api-keys
         resources:
           requests:
             memory: "64Mi"
