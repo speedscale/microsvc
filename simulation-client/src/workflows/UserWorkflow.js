@@ -512,7 +512,16 @@ class UserWorkflow {
   // (The gateway FaultInjectionFilter adds independent 500/503 noise.)
   async generateErrorTraffic(user) {
     if (!config.simulation.errorInjection.enabled) return;
-    if (Math.random() >= config.simulation.errorInjection.probability) return;
+
+    let effectiveProbability = config.simulation.errorInjection.probability;
+    const spike = config.simulation.errorSpike;
+    if (spike.enabled) {
+      const minute = new Date().getMinutes();
+      if (spike.minuteMarks.some(m => minute >= m && minute < m + spike.durationMinutes)) {
+        effectiveProbability = spike.probability;
+      }
+    }
+    if (Math.random() >= effectiveProbability) return;
 
     const account = user.accounts && user.accounts.length > 0 ? user.accounts[0] : null;
 
