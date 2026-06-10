@@ -13,6 +13,7 @@ resources:
   - otel-collector.yaml
   - jaeger-deployment.yaml
   - loki.yaml
+  - promtail.yaml
   - grafana.yaml
 
 generatorOptions:

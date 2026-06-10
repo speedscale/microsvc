@@ -269,9 +269,29 @@
     },
     {
       "type": "logs",
+      "title": "Application Logs — Errors",
+      "description": "ERROR and WARN log lines from banking-app services (via Promtail → Loki)",
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 29},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {"expr": "{namespace=\"banking-app\"} |~ \"(?i)(ERROR|WARN|Exception|panic|fatal)\"", "refId": "A"}
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "showCommonLabels": false,
+        "wrapLogMessage": false,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      }
+    },
+    {
+      "type": "logs",
       "title": "eBPF Traffic — Error Requests",
       "description": "Speedscale eBPF-captured requests returning errors. Full payload inspection requires Speedscale / proxymock.",
-      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 29},
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 39},
       "datasource": {"type": "loki", "uid": "loki"},
       "targets": [
         {"expr": "{exporter=\"OTLP\"} | json | body_l7protocol = \"http\" | body_status >= 400 | line_format \"{{.body_service}} {{.body_command}} {{.body_location}} → {{.body_status}} ({{.body_duration}}ms)\"", "refId": "A"}
