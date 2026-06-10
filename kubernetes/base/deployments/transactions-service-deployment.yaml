@@ -44,7 +44,7 @@ spec:
               name: banking-jwt-secret
               key: secret
         - name: JAVA_OPTS
-          value: "-Xms64m -Xmx192m -XX:MaxMetaspaceSize=160m -XX:ReservedCodeCacheSize=32m -XX:MaxDirectMemorySize=16m -XX:+UseSerialGC -XX:+UseStringDeduplication -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom -Dspring.main.lazy-initialization=true"
+          value: "-Xms64m -Xmx128m -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m -XX:MaxDirectMemorySize=16m -XX:+UseSerialGC -XX:+UseStringDeduplication -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom -Dspring.main.lazy-initialization=true"
         envFrom:
         - configMapRef:
             name: app-config
@@ -55,7 +55,7 @@ spec:
             memory: "256Mi"
             cpu: "50m"
           limits:
-            memory: "768Mi"
+            memory: "512Mi"
             # Right-sized for live sim traffic; 150m throttled the JVM (see user-service).
             cpu: "1000m"
         startupProbe:
