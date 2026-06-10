@@ -14,9 +14,9 @@
         "name": "service",
         "label": "Service",
         "type": "query",
-        "datasource": {"type": "prometheus", "uid": "prometheus-app"},
-        "definition": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\"}, job)",
-        "query": {"qryType": 1, "query": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\"}, job)", "refId": "PrometheusVariableQueryEditor-VariableQuery"},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "definition": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service\"}, job)",
+        "query": {"qryType": 1, "query": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service\"}, job)", "refId": "PrometheusVariableQueryEditor-VariableQuery"},
         "includeAll": true,
         "multi": true,
         "allValue": null,
@@ -35,7 +35,7 @@
       "title": "Total Errors",
       "description": "Total 4xx + 5xx errors in the selected time range",
       "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum(increase(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[$__range]))", "refId": "A"}
       ],
@@ -58,7 +58,7 @@
       "title": "Error %",
       "description": "Percentage of requests returning 4xx/5xx",
       "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m])) / sum(rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[5m])) * 100", "refId": "A"}
       ],
@@ -82,7 +82,7 @@
       "title": "4xx Errors",
       "description": "Client errors in selected time range",
       "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum(increase(http_server_requests_seconds_count{job=~\"$service\", status=~\"4..\", uri!~\"/actuator.*\"}[$__range]))", "refId": "A"}
       ],
@@ -104,7 +104,7 @@
       "title": "5xx Errors",
       "description": "Server errors in selected time range",
       "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum(increase(http_server_requests_seconds_count{job=~\"$service\", status=~\"5..\", uri!~\"/actuator.*\"}[$__range]))", "refId": "A"}
       ],
@@ -126,7 +126,7 @@
       "title": "Error Rate by Service",
       "description": "4xx/5xx error percentage per service over time",
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum by (job) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[1m])) / sum by (job) (rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[1m])) * 100", "legendFormat": "{{job}}", "refId": "A"}
       ],
@@ -144,7 +144,7 @@
       "title": "Errors by Status Code",
       "description": "Error count per status code over time",
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum by (status) (increase(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "{{status}}", "refId": "A"}
       ],
@@ -166,7 +166,7 @@
       "title": "Errors by Endpoint",
       "description": "Error rate as percentage of each endpoint's total traffic",
       "gridPos": {"h": 9, "w": 24, "x": 0, "y": 12},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {
           "expr": "(100 * sum by (job, method, uri, status) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m])) / ignoring(status) group_left sum by (job, method, uri) (rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[5m]))) >= 0",
@@ -202,7 +202,7 @@
       "title": "Third-party API Health (fraud-service)",
       "description": "Outbound calls from fraud-service to Stripe, Sift, and MaxMind. Non-2xx responses indicate provider issues or bad credentials.",
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 21},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum by (provider, status) (rate(fraud_external_requests_total{status!~\"2..\"}[1m]))", "legendFormat": "{{provider}} {{status}}", "refId": "A"}
       ],
@@ -225,7 +225,7 @@
       "title": "Fraud Check Rejections",
       "description": "Transactions rejected by fraud-service, by reason",
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 21},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum by (reason) (increase(fraud_checks_total{approved=\"false\"}[$__range]))", "legendFormat": "{{reason}}", "refId": "A"}
       ],

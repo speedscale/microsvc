@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Prometheus;
 using UserServiceDotnet.Data;
 using UserServiceDotnet.Services;
 
@@ -26,7 +27,9 @@ builder.Services.AddControllers()
 
 var app = builder.Build();
 
+app.UseHttpMetrics();
 app.MapControllers();
 app.MapGet("/actuator/health", () => Results.Ok(new { status = "UP" }));
+app.MapMetrics("/actuator/prometheus");
 
 app.Run();

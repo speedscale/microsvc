@@ -206,11 +206,10 @@ class UserWorkflow {
   async getAccountsAndBalances(user) {
     try {
       logger.debug('Getting accounts and balances', { userId: user.id });
-      
+
       const accounts = await this.apiClient.getAccounts(user.token);
-      
+
       if (accounts && accounts.length > 0) {
-        // Get balance for each account
         for (const account of accounts) {
           try {
             const balanceResp = await this.apiClient.getAccountBalance(account.id, user.token);
@@ -220,6 +219,21 @@ class UserWorkflow {
               accountId: account.id,
               error: error.message
             });
+          }
+        }
+
+        // 40% chance: fetch single account detail + per-account transaction history
+        if (Math.random() < 0.4) {
+          const pick = accounts[Math.floor(Math.random() * accounts.length)];
+          try {
+            await this.apiClient.getAccountById(pick.id, user.token);
+          } catch (error) {
+            logger.warn('Failed to get account detail', { accountId: pick.id, error: error.message });
+          }
+          try {
+            await this.apiClient.getAccountTransactions(pick.id, user.token);
+          } catch (error) {
+            logger.warn('Failed to get account transactions', { accountId: pick.id, error: error.message });
           }
         }
       }
@@ -385,13 +399,22 @@ class UserWorkflow {
 
     try {
       const result = await this.apiClient.createTransaction(transactionData, user.token);
-      
+
       logger.info('Transaction completed', {
         userId: user.id,
         transactionType,
         amount: transactionData.amount,
         transactionId: result?.id
       });
+
+      // 50% chance: fetch the individual transaction we just created
+      if (result?.id && Math.random() < 0.5) {
+        try {
+          await this.apiClient.getTransaction(result.id, user.token);
+        } catch (error) {
+          logger.warn('Failed to fetch transaction detail', { transactionId: result.id, error: error.message });
+        }
+      }
 
       user.updateLastAction();
     } catch (error) {

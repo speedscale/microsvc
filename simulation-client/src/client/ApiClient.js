@@ -133,6 +133,15 @@ class ApiClient {
     });
   }
 
+  async getAccountById(accountId, token) {
+    return this.retryRequest(async () => {
+      const response = await this.client.get(`/api/accounts/${accountId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    });
+  }
+
   async getAccountBalance(accountId, token) {
     return this.retryRequest(async () => {
       const response = await this.client.get(`/api/accounts/${accountId}/balance`, {
