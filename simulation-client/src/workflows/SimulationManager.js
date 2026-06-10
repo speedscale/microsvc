@@ -295,6 +295,7 @@ class SimulationManager {
       runtimeMs: runtime,
       activeSessions: this.activeSessions.size,
       burstActive: this.burstActive,
+      errorSpikeActive: this.isErrorSpikeActive(),
       currentConcurrency: this.getCurrentConcurrency(),
       totalSessions: this.metrics.totalSessions,
       successfulSessions: this.metrics.successfulSessions,
@@ -309,6 +310,13 @@ class SimulationManager {
         ? Math.round(this.metrics.totalSessions / runtimeMinutes)
         : 0
     };
+  }
+
+  isErrorSpikeActive() {
+    const spike = config.simulation.errorSpike;
+    if (!spike.enabled) return false;
+    const minute = new Date().getMinutes();
+    return spike.minuteMarks.some(m => minute >= m && minute < m + spike.durationMinutes);
   }
 
   delay(ms) {

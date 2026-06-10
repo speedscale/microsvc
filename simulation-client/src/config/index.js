@@ -64,6 +64,15 @@ const config = {
     errorInjection: {
       enabled: (process.env.ERROR_INJECTION_ENABLED || 'true') === 'true',
       probability: parseFloat(process.env.ERROR_INJECTION_PROBABILITY) || 0.05
+    },
+
+    // Scheduled error spikes: crank error probability at fixed minutes each hour
+    // so every 30-min demo window has a visible spike to investigate.
+    errorSpike: {
+      enabled: (process.env.ERROR_SPIKE_ENABLED || 'true') === 'true',
+      probability: parseFloat(process.env.ERROR_SPIKE_PROBABILITY) || 0.6,
+      minuteMarks: (process.env.ERROR_SPIKE_MINUTES || '10,40').split(',').map(Number),
+      durationMinutes: parseInt(process.env.ERROR_SPIKE_DURATION) || 2
     }
   },
 
