@@ -87,6 +87,10 @@ class UserWorkflow {
   }
 
   async executeNewUserWorkflow(user) {
+    // Step 0: Check username/email availability before registering
+    await this.checkAvailability(user);
+    await this.randomDelay();
+
     // Step 1: Register new user
     await this.performRegistration(user);
     await this.randomDelay();
@@ -117,6 +121,16 @@ class UserWorkflow {
     }
 
     logger.info('New user workflow completed', { user: user.toLogData() });
+  }
+
+  async checkAvailability(user) {
+    try {
+      await this.apiClient.checkUsername(user.username);
+      await this.apiClient.checkEmail(user.email);
+      logger.debug('Availability check passed', { username: user.username });
+    } catch (error) {
+      logger.warn('Availability check failed', { username: user.username, error: error.message });
+    }
   }
 
   async performRegistration(user) {
@@ -206,11 +220,10 @@ class UserWorkflow {
   async getAccountsAndBalances(user) {
     try {
       logger.debug('Getting accounts and balances', { userId: user.id });
-      
+
       const accounts = await this.apiClient.getAccounts(user.token);
-      
+
       if (accounts && accounts.length > 0) {
-        // Get balance for each account
         for (const account of accounts) {
           try {
             const balanceResp = await this.apiClient.getAccountBalance(account.id, user.token);
@@ -220,6 +233,21 @@ class UserWorkflow {
               accountId: account.id,
               error: error.message
             });
+          }
+        }
+
+        // 40% chance: fetch single account detail + per-account transaction history
+        if (Math.random() < 0.4) {
+          const pick = accounts[Math.floor(Math.random() * accounts.length)];
+          try {
+            await this.apiClient.getAccountById(pick.id, user.token);
+          } catch (error) {
+            logger.warn('Failed to get account detail', { accountId: pick.id, error: error.message });
+          }
+          try {
+            await this.apiClient.getAccountTransactions(pick.id, user.token);
+          } catch (error) {
+            logger.warn('Failed to get account transactions', { accountId: pick.id, error: error.message });
           }
         }
       }
@@ -384,14 +412,35 @@ class UserWorkflow {
     }
 
     try {
-      const result = await this.apiClient.createTransaction(transactionData, user.token);
-      
+      // 30% of the time use the dedicated endpoint instead of the generic create
+      const useDedicated = Math.random() < 0.3;
+      let result;
+      if (useDedicated && transactionType === 'deposit') {
+        result = await this.apiClient.deposit(transactionData, user.token);
+      } else if (useDedicated && transactionType === 'withdrawal') {
+        result = await this.apiClient.withdraw(transactionData, user.token);
+      } else if (useDedicated && transactionType === 'transfer') {
+        result = await this.apiClient.transfer(transactionData, user.token);
+      } else {
+        result = await this.apiClient.createTransaction(transactionData, user.token);
+      }
+
       logger.info('Transaction completed', {
         userId: user.id,
         transactionType,
         amount: transactionData.amount,
-        transactionId: result?.id
+        transactionId: result?.id,
+        dedicated: useDedicated
       });
+
+      // 50% chance: fetch the individual transaction we just created
+      if (result?.id && Math.random() < 0.5) {
+        try {
+          await this.apiClient.getTransaction(result.id, user.token);
+        } catch (error) {
+          logger.warn('Failed to fetch transaction detail', { transactionId: result.id, error: error.message });
+        }
+      }
 
       user.updateLastAction();
     } catch (error) {

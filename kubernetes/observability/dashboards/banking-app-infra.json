@@ -14,9 +14,9 @@
         "name": "service",
         "label": "Service",
         "type": "query",
-        "datasource": {"type": "prometheus", "uid": "prometheus-app"},
-        "definition": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\"}, job)",
-        "query": {"qryType": 1, "query": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\"}, job)", "refId": "PrometheusVariableQueryEditor-VariableQuery"},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "definition": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service\"}, job)",
+        "query": {"qryType": 1, "query": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service\"}, job)", "refId": "PrometheusVariableQueryEditor-VariableQuery"},
         "includeAll": true,
         "multi": true,
         "allValue": null,
@@ -35,7 +35,7 @@
       "title": "Peak CPU",
       "description": "Highest process CPU across services",
       "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "max(process_cpu_usage{job=~\"$service\"})", "refId": "A"}
       ],
@@ -53,7 +53,7 @@
       "title": "Heap Used",
       "description": "Total JVM heap in use across all services",
       "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum(jvm_memory_used_bytes{area=\"heap\", job=~\"$service\"})", "refId": "A"}
       ],
@@ -71,7 +71,7 @@
       "title": "GC Overhead",
       "description": "Maximum GC overhead across services",
       "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "max(jvm_gc_overhead_percent{job=~\"$service\"})", "refId": "A"}
       ],
@@ -89,7 +89,7 @@
       "title": "DB Connections",
       "description": "Total active HikariCP connections",
       "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum(hikaricp_connections_active{job=~\"$service\"})", "refId": "A"}
       ],
@@ -107,7 +107,7 @@
       "title": "CPU by Service",
       "description": "Process CPU utilization per service (0-1 = one core)",
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "process_cpu_usage{job=~\"$service\"}", "legendFormat": "{{job}}", "refId": "A"}
       ],
@@ -127,7 +127,7 @@
       "title": "Memory by Service — Heap Used vs Max",
       "description": "JVM heap used (solid) vs max (dashed) per service",
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum by (job) (jvm_memory_used_bytes{area=\"heap\", job=~\"$service\"})", "legendFormat": "{{job}} used", "refId": "A"},
         {"expr": "sum by (job) (jvm_memory_max_bytes{area=\"heap\", job=~\"$service\"})", "legendFormat": "{{job}} max", "refId": "B"}
@@ -152,7 +152,7 @@
       "title": "GC Pause Duration",
       "description": "Garbage collection pause rate per service",
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "rate(jvm_gc_pause_seconds_sum{job=~\"$service\"}[5m])", "legendFormat": "{{job}} {{action}} {{cause}}", "refId": "A"}
       ],
@@ -170,7 +170,7 @@
       "title": "Connection Pools",
       "description": "HikariCP and JDBC connection states",
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "hikaricp_connections_active{job=~\"$service\"}", "legendFormat": "{{job}} active", "refId": "A"},
         {"expr": "hikaricp_connections_idle{job=~\"$service\"}", "legendFormat": "{{job}} idle", "refId": "B"},
@@ -198,7 +198,7 @@
       "title": "JVM Threads",
       "description": "Live thread count per service",
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "jvm_threads_live_threads{job=~\"$service\"}", "legendFormat": "{{job}} live", "refId": "A"},
         {"expr": "jvm_threads_peak_threads{job=~\"$service\"}", "legendFormat": "{{job}} peak", "refId": "B"}
@@ -222,7 +222,7 @@
       "title": "Loaded Classes",
       "description": "JVM loaded class count per service",
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "jvm_classes_loaded_classes{job=~\"$service\"}", "legendFormat": "{{job}}", "refId": "A"}
       ],

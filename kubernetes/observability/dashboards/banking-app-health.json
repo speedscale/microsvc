@@ -14,9 +14,9 @@
         "name": "service",
         "label": "Service",
         "type": "query",
-        "datasource": {"type": "prometheus", "uid": "prometheus-app"},
-        "definition": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\"}, job)",
-        "query": {"qryType": 1, "query": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service|user-service\"}, job)", "refId": "PrometheusVariableQueryEditor-VariableQuery"},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "definition": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service\"}, job)",
+        "query": {"qryType": 1, "query": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|accounts-service|transactions-service\"}, job)", "refId": "PrometheusVariableQueryEditor-VariableQuery"},
         "includeAll": true,
         "multi": true,
         "allValue": null,
@@ -38,7 +38,7 @@
       "title": "Latency p95",
       "description": "95th percentile response time at the API gateway",
       "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"api-gateway\"}[5m])))", "refId": "A"}
       ],
@@ -63,7 +63,7 @@
       "title": "Throughput",
       "description": "Total HTTP request rate across banking services",
       "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[1m]))", "refId": "A"}
       ],
@@ -85,7 +85,7 @@
       "title": "CPU",
       "description": "Peak process CPU across banking services",
       "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "max(process_cpu_usage{job=~\"$service\"})", "refId": "A"}
       ],
@@ -110,7 +110,7 @@
       "title": "Memory",
       "description": "JVM heap utilization (used / max) across all services",
       "gridPos": {"h": 4, "w": 4, "x": 12, "y": 0},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum(jvm_memory_used_bytes{area=\"heap\", job=~\"$service\"}) / sum(jvm_memory_max_bytes{area=\"heap\", job=~\"$service\"})", "refId": "A"}
       ],
@@ -135,7 +135,7 @@
       "title": "Error %",
       "description": "Percentage of requests returning 4xx/5xx",
       "gridPos": {"h": 4, "w": 4, "x": 16, "y": 0},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m])) / sum(rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[5m])) * 100", "refId": "A"}
       ],
@@ -182,7 +182,7 @@
       "title": "Request Rate + Errors",
       "description": "Total throughput with error traffic overlaid",
       "gridPos": {"h": 8, "w": 14, "x": 0, "y": 4},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "total req/s", "refId": "A"},
         {"expr": "sum(rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[1m]))", "legendFormat": "errors/s", "refId": "B"}
@@ -236,7 +236,7 @@
       "title": "Errors by Endpoint",
       "description": "Which route is failing? Click Error % header to drill down.",
       "gridPos": {"h": 8, "w": 24, "x": 0, "y": 12},
-      "datasource": {"type": "prometheus", "uid": "prometheus-app"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {"expr": "sum by (job, method, uri, status) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m]))", "format": "table", "instant": true, "refId": "A"}
       ],
