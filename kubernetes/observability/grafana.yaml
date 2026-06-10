@@ -46,7 +46,7 @@ data:
         folder: Speedscale BYOC
         type: file
         disableDeletion: false
-        editable: true
+        editable: false
         options:
           path: /var/lib/grafana/dashboards/byoc
       - name: banking-app
@@ -54,7 +54,7 @@ data:
         folder: Banking App
         type: file
         disableDeletion: false
-        editable: true
+        editable: false
         options:
           path: /var/lib/grafana/dashboards/app
       - name: banking-app-details
@@ -62,7 +62,7 @@ data:
         folder: 'Banking App — Drilldowns'
         type: file
         disableDeletion: false
-        editable: true
+        editable: false
         options:
           path: /var/lib/grafana/dashboards/app-details
 ---
