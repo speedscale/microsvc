@@ -4,7 +4,10 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "links": [],
+  "links": [
+    {"title": "Live API Traffic →", "icon": "external-link-alt", "type": "link", "url": "/d/speedscale-traffic/speedscale-byoc-live-api-traffic?${__url_time_range}", "targetBlank": false},
+    {"title": "← Overview", "icon": "arrow-left", "type": "link", "url": "/d/banking-app-health/overview?${__url_time_range}&${__all_variables}", "targetBlank": false}
+  ],
   "liveNow": false,
   "panels": [
     {
