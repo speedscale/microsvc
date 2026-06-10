@@ -24,7 +24,5 @@ patches:
 - path: ai-service-annotations.yaml
 - path: api-gateway-annotations.yaml
 - path: frontend-annotations.yaml
-- path: simulation-client-annotations.yaml
 - path: fraud-service-annotations.yaml
 - path: notification-service-annotations.yaml
-- path: kafka-annotations.yaml

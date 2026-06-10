@@ -1,7 +1,0 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: banking-kafka
-  namespace: banking-app
-  annotations:
-    sidecar.speedscale.com/inject: "false"
