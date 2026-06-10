@@ -193,6 +193,54 @@ class ApiClient {
     });
   }
 
+  async deposit(transactionData, token) {
+    const payload = { currency: 'USD', ...transactionData };
+    return this.retryRequest(async () => {
+      const response = await this.client.post('/api/transactions/deposit', payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    });
+  }
+
+  async withdraw(transactionData, token) {
+    const payload = { currency: 'USD', ...transactionData };
+    return this.retryRequest(async () => {
+      const response = await this.client.post('/api/transactions/withdraw', payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    });
+  }
+
+  async transfer(transactionData, token) {
+    const payload = { currency: 'USD', ...transactionData };
+    return this.retryRequest(async () => {
+      const response = await this.client.post('/api/transactions/transfer', payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    });
+  }
+
+  async checkUsername(username) {
+    return this.retryRequest(async () => {
+      const response = await this.client.get('/api/users/check-username', {
+        params: { username }
+      });
+      return response.data;
+    });
+  }
+
+  async checkEmail(email) {
+    return this.retryRequest(async () => {
+      const response = await this.client.get('/api/users/check-email', {
+        params: { email }
+      });
+      return response.data;
+    });
+  }
+
   async exportStatement(accountId, token) {
     return this.retryRequest(async () => {
       const response = await this.client.post(`/api/accounts/${accountId}/export-statement`, {}, {
