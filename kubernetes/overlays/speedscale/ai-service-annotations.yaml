@@ -4,5 +4,4 @@ metadata:
   name: banking-ai
   namespace: banking-app
   annotations:
-    sidecar.speedscale.com/inject: "false"
     capture.speedscale.com/enabled: "true"
