@@ -180,7 +180,7 @@
         }},
         {"id": "filterByValue", "options": {
           "type": "include",
-          "filters": [{"fieldName": "Error %", "config": {"id": "isNotNull"}}]
+          "filters": [{"fieldName": "Error %", "config": {"id": "greaterOrEqual", "options": {"value": 0}}}]
         }},
         {"id": "sortBy", "options": {"fields": {}, "sort": [{"field": "Error %", "desc": true}]}}
       ],
