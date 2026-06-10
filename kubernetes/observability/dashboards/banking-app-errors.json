@@ -169,7 +169,7 @@
       "datasource": {"type": "prometheus", "uid": "prometheus-app"},
       "targets": [
         {
-          "expr": "100 * sum by (job, method, uri, status) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m])) / ignoring(status) group_left sum by (job, method, uri) (rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[5m]))",
+          "expr": "(100 * sum by (job, method, uri, status) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m])) / ignoring(status) group_left sum by (job, method, uri) (rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[5m]))) >= 0",
           "format": "table", "instant": true, "refId": "A"
         }
       ],
@@ -177,10 +177,6 @@
         {"id": "organize", "options": {
           "excludeByName": {"Time": true},
           "renameByName": {"job": "Service", "method": "Method", "uri": "Endpoint", "status": "Status", "Value": "Error %"}
-        }},
-        {"id": "filterByValue", "options": {
-          "type": "include",
-          "filters": [{"fieldName": "Error %", "config": {"id": "greaterOrEqual", "options": {"value": 0}}}]
         }},
         {"id": "sortBy", "options": {"fields": {}, "sort": [{"field": "Error %", "desc": true}]}}
       ],
