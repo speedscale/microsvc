@@ -14,7 +14,7 @@
 
     <groupId>com.banking</groupId>
     <artifactId>api-gateway</artifactId>
-    <version>1.4.34</version>
+    <version>1.4.35</version>
     <packaging>jar</packaging>
 
     <name>api-gateway</name>
