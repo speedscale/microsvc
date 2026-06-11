@@ -44,7 +44,7 @@ spec:
               name: banking-jwt-secret
               key: secret
         - name: JAVA_OPTS
-          value: "-Xms64m -Xmx128m -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m -XX:MaxDirectMemorySize=16m -XX:+UseSerialGC -XX:+UseStringDeduplication -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom -Dspring.main.lazy-initialization=true"
+          value: "-Xms128m -Xmx384m -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m -XX:MaxDirectMemorySize=16m -XX:+UseSerialGC -XX:+UseStringDeduplication -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom -Dspring.main.lazy-initialization=true"
         - name: AWS_S3_BUCKET
           value: "banking-app-statements"
         - name: AWS_REGION
@@ -60,11 +60,10 @@ spec:
             name: banking-accounts-config
         resources:
           requests:
-            memory: "256Mi"
+            memory: "384Mi"
             cpu: "50m"
           limits:
-            memory: "512Mi"
-            # Right-sized for live sim traffic; 150m throttled the JVM (see user-service).
+            memory: "1Gi"
             cpu: "1000m"
         startupProbe:
           tcpSocket:
