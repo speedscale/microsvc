@@ -153,10 +153,11 @@ class ApiClient {
 
   async getAccountTransactions(accountId, token) {
     return this.retryRequest(async () => {
-      const response = await this.client.get(`/api/accounts/${accountId}/transactions`, {
+      const response = await this.client.get('/api/transactions', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      return response.data;
+      const txns = Array.isArray(response.data) ? response.data : response.data?.content || [];
+      return txns.filter(t => t.accountId === accountId || t.fromAccountId === accountId || t.toAccountId === accountId);
     });
   }
 
