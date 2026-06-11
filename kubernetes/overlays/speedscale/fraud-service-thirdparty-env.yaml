@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-fraud
+  namespace: banking-app
+spec:
+  template:
+    spec:
+      containers:
+      - name: fraud-service
+        env:
+        - name: STRIPE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: STRIPE_API_KEY
+        - name: SIFT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: SIFT_API_KEY
+        - name: MAXMIND_ACCOUNT_ID
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: MAXMIND_ACCOUNT_ID
+        - name: MAXMIND_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: MAXMIND_LICENSE_KEY

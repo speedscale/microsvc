@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-accounts
+  namespace: banking-app
+spec:
+  template:
+    spec:
+      containers:
+      - name: accounts-service
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: PLAID_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: PLAID_CLIENT_ID
+        - name: PLAID_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: PLAID_SECRET
+        - name: EXCHANGE_RATES_APP_ID
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: EXCHANGE_RATES_APP_ID
+        - name: MOODYS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: MOODYS_API_KEY
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: AWS_ACCESS_KEY_ID
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: AWS_SECRET_ACCESS_KEY
+        - name: AWS_S3_BUCKET
+          value: "speedscale-banking-demo-statements"

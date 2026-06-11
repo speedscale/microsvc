@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-user
+  namespace: banking-app
+spec:
+  template:
+    spec:
+      containers:
+      - name: user-service
+        env:
+        - name: SOCURE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: SOCURE_API_KEY
+        - name: JUMIO_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: JUMIO_API_TOKEN
+        - name: HIBP_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: HIBP_API_KEY

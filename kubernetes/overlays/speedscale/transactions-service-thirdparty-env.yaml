@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-transactions
+  namespace: banking-app
+spec:
+  template:
+    spec:
+      containers:
+      - name: transactions-service
+        env:
+        - name: PAYMENT_STRIPE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: STRIPE_API_KEY
+        - name: PAYMENT_PAYPAL_ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: PAYPAL_ACCESS_TOKEN
+        - name: PAYMENT_COMPLY_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: COMPLY_API_KEY

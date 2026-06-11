@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-notification
+  namespace: banking-app
+spec:
+  template:
+    spec:
+      containers:
+      - name: notification-service
+        env:
+        - name: SENDGRID_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: SENDGRID_API_KEY
+        - name: TWILIO_ACCOUNT_SID
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: TWILIO_ACCOUNT_SID
+        - name: TWILIO_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: TWILIO_AUTH_TOKEN
+        - name: SLACK_WEBHOOK_URL
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: SLACK_WEBHOOK_URL
