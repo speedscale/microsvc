@@ -8,6 +8,7 @@ spec:
     spec:
       containers:
       - name: accounts-service
+        imagePullPolicy: IfNotPresent
         env:
         - name: PLAID_CLIENT_ID
           valueFrom:

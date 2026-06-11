@@ -7,6 +7,11 @@ resources:
 - speedscale-metrics-services.yaml
 - banking-thirdparty-keys-sealed.yaml
 
+# accounts-service: locally-built image with the real Plaid create→exchange→balance flow
+images:
+- name: ghcr.io/speedscale/microsvc/accounts-service
+  newTag: demo-plaid
+
 patches:
 # Add Istio injection and Speedscale labels to the existing banking-app namespace
 - target:
