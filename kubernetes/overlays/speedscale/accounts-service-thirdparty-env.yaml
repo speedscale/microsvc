@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-accounts
+  namespace: banking-app
+spec:
+  template:
+    spec:
+      containers:
+      - name: accounts-service
+        env:
+        - name: PLAID_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: PLAID_CLIENT_ID
+        - name: PLAID_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: PLAID_SECRET
+        - name: EXCHANGE_RATES_APP_ID
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: EXCHANGE_RATES_APP_ID
+        - name: MOODYS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: MOODYS_API_KEY

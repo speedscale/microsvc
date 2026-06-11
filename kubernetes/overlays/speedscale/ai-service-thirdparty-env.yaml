@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-ai
+  namespace: banking-app
+spec:
+  template:
+    spec:
+      containers:
+      - name: ai-service
+        env:
+        - name: AI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: AI_API_KEY
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: OPENAI_API_KEY
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: GEMINI_API_KEY
+        - name: XAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: XAI_API_KEY
+        - name: OPENROUTER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banking-thirdparty-keys
+              key: OPENROUTER_API_KEY
