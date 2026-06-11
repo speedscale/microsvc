@@ -31,6 +31,9 @@ public class FinancialDataService {
     @Value("${MOODYS_API_KEY:demo_moodys_key}")
     private String moodysApiKey;
 
+    @Value("${MOODYS_API_URL:https://api.ratings.moodys.com/research/v1/ratings?identifier=test}")
+    private String moodysApiUrl;
+
     private HttpClient httpClient;
 
     @PostConstruct
@@ -92,7 +95,7 @@ public class FinancialDataService {
 
     private CompletableFuture<Void> fetchMoodysRating() {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.ratings.moodys.com/research/v1/ratings?identifier=test"))
+                .uri(URI.create(moodysApiUrl))
                 .timeout(TIMEOUT)
                 .header("Authorization", "Bearer " + moodysApiKey)
                 .GET()

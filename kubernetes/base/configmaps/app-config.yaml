@@ -21,6 +21,10 @@ data:
   NOTIFICATION_SERVICE_URL: "http://banking-notification:80"
   KAFKA_BROKERS: "banking-kafka:9092"
 
+  # Third-party API overrides (reachable defaults for demo capture)
+  SLACK_WEBHOOK_URL: "https://httpbin.org/anything/slack/webhook"
+  MOODYS_API_URL: "https://httpbin.org/anything/moodys/ratings?identifier=test"
+
   # Observability (language-agnostic OTel)
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability:4317"
   OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
