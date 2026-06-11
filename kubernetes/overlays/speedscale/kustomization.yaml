@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
 - ../../base
 - ../../observability
+- speedscale-metrics-services.yaml
 
 patches:
 # Add Istio injection and Speedscale labels to the existing banking-app namespace
