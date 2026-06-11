@@ -11,7 +11,9 @@ public class RouterValidator {
 
     public static final List<String> openApiEndpoints = List.of(
             "/api/users/register",
-            "/api/users/login"
+            "/api/users/login",
+            "/api/users/check-username",
+            "/api/users/check-email"
     );
 
     public Predicate<ServerHttpRequest> requiresAuthentication =

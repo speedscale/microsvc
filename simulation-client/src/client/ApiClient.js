@@ -161,13 +161,10 @@ class ApiClient {
   }
 
   // Transaction endpoints
-  // The frontend BFF route is POST /api/transactions (it proxies to the
-  // backend's /api/transactions/create). transactions-service requires a
-  // currency, so default it here.
   async createTransaction(transactionData, token) {
     const payload = { currency: 'USD', ...transactionData };
     return this.retryRequest(async () => {
-      const response = await this.client.post('/api/transactions', payload, {
+      const response = await this.client.post('/api/transactions/create', payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       return response.data;
@@ -185,11 +182,14 @@ class ApiClient {
   }
 
   async getTransaction(transactionId, token) {
+    // No GET /{id} endpoint on transactions-service; use the list endpoint
+    // and filter client-side. Return null if not found.
     return this.retryRequest(async () => {
-      const response = await this.client.get(`/api/transactions/${transactionId}`, {
+      const response = await this.client.get('/api/transactions', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      return response.data;
+      const txns = Array.isArray(response.data) ? response.data : response.data?.content || [];
+      return txns.find(t => t.id === transactionId) || null;
     });
   }
 
