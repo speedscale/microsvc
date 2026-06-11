@@ -86,7 +86,7 @@ public class FinancialDataService {
         if (cached != null) {
             return CompletableFuture.completedFuture(cached);
         }
-        String createBody = "{\"institution_id\":\"ins_109508\",\"initial_products\":[\"balance\"]}";
+        String createBody = "{\"institution_id\":\"ins_109508\",\"initial_products\":[\"transactions\"]}";
         HttpRequest createReq = plaidRequest("/sandbox/public_token/create", createBody);
         return httpClient.sendAsync(createReq, HttpResponse.BodyHandlers.ofString())
                 .thenCompose(createResp -> {
