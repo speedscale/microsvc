@@ -21,9 +21,13 @@ data:
   NOTIFICATION_SERVICE_URL: "http://banking-notification:80"
   KAFKA_BROKERS: "banking-kafka:9092"
 
-  # Third-party API overrides (reachable defaults for demo capture)
-  SLACK_WEBHOOK_URL: "https://httpbin.org/anything/slack/webhook"
-  MOODYS_API_URL: "https://httpbin.org/anything/moodys/ratings?identifier=test"
+  # Third-party endpoints — real hosts; Speedscale responder mocks intercept them.
+  # SLACK_WEBHOOK_URL here is a dead, non-secret fallback (no token path); the
+  # notification service gets the live hooks.slack.com webhook URL from the
+  # banking-thirdparty-keys secret. The responder /etc/hosts redirect is driven by
+  # the recorded snapshot's hosts, not by this value.
+  SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/SET-VIA-SECRET"
+  MOODYS_API_URL: "https://api.ratings.moodys.com/research/v1/ratings?identifier=test"
 
   # Observability (language-agnostic OTel)
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability:4317"
