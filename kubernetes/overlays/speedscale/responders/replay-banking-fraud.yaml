@@ -1,0 +1,13 @@
+apiVersion: speedscale.com/v1
+kind: TrafficReplay
+metadata:
+  name: replay-banking-fraud
+  namespace: banking-app
+spec:
+  snapshotID: c3898583-282b-4b82-9bdb-72b7dd45d15c
+  testConfigID: banking-mock-noproxy
+  mode: responder-only
+  workloadRef:
+    kind: Deployment
+    name: banking-fraud
+  cleanup: inventory
