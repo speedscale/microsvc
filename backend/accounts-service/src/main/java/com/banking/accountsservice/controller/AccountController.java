@@ -177,26 +177,29 @@ public class AccountController {
     }
     
     @PostMapping("/{accountId}/export-statement")
-    public ResponseEntity<Map<String, String>> exportStatement(
+    public ResponseEntity<Map<String, Object>> exportStatement(
             @PathVariable Long accountId) {
         Span span = tracer.spanBuilder("export-statement").startSpan();
         try {
-            if (!statementExportService.isConfigured()) {
-                Map<String, String> body = new HashMap<>();
-                body.put("status", "unavailable");
-                body.put("reason", "S3 not configured");
-                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body);
-            }
-
             Long userId = getUserIdFromAuthentication();
-            logger.info("Exporting statement for account {} user {}", accountId, userId);
-
-            String key = statementExportService.exportStatement(accountId, userId);
             span.setAttribute("user.id", userId);
             span.setAttribute("account.id", accountId);
+
+            if (!statementExportService.isConfigured()) {
+                // No object store wired in this environment: generate the
+                // statement and return it inline (zero external egress) rather
+                // than failing the request.
+                Map<String, Object> body = new HashMap<>();
+                body.put("status", "generated");
+                body.put("statement", statementExportService.generateStatement(accountId, userId));
+                return ResponseEntity.ok(body);
+            }
+
+            logger.info("Exporting statement for account {} user {}", accountId, userId);
+            String key = statementExportService.exportStatement(accountId, userId);
             span.setAttribute("s3.key", key);
 
-            Map<String, String> body = new HashMap<>();
+            Map<String, Object> body = new HashMap<>();
             body.put("status", "exported");
             body.put("key", key);
             return ResponseEntity.ok(body);
