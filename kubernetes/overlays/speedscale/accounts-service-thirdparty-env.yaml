@@ -30,15 +30,10 @@ spec:
             secretKeyRef:
               name: banking-thirdparty-keys
               key: MOODYS_API_KEY
-        - name: AWS_ACCESS_KEY_ID
-          valueFrom:
-            secretKeyRef:
-              name: banking-thirdparty-keys
-              key: AWS_ACCESS_KEY_ID
-        - name: AWS_SECRET_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: banking-thirdparty-keys
-              key: AWS_SECRET_ACCESS_KEY
-        - name: AWS_S3_BUCKET
-          value: "speedscale-banking-demo-statements"
+        # S3 statement export is intentionally left unconfigured here: there is
+        # no object store in this environment and S3 is not a responder-mocked
+        # host, so a real PutObject would egress to AWS and fail on dummy creds.
+        # With AWS_S3_BUCKET unset, StatementExportService.isConfigured() is
+        # false and the controller returns the statement inline (2xx, zero
+        # egress) instead of 500. Re-add the bucket + working creds (or an
+        # in-cluster/MinIO endpoint) to exercise the real upload path.

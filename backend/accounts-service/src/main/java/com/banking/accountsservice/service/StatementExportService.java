@@ -66,12 +66,13 @@ public class StatementExportService {
         return configured;
     }
 
-    public String exportStatement(Long accountId, Long userId) {
+    /**
+     * Builds the statement document for an account. Does not touch S3, so it is
+     * safe (and egress-free) to call even when no object store is configured.
+     */
+    public Map<String, Object> generateStatement(Long accountId, Long userId) {
         Account account = accountRepository.findByIdAndUserId(accountId, userId)
                 .orElseThrow(() -> new RuntimeException("Account not found or access denied"));
-
-        String timestamp = Instant.now().toString().replace(":", "-");
-        String key = "statements/account-" + accountId + "/" + timestamp + ".json";
 
         Map<String, Object> statement = new LinkedHashMap<>();
         statement.put("accountId", account.getId());
@@ -80,6 +81,14 @@ public class StatementExportService {
         statement.put("balance", account.getBalance());
         statement.put("exportedAt", LocalDateTime.now().toString());
         statement.put("userId", userId);
+        return statement;
+    }
+
+    public String exportStatement(Long accountId, Long userId) {
+        Map<String, Object> statement = generateStatement(accountId, userId);
+
+        String timestamp = Instant.now().toString().replace(":", "-");
+        String key = "statements/account-" + accountId + "/" + timestamp + ".json";
 
         try {
             byte[] payload = objectMapper.writeValueAsBytes(statement);
