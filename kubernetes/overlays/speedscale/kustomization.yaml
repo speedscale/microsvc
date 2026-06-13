@@ -5,12 +5,15 @@ resources:
 - ../../base
 - ../../observability
 - speedscale-metrics-services.yaml
-- banking-thirdparty-keys-sealed.yaml
-
-# accounts-service: locally-built image with the real Plaid create→exchange→balance flow
-images:
-- name: ghcr.io/speedscale/microsvc/accounts-service
-  newTag: demo-plaid
+# In-cluster Speedscale responder mocks for every third-party call (responder-only,
+# fail-closed). The app exercises its real integration paths against recorded
+# snapshots with zero external egress; dummy keys from the base secret are fine.
+- responders/replay-banking-accounts.yaml
+- responders/replay-banking-transactions.yaml
+- responders/replay-banking-fraud.yaml
+- responders/replay-banking-notification.yaml
+- responders/replay-banking-user.yaml
+- responders/replay-banking-ai.yaml
 
 patches:
 # Add Istio injection and Speedscale labels to the existing banking-app namespace
@@ -30,10 +33,13 @@ patches:
 - path: frontend-annotations.yaml
 - path: fraud-service-annotations.yaml
 - path: notification-service-annotations.yaml
-# Real third-party API keys (sourced from banking-thirdparty-keys SealedSecret)
+# Wire third-party API keys into each service (sourced from the base
+# banking-thirdparty-keys secret — dummy values; calls are responder-mocked)
 - path: accounts-service-thirdparty-env.yaml
 - path: transactions-service-thirdparty-env.yaml
 - path: fraud-service-thirdparty-env.yaml
 - path: notification-service-thirdparty-env.yaml
 - path: user-service-thirdparty-env.yaml
 - path: ai-service-thirdparty-env.yaml
+# Disable S3 statement export (not responder-mocked) to keep egress at zero
+- path: simulation-client-export-off.yaml

@@ -1,0 +1,9 @@
+# Statement export hits real S3 (not a host the responders mock), so under the
+# responder-only, zero-egress demo it would 500 on dummy AWS creds. Disable it.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: banking-sim-config
+  namespace: banking-app
+data:
+  EXPORT_STATEMENT_ENABLED: "false"
