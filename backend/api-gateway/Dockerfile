@@ -55,4 +55,4 @@ ENTRYPOINT ["java", \
     "-Dspring.main.banner-mode=off", \
     "-Dlogging.level.org.springframework.boot.autoconfigure=WARN", \
     "-Dlogging.level.io.opentelemetry=WARN", \
-    "org.springframework.boot.loader.JarLauncher"]
+    "org.springframework.boot.loader.launch.JarLauncher"]
