@@ -152,8 +152,12 @@ class ApiClient {
   }
 
   async getAccountTransactions(accountId, token) {
+    // Per-account history is served by transactions-service at GET /api/transactions?accountId=.
+    // There is no /api/accounts/{id}/transactions route, so the old path 404'd -> stateless
+    // Spring Security re-dispatches to /error unauthenticated -> 401.
     return this.retryRequest(async () => {
-      const response = await this.client.get(`/api/accounts/${accountId}/transactions`, {
+      const response = await this.client.get('/api/transactions', {
+        params: { accountId },
         headers: { Authorization: `Bearer ${token}` }
       });
       return response.data;
