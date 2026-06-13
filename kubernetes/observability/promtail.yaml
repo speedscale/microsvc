@@ -43,6 +43,11 @@ data:
               - __meta_kubernetes_container_name
             target_label: __path__
             separator: /
+            # Without an explicit regex the default (.*) captures the whole
+            # "uid/container" as $1, leaving $2 empty and yielding a malformed
+            # "/var/log/pods/*<uid>/<container>//*.log" glob that matches no
+            # files (promtail ships nothing). Split into $1=uid, $2=container.
+            regex: (.+)/(.+)
             replacement: /var/log/pods/*$1/$2/*.log
         pipeline_stages:
           - cri: {}

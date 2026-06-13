@@ -204,11 +204,11 @@
     {
       "type": "timeseries",
       "title": "Third-party API Health (fraud-service)",
-      "description": "Outbound calls from fraud-service to Stripe, Sift, and MaxMind. Non-2xx responses indicate provider issues or bad credentials.",
+      "description": "Outbound call rate from fraud-service to Stripe, Sift, and MaxMind, broken out by response status. Healthy traffic shows as 2xx/201 series; any non-2xx series indicates provider issues or bad credentials.",
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 21},
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
-        {"expr": "sum by (provider, status) (rate(fraud_external_requests_total{status!~\"2..\"}[1m]))", "legendFormat": "{{provider}} {{status}}", "refId": "A"}
+        {"expr": "sum by (provider, status) (rate(fraud_external_requests_total[1m]))", "legendFormat": "{{provider}} {{status}}", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
@@ -293,12 +293,12 @@
     },
     {
       "type": "logs",
-      "title": "eBPF Traffic — Error Requests",
-      "description": "Speedscale eBPF-captured requests returning errors. Full payload inspection requires Speedscale / proxymock.",
+      "title": "eBPF Traffic — HTTP Requests",
+      "description": "Speedscale eBPF-captured HTTP requests across services (all statuses; 4xx/5xx stand out in the status column). Full payload inspection requires Speedscale / proxymock.",
       "gridPos": {"h": 10, "w": 12, "x": 0, "y": 39},
       "datasource": {"type": "loki", "uid": "loki"},
       "targets": [
-        {"expr": "{exporter=\"OTLP\"} | json | body_l7protocol = \"http\" | body_status >= 400 | line_format \"{{.body_service}} {{.body_command}} {{.body_location}} → {{.body_status}} ({{.body_duration}}ms)\"", "refId": "A"}
+        {"expr": "{exporter=\"OTLP\"} | json | body_l7protocol = \"http\" | line_format \"{{.body_service}} {{.body_command}} {{.body_location}} → {{.body_status}} ({{.body_duration}}ms)\"", "refId": "A"}
       ],
       "options": {
         "showTime": true,
