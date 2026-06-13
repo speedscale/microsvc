@@ -16,41 +16,32 @@ data:
       - url: http://loki:3100/loki/api/v1/push
 
     scrape_configs:
-      - job_name: kubernetes-pods
-        kubernetes_sd_configs:
-          - role: pod
-        relabel_configs:
-          # Only collect from banking-app namespace
-          - source_labels: [__meta_kubernetes_namespace]
-            regex: banking-app
-            action: keep
-          # Drop simulation-client logs (too noisy)
-          - source_labels: [__meta_kubernetes_pod_label_app]
-            regex: simulation-client
-            action: drop
-          # Standard k8s metadata labels
-          - source_labels: [__meta_kubernetes_namespace]
-            target_label: namespace
-          - source_labels: [__meta_kubernetes_pod_name]
-            target_label: pod
-          - source_labels: [__meta_kubernetes_pod_label_app]
-            target_label: app
-          - source_labels: [__meta_kubernetes_container_name]
-            target_label: container
-          # Use the pod log path
-          - source_labels:
-              - __meta_kubernetes_pod_uid
-              - __meta_kubernetes_container_name
-            target_label: __path__
-            separator: /
-            # Without an explicit regex the default (.*) captures the whole
-            # "uid/container" as $1, leaving $2 empty and yielding a malformed
-            # "/var/log/pods/*<uid>/<container>//*.log" glob that matches no
-            # files (promtail ships nothing). Split into $1=uid, $2=container.
-            regex: (.+)/(.+)
-            replacement: /var/log/pods/*$1/$2/*.log
+      # Kubernetes pod service-discovery returns zero targets on this cluster
+      # (RBAC + config are correct, but promtail 2.9.8's k8s SD silently
+      # discovers nothing here). Tail the CRI pod logs straight off the mounted
+      # /var/log/pods hostPath instead — deterministic and SD-free. promtail
+      # runs as root and the path is mounted, so the files are readable.
+      - job_name: banking-app
+        static_configs:
+          - targets: [localhost]
+            labels:
+              namespace: banking-app
+              __path__: /var/log/pods/banking-app_*/*/*.log
         pipeline_stages:
           - cri: {}
+          # Derive pod/container from the log file path
+          # (/var/log/pods/<ns>_<pod>_<uid>/<container>/<n>.log)
+          - regex:
+              source: filename
+              expression: '/var/log/pods/[^_]+_(?P<pod>.+)_[^_/]+/(?P<container>[^/]+)/[^/]+\.log'
+          - labels:
+              pod:
+              container:
+          # Keep the panel focused on application containers: drop the sim load
+          # generator and the injected init/sidecar containers.
+          - drop:
+              source: container
+              expression: 'simulation-client|speedscale-.*|wait-for-.*|istio-.*'
 ---
 apiVersion: apps/v1
 kind: DaemonSet
