@@ -42,6 +42,15 @@ data:
           - drop:
               source: container
               expression: 'simulation-client|speedscale-.*|wait-for-.*|istio-.*'
+          # Drop high-volume DEBUG/TRACE lines (the Spring Cloud Gateway alone
+          # emits multi-MB of reactor DEBUG noise) — it OOM-kills the small Loki
+          # and the errors panel only surfaces WARN/ERROR/fatal anyway.
+          - match:
+              selector: '{namespace="banking-app"}'
+              stages:
+                - drop:
+                    expression: '(?i)\s(DEBUG|TRACE)\s'
+                    drop_counter_reason: debug_trace_volume
 ---
 apiVersion: apps/v1
 kind: DaemonSet
