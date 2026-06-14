@@ -290,26 +290,6 @@
         "sortOrder": "Descending",
         "dedupStrategy": "none"
       }
-    },
-    {
-      "type": "logs",
-      "title": "eBPF Traffic — HTTP Requests",
-      "description": "Speedscale eBPF-captured HTTP requests across services (all statuses; 4xx/5xx stand out in the status column). Full payload inspection requires Speedscale / proxymock.",
-      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 39},
-      "datasource": {"type": "loki", "uid": "loki"},
-      "targets": [
-        {"expr": "{exporter=\"OTLP\"} | json | body_l7protocol = \"http\" | line_format \"{{.body_service}} {{.body_command}} {{.body_location}} → {{.body_status}} ({{.body_duration}}ms)\"", "refId": "A"}
-      ],
-      "options": {
-        "showTime": true,
-        "showLabels": false,
-        "showCommonLabels": false,
-        "wrapLogMessage": false,
-        "prettifyLogMessage": false,
-        "enableLogDetails": true,
-        "sortOrder": "Descending",
-        "dedupStrategy": "none"
-      }
     }
   ]
 }
