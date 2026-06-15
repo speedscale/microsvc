@@ -70,6 +70,40 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("[startup] user_service schema bootstrap did not complete; continuing startup (real Postgres should already be migrated, mocked Postgres answers queries directly).");
 }
 
+// Seed the sim_user_NNN pool the load-simulation client logs into. The simulator assumes
+// these accounts pre-exist and does NOT register them (≈80% of its sessions reuse this
+// pool), so on a fresh or wiped database every simulator login 401s. Flyway migration
+// V2__Seed_simulation_users.sql seeds them for the Java services but never runs against
+// this .NET service (no Flyway) — same gap the table bootstrap above closes. We hash the
+// password with the very BCrypt call the register/login path uses (Models match: roles is
+// a plain VARCHAR, not an array), so the seeded credentials verify. Idempotent via
+// ON CONFLICT and best-effort like the bootstrap above (a mocked Postgres in CI just
+// no-ops). Password/count are overridable to track the simulator's SIM_USER_PASSWORD.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var simPassword = Environment.GetEnvironmentVariable("SIM_USER_PASSWORD") ?? "SimUser123!";
+    var simCount = int.TryParse(Environment.GetEnvironmentVariable("SIM_USER_COUNT"), out var c) ? c : 1000;
+    var simHash = BCrypt.Net.BCrypt.HashPassword(simPassword);
+    const string seedSql = @"
+        INSERT INTO user_service.users (username, email, password_hash, roles, created_at, updated_at)
+        SELECT 'sim_user_' || LPAD(g::text, 3, '0'),
+               'sim_user_' || LPAD(g::text, 3, '0') || '@simulation.local',
+               {0}, 'USER', NOW(), NOW()
+        FROM generate_series(1, {1}) AS g
+        ON CONFLICT (username) DO NOTHING;";
+    try
+    {
+        var seeded = db.Database.ExecuteSqlRaw(seedSql, simHash, simCount);
+        if (seeded > 0)
+            Console.WriteLine($"[startup] seeded {seeded} sim_user_* accounts for the load simulator.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[startup] sim_user_* seed skipped: {ex.Message} (continuing; a healthy Postgres seeds on next startup).");
+    }
+}
+
 app.UseHttpMetrics();
 app.MapControllers();
 app.MapGet("/actuator/health", () => Results.Ok(new { status = "UP" }));
