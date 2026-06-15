@@ -5,3 +5,6 @@ metadata:
   namespace: banking-app
   annotations:
     capture.speedscale.com/enabled: "true"
+    # Exclude Postgres wire from eBPF capture: nettap joins long-lived Npgsql pool
+    # connections mid-stream, never syncs, and leaks buffers -> ingest OOMKill loop.
+    capture.speedscale.com/ignore-ports: "5432"
