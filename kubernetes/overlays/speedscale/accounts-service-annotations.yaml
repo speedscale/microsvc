@@ -6,3 +6,6 @@ metadata:
   annotations:
     capture.speedscale.com/enabled: "true"
     capture.speedscale.com/java-agent: "true"
+    # Exclude Postgres wire from eBPF capture: nettap joins long-lived HikariCP
+    # connections mid-stream, never syncs, and leaks buffers -> ingest OOMKill loop.
+    capture.speedscale.com/ignore-ports: "5432"
