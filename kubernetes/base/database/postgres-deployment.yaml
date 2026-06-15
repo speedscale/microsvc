@@ -8,6 +8,12 @@ metadata:
     app.kubernetes.io/component: database
 spec:
   replicas: 1
+  # The Postgres PVC is RWO block storage (do-block-storage) and can attach to only
+  # one pod at a time. The default RollingUpdate surges a new pod that deadlocks on a
+  # Multi-Attach error against the still-running old pod, so rollouts never complete.
+  # Recreate terminates the old pod (releasing the volume) before starting the new one.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: banking-postgres
