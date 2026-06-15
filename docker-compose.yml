@@ -88,6 +88,7 @@ services:
     container_name: banking-transactions-service
     depends_on:
       - postgres
+      - fraud-service
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - DB_HOST=postgres
@@ -101,6 +102,8 @@ services:
       - JWT_EXPIRATION=86400000
       # Service URLs
       - ACCOUNTS_SERVICE_URL=http://accounts-service:8080
+      - FRAUD_SERVICE_HOST=fraud-service
+      - FRAUD_SERVICE_PORT=50051
       # OpenTelemetry Configuration
       - OTEL_SERVICE_NAME=transactions-service
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
@@ -115,6 +118,21 @@ services:
     ports:
       - "8083:8080"
       - "5005:5005"
+    networks:
+      - banking-network
+
+  # Fraud detection (gRPC) — transactions-service calls this for every transaction.
+  # Without it the fraud gRPC call fails and the client fails open (no fraud checks).
+  fraud-service:
+    build:
+      context: ./backend/fraud-service
+      dockerfile: Dockerfile
+    container_name: banking-fraud-service
+    environment:
+      - GRPC_PORT=50051
+      - METRICS_PORT=9091
+    ports:
+      - "50051:50051"
     networks:
       - banking-network
 
