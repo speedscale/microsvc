@@ -27,19 +27,25 @@ builder.Services.AddControllers()
 
 var app = builder.Build();
 
-// Bootstrap the user_service schema on startup so the service works against any fresh
+// Bootstrap the user_service table on startup so the service works against any fresh
 // database without relying on an external seed/migration job. The Java services
 // self-migrate via Flyway; this is the .NET equivalent. (EnsureCreated() is unusable
 // here because the banking_app database is shared and already exists, so it no-ops
-// even when this table is missing.) Idempotent, retried for Postgres readiness, and
-// best-effort: if it can't run (e.g. a mocked Postgres in CI that has no recorded
-// response for this DDL, or insufficient privileges) we log and continue rather than
-// crash — a real Postgres will have the table created; a mock already answers queries.
+// even when this table is missing.)
+//
+// NOTE: we do NOT issue CREATE SCHEMA here. The user_service schema is provisioned by
+// the database init (cluster postgres configmap / compose database/init), and Postgres
+// requires CREATE-on-database privilege for CREATE SCHEMA even with IF NOT EXISTS — which
+// the least-privilege app role (user_service_user) does not (and should not) have. The
+// role does have CREATE on the existing schema, so CREATE TABLE alone succeeds.
+//
+// Idempotent, retried for Postgres readiness, and best-effort: if it can't run (e.g. a
+// mocked Postgres in CI with no recorded response, or a missing schema) we log and
+// continue rather than crash — a real Postgres gets the table; a mock answers directly.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     const string ddl = @"
-        CREATE SCHEMA IF NOT EXISTS user_service;
         CREATE TABLE IF NOT EXISTS user_service.users (
             id            BIGSERIAL PRIMARY KEY,
             username      VARCHAR(50)  UNIQUE NOT NULL,
