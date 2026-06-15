@@ -27,6 +27,43 @@ builder.Services.AddControllers()
 
 var app = builder.Build();
 
+// Bootstrap the user_service schema on startup so the service works against any fresh
+// database without relying on an external seed/migration job. The Java services
+// self-migrate via Flyway; this is the .NET equivalent. (EnsureCreated() is unusable
+// here because the banking_app database is shared and already exists, so it no-ops
+// even when this table is missing.) Idempotent, retried for Postgres readiness, and
+// best-effort: if it can't run (e.g. a mocked Postgres in CI that has no recorded
+// response for this DDL, or insufficient privileges) we log and continue rather than
+// crash — a real Postgres will have the table created; a mock already answers queries.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    const string ddl = @"
+        CREATE SCHEMA IF NOT EXISTS user_service;
+        CREATE TABLE IF NOT EXISTS user_service.users (
+            id            BIGSERIAL PRIMARY KEY,
+            username      VARCHAR(50)  UNIQUE NOT NULL,
+            email         VARCHAR(100) UNIQUE NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            roles         VARCHAR(50)  NOT NULL DEFAULT 'USER',
+            created_at    TIMESTAMP    NOT NULL DEFAULT NOW(),
+            updated_at    TIMESTAMP
+        );";
+    Exception? lastError = null;
+    for (var attempt = 1; attempt <= 8; attempt++)
+    {
+        try { db.Database.ExecuteSqlRaw(ddl); lastError = null; break; }
+        catch (Exception ex)
+        {
+            lastError = ex;
+            Console.WriteLine($"[startup] user_service schema bootstrap attempt {attempt}/8 failed: {ex.Message}");
+            System.Threading.Thread.Sleep(2000);
+        }
+    }
+    if (lastError != null)
+        Console.WriteLine("[startup] user_service schema bootstrap did not complete; continuing startup (real Postgres should already be migrated, mocked Postgres answers queries directly).");
+}
+
 app.UseHttpMetrics();
 app.MapControllers();
 app.MapGet("/actuator/health", () => Results.Ok(new { status = "UP" }));
