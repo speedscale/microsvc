@@ -1,0 +1,111 @@
+# Local Reproduce-demo stack: prebuilt ghcr images + fraud-service (absent from the
+# committed compose). Untracked helper for the eBPF reproduce demo.
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: banking-postgres
+    environment:
+      POSTGRES_DB: banking_app
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports: ["5432:5432"]
+    volumes:
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks: [banking-network]
+
+  redis:
+    image: redis:7-alpine
+    container_name: banking-redis
+    ports: ["6379:6379"]
+    networks: [banking-network]
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: banking-jaeger
+    ports: ["16686:16686", "4318:4318", "4317:4317"]
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - COLLECTOR_OTLP_GRPC_HOST_PORT=:4317
+    networks: [banking-network]
+
+  user-service:
+    image: ghcr.io/speedscale/microsvc/user-service:v1.4.53
+    container_name: banking-user-service
+    depends_on: [postgres]
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=banking_app
+      - DB_USERNAME=user_service_user
+      - DB_PASSWORD=user_service_pass
+      - DB_SCHEMA=user_service
+      - JWT_SECRET=banking-app-super-secret-key-change-this-in-production-256-bit
+      - JWT_EXPIRATION=86400000
+    ports: ["8081:8080"]
+    networks: [banking-network]
+
+  accounts-service:
+    image: ghcr.io/speedscale/microsvc/accounts-service:v1.4.53
+    container_name: banking-accounts-service
+    depends_on: [postgres]
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=banking_app
+      - DB_USERNAME=accounts_service_user
+      - DB_PASSWORD=accounts_service_pass
+      - DB_SCHEMA=accounts_service
+      - JWT_SECRET=banking-app-super-secret-key-change-this-in-production-256-bit
+      - JWT_EXPIRATION=86400000
+    ports: ["8082:8080"]
+    networks: [banking-network]
+
+  fraud-service:
+    image: ghcr.io/speedscale/microsvc/fraud-service:v1.4.53
+    container_name: banking-fraud-service
+    environment:
+      - GRPC_PORT=50051
+      - METRICS_PORT=9091
+    ports: ["50051:50051"]
+    networks: [banking-network]
+
+  transactions-service:
+    image: ghcr.io/speedscale/microsvc/transactions-service:v1.4.53
+    container_name: banking-transactions-service
+    depends_on: [postgres, fraud-service, accounts-service]
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=banking_app
+      - DB_USERNAME=transactions_service_user
+      - DB_PASSWORD=transactions_service_pass
+      - DB_SCHEMA=transactions_service
+      - JWT_SECRET=banking-app-super-secret-key-change-this-in-production-256-bit
+      - JWT_EXPIRATION=86400000
+      - ACCOUNTS_SERVICE_URL=http://accounts-service:8080
+      - FRAUD_SERVICE_HOST=fraud-service
+      - FRAUD_SERVICE_PORT=50051
+    ports: ["8083:8080"]
+    networks: [banking-network]
+
+  api-gateway:
+    image: ghcr.io/speedscale/microsvc/api-gateway:v1.4.53
+    container_name: banking-api-gateway
+    depends_on: [user-service, accounts-service, transactions-service, redis]
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - USER_SERVICE_URL=http://user-service:8080
+      - ACCOUNTS_SERVICE_URL=http://accounts-service:8080
+      - TRANSACTIONS_SERVICE_URL=http://transactions-service:8080
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=banking-app-super-secret-key-change-this-in-production-256-bit
+      - JWT_EXPIRATION=86400000
+    ports: ["18080:8080"]
+    networks: [banking-network]
+
+networks:
+  banking-network:
+    driver: bridge
