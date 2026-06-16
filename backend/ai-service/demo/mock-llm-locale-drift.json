@@ -1,0 +1,14 @@
+{
+  "_comment": "proxymock/mock fixture for the AI locale-drift demo. Serve as the LLM provider response (point OPENAI_URL at the mock). The assistant 'drifted' to Japanese; with an en-US request (cp1252) ai-service 500s on the downstream encode. Swap content to ASCII to show the clean path.",
+  "id": "chatcmpl-demo-locale-drift",
+  "object": "chat.completion",
+  "model": "gpt-4o-mini",
+  "choices": [
+    {
+      "index": 0,
+      "message": { "role": "assistant", "content": "申し訳ありませんが、お客様の残高は $1,234.56 です。ご不明な点がございましたらお知らせください。" },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": { "prompt_tokens": 42, "completion_tokens": 31, "total_tokens": 73 }
+}

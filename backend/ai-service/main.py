@@ -33,10 +33,31 @@ PROVIDERS = [
     {"provider": "openrouter", "name": "OpenRouter Mistral", "model": "mistralai/mistral-small-3.2-24b-instruct"},
 ]
 
+# Provider endpoints — overridable so the service can be pointed at a proxymock/test
+# double instead of the real models (the real ones are non-deterministic and can't be
+# driven to a specific edge case on demand).
+PROVIDER_URLS = {
+    "anthropic": os.environ.get("ANTHROPIC_URL", "https://api.anthropic.com/v1/messages"),
+    "openai": os.environ.get("OPENAI_URL", "https://api.openai.com/v1/chat/completions"),
+    "gemini_base": os.environ.get("GEMINI_URL", "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"),
+    "xai": os.environ.get("XAI_URL", "https://api.x.ai/v1/chat/completions"),
+    "openrouter": os.environ.get("OPENROUTER_URL", "https://openrouter.ai/api/v1/chat/completions"),
+}
+
+# Downstream delivery (notifications, statements, legacy core) consumes the assistant
+# reply in the user's locale-specific legacy encoding — not everything is UTF-8 yet.
+LOCALE_CHARSET = {
+    "en-US": "cp1252", "en-GB": "cp1252",
+    "fr-FR": "cp1252", "de-DE": "cp1252", "es-ES": "cp1252", "es-MX": "cp1252",
+    "ja-JP": "shift_jis", "zh-CN": "gb2312",
+}
+DEFAULT_CHARSET = "cp1252"
+
 
 class ChatRequest(BaseModel):
     message: str
     accountContext: str = ""
+    locale: str = "en-US"
 
 
 class ProviderResult(BaseModel):
@@ -58,7 +79,7 @@ async def call_anthropic(client: httpx.AsyncClient, message: str, context: str) 
     try:
         user_content = f"{context}\n\n{message}" if context else message
         resp = await client.post(
-            "https://api.anthropic.com/v1/messages",
+            PROVIDER_URLS["anthropic"],
             headers={
                 "x-api-key": os.environ.get("AI_API_KEY", ""),
                 "anthropic-version": "2023-06-01",
@@ -84,7 +105,7 @@ async def call_openai(client: httpx.AsyncClient, message: str, context: str) -> 
     start = time.monotonic()
     try:
         resp = await client.post(
-            "https://api.openai.com/v1/chat/completions",
+            PROVIDER_URLS["openai"],
             headers={
                 "Authorization": f"Bearer {os.environ.get('OPENAI_API_KEY', '')}",
                 "Content-Type": "application/json",
@@ -110,7 +131,7 @@ async def call_gemini(client: httpx.AsyncClient, message: str, context: str) -> 
         key = os.environ.get("GEMINI_API_KEY", "")
         user_content = f"{context}\n\n{message}" if context else message
         resp = await client.post(
-            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={key}",
+            f"{PROVIDER_URLS['gemini_base']}?key={key}",
             headers={"Content-Type": "application/json"},
             json={
                 "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
@@ -130,7 +151,7 @@ async def call_xai(client: httpx.AsyncClient, message: str, context: str) -> Pro
     start = time.monotonic()
     try:
         resp = await client.post(
-            "https://api.x.ai/v1/chat/completions",
+            PROVIDER_URLS["xai"],
             headers={
                 "Authorization": f"Bearer {os.environ.get('XAI_API_KEY', '')}",
                 "Content-Type": "application/json",
@@ -154,7 +175,7 @@ async def call_openrouter(client: httpx.AsyncClient, message: str, context: str)
     start = time.monotonic()
     try:
         resp = await client.post(
-            "https://openrouter.ai/api/v1/chat/completions",
+            PROVIDER_URLS["openrouter"],
             headers={
                 "Authorization": f"Bearer {os.environ.get('OPENROUTER_API_KEY', '')}",
                 "Content-Type": "application/json",
@@ -186,19 +207,33 @@ def _elapsed(start: float) -> int:
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
+    # Pass the user's locale through to the model so replies match their language/conventions.
+    context = req.accountContext
+    if req.locale:
+        context = (f"{context}\n" if context else "") + (
+            f"User locale: {req.locale}. Respond in the language and conventions for this locale."
+        )
     async with httpx.AsyncClient(timeout=30.0) as client:
         results = await asyncio.gather(
-            call_anthropic(client, req.message, req.accountContext),
-            call_openai(client, req.message, req.accountContext),
-            call_gemini(client, req.message, req.accountContext),
-            call_xai(client, req.message, req.accountContext),
-            call_openrouter(client, req.message, req.accountContext),
+            call_anthropic(client, req.message, context),
+            call_openai(client, req.message, context),
+            call_gemini(client, req.message, context),
+            call_xai(client, req.message, context),
+            call_openrouter(client, req.message, context),
         )
     for r in results:
         if r.error:
             logger.warning("provider=%s error=%s duration=%dms", r.provider, r.error, r.durationMs)
         else:
             logger.info("provider=%s duration=%dms", r.provider, r.durationMs)
+    # Encode each reply in the user's locale charset for downstream delivery. If the model
+    # replied in a language outside that charset (the "model drifted to another language"
+    # case), this raises UnicodeEncodeError -> 500. Intermittent, per-locale, and invisible
+    # in status/latency metrics until you see the actual reply bytes + the locale.
+    charset = LOCALE_CHARSET.get(req.locale, DEFAULT_CHARSET)
+    for r in results:
+        if r.message:
+            r.message.encode(charset)
     return ChatResponse(results=list(results))
 
 
