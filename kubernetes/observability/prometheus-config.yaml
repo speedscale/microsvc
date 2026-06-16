@@ -58,6 +58,6 @@ data:
 
       - job_name: 'ai-service'
         static_configs:
-          - targets: ['banking-ai.banking-app:80']
+          - targets: ['banking-ai.banking-app:8080']
         metrics_path: '/actuator/prometheus'
         scrape_interval: 30s

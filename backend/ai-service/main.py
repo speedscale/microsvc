@@ -6,7 +6,7 @@ import time
 import httpx
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Histogram, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, Histogram, generate_latest
 from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO)
@@ -29,6 +29,15 @@ _HTTP_REQUESTS = Histogram(
     "http_server_requests_seconds",
     "HTTP server requests (Micrometer-compatible)",
     ["method", "uri", "status", "outcome"],
+    registry=_metrics_registry,
+)
+
+# Outbound calls to the 5 LLM providers — feeds the Errors-dashboard "AI Provider Calls" panel
+# the same way fraud_external_requests_total used to feed the old fraud third-party panel.
+_PROVIDER_REQUESTS = Counter(
+    "ai_provider_requests_total",
+    "Outbound calls to LLM providers from ai-service",
+    ["provider", "status"],
     registry=_metrics_registry,
 )
 
@@ -131,6 +140,7 @@ async def call_anthropic(client: httpx.AsyncClient, message: str, context: str) 
                 "messages": [{"role": "user", "content": user_content}],
             },
         )
+        _PROVIDER_REQUESTS.labels(info["provider"], str(resp.status_code)).inc()
         resp.raise_for_status()
         data = resp.json()
         text = data["content"][0]["text"]
@@ -155,6 +165,7 @@ async def call_openai(client: httpx.AsyncClient, message: str, context: str) -> 
                 "messages": _openai_messages(message, context),
             },
         )
+        _PROVIDER_REQUESTS.labels(info["provider"], str(resp.status_code)).inc()
         resp.raise_for_status()
         data = resp.json()
         text = data["choices"][0]["message"]["content"]
@@ -177,6 +188,7 @@ async def call_gemini(client: httpx.AsyncClient, message: str, context: str) -> 
                 "contents": [{"role": "user", "parts": [{"text": user_content}]}],
             },
         )
+        _PROVIDER_REQUESTS.labels(info["provider"], str(resp.status_code)).inc()
         resp.raise_for_status()
         data = resp.json()
         text = data["candidates"][0]["content"]["parts"][0]["text"]
@@ -201,6 +213,7 @@ async def call_xai(client: httpx.AsyncClient, message: str, context: str) -> Pro
                 "messages": _openai_messages(message, context),
             },
         )
+        _PROVIDER_REQUESTS.labels(info["provider"], str(resp.status_code)).inc()
         resp.raise_for_status()
         data = resp.json()
         text = data["choices"][0]["message"]["content"]
@@ -225,6 +238,7 @@ async def call_openrouter(client: httpx.AsyncClient, message: str, context: str)
                 "messages": _openai_messages(message, context),
             },
         )
+        _PROVIDER_REQUESTS.labels(info["provider"], str(resp.status_code)).inc()
         resp.raise_for_status()
         data = resp.json()
         text = data["choices"][0]["message"]["content"]
