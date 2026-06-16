@@ -44,12 +44,15 @@ PROVIDER_URLS = {
     "openrouter": os.environ.get("OPENROUTER_URL", "https://openrouter.ai/api/v1/chat/completions"),
 }
 
-# Downstream delivery (notifications, statements, legacy core) consumes the assistant
-# reply in the user's locale-specific legacy encoding — not everything is UTF-8 yet.
+# Downstream delivery (notifications, statements, legacy core) consumes the assistant reply in
+# the user's locale-specific encoding. Asian locales were forced to UTF-8 long ago (shift_jis /
+# gb2312 are too narrow for the language) so emoji and rare characters survive. Western locales
+# are still on legacy cp1252 for downstream compatibility — a model reply with an emoji blows it
+# up. Same response payload, the outcome diverges purely by the request's locale.
 LOCALE_CHARSET = {
     "en-US": "cp1252", "en-GB": "cp1252",
     "fr-FR": "cp1252", "de-DE": "cp1252", "es-ES": "cp1252", "es-MX": "cp1252",
-    "ja-JP": "shift_jis", "zh-CN": "gb2312",
+    "ja-JP": "utf-8", "zh-CN": "utf-8", "ko-KR": "utf-8",
 }
 DEFAULT_CHARSET = "cp1252"
 
