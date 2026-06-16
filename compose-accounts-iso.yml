@@ -1,0 +1,33 @@
+# Single-service isolation demo: accounts-service + its own throwaway postgres only.
+# No gateway/user/transactions/fraud, no jaeger, no host-port clash. External SaaS
+# (Plaid/Moody's/exchange) intentionally absent — accounts degrades gracefully.
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: acct-iso-postgres
+    environment:
+      POSTGRES_DB: banking_app
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks: [acct-iso]
+  accounts-service:
+    image: ghcr.io/speedscale/microsvc/accounts-service:v1.4.53
+    container_name: acct-iso-accounts
+    depends_on: [postgres]
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: banking_app
+      DB_USERNAME: accounts_service_user
+      DB_PASSWORD: accounts_service_pass
+      DB_SCHEMA: accounts_service
+      JWT_SECRET: banking-app-super-secret-key-change-this-in-production-256-bit
+      JWT_EXPIRATION: "86400000"
+      OTEL_SDK_DISABLED: "true"
+    ports: ["8082:8080"]
+    networks: [acct-iso]
+networks:
+  acct-iso: {driver: bridge}
