@@ -255,8 +255,18 @@ class ApiClient {
   }
 
   async askAIChat(message, token) {
+    // Mixed locales across sessions: most users are en-US (some get smart "—"/curly
+    // quotes from the model = ok under cp1252), a real but minority slice are
+    // ja-JP/es-MX etc. Drives an intermittent, per-locale error pattern on the AI
+    // chat endpoint — the demo's investigation hook.
+    const LOCALES = [
+      'en-US','en-US','en-US','en-US','en-US','en-US','en-US',  // ~70%
+      'es-MX','es-MX',                                          // ~20%
+      'ja-JP',                                                  // ~10%
+    ];
+    const locale = LOCALES[Math.floor(Math.random() * LOCALES.length)];
     return this.retryRequest(async () => {
-      const response = await this.client.post('/api/ai/chat', { message }, {
+      const response = await this.client.post('/api/ai/chat', { message, locale }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       return response.data;
