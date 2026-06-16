@@ -4,8 +4,9 @@ import os
 import time
 
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Histogram, generate_latest
 from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO)
@@ -18,6 +19,37 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Match the Spring Boot Micrometer metric name + label set the banking-app dashboards use,
+# so /api/chat shows up in the cross-service "Errors by Endpoint" / "Status Codes by Service"
+# panels alongside the Java services. Histogram (not Counter) so the exposed series is named
+# http_server_requests_seconds_count — without prometheus_client's automatic `_total` suffix.
+_metrics_registry = CollectorRegistry()
+_HTTP_REQUESTS = Histogram(
+    "http_server_requests_seconds",
+    "HTTP server requests (Micrometer-compatible)",
+    ["method", "uri", "status", "outcome"],
+    registry=_metrics_registry,
+)
+
+
+@app.middleware("http")
+async def _record_http_metrics(request: Request, call_next):
+    if request.url.path in ("/metrics", "/actuator/prometheus", "/health"):
+        return await call_next(request)
+    start = time.monotonic()
+    response = await call_next(request)
+    elapsed = time.monotonic() - start
+    status = str(response.status_code)
+    outcome = "SUCCESS" if response.status_code < 400 else "CLIENT_ERROR" if response.status_code < 500 else "SERVER_ERROR"
+    _HTTP_REQUESTS.labels(request.method, request.url.path, status, outcome).observe(elapsed)
+    return response
+
+
+@app.get("/actuator/prometheus")
+@app.get("/metrics")
+def _metrics_endpoint() -> Response:
+    return Response(generate_latest(_metrics_registry), media_type=CONTENT_TYPE_LATEST)
 
 SYSTEM_PROMPT = (
     "You are a helpful banking assistant for Apex Banking. "
