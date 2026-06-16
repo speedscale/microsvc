@@ -38,12 +38,16 @@ async def _record_http_metrics(request: Request, call_next):
     if request.url.path in ("/metrics", "/actuator/prometheus", "/health"):
         return await call_next(request)
     start = time.monotonic()
-    response = await call_next(request)
-    elapsed = time.monotonic() - start
-    status = str(response.status_code)
-    outcome = "SUCCESS" if response.status_code < 400 else "CLIENT_ERROR" if response.status_code < 500 else "SERVER_ERROR"
-    _HTTP_REQUESTS.labels(request.method, request.url.path, status, outcome).observe(elapsed)
-    return response
+    status_code = 500  # if call_next raises, FastAPI's default handler turns it into a 500 downstream
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+        return response
+    finally:
+        elapsed = time.monotonic() - start
+        status = str(status_code)
+        outcome = "SUCCESS" if status_code < 400 else "CLIENT_ERROR" if status_code < 500 else "SERVER_ERROR"
+        _HTTP_REQUESTS.labels(request.method, request.url.path, status, outcome).observe(elapsed)
 
 
 @app.get("/actuator/prometheus")
