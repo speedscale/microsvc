@@ -574,19 +574,18 @@ class UserWorkflow {
 
     const account = user.accounts && user.accounts.length > 0 ? user.accounts[0] : null;
 
-    // Weighted scenario selection — pick from a bag with repeats.
+    // Weighted scenario selection — pick from a bag with repeats. Weighted toward the
+    // accounts-service errors the isolation demo investigates. The transaction-error scenarios
+    // (overdraw -> $100M 400, invalidAmount) are DEFERRED with the transactions/fraud reproduce
+    // (needs eBPF gRPC dissection), so they're left OUT of the default bag — /api/transactions/create
+    // stays quiet and the errors board centers on accounts. Re-add 'overdraw' to bring the $100M back
+    // when transactions is the hero again.
     const bag = [
-      'badLogin',                                   // 401
-      'expiredToken',                               // 401
-      'missingAccount', 'missingAccount',            // 404
-      'serviceUnavailable',                         // 503
+      'missingAccount', 'missingAccount', 'missingAccount',  // 404 /api/accounts/{id}/balance (focus)
+      'serviceUnavailable',                                  // 503 /api/accounts/{id}/export-statement
+      'badLogin',                                            // 401 (light realism)
+      'expiredToken',                                        // 401 (light realism)
     ];
-    if (account) {
-      bag.push(
-        'overdraw', 'overdraw',                     // 400
-        'invalidAmount',                            // 400
-      );
-    }
     const scenario = bag[Math.floor(Math.random() * bag.length)];
 
     try {
