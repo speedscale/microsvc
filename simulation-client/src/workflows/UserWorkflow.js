@@ -574,14 +574,13 @@ class UserWorkflow {
 
     const account = user.accounts && user.accounts.length > 0 ? user.accounts[0] : null;
 
-    // Weighted scenario selection — pick from a bag with repeats. Weighted toward the
-    // accounts-service errors the isolation demo investigates. The transaction-error scenarios
-    // (overdraw -> $100M 400, invalidAmount) are DEFERRED with the transactions/fraud reproduce
-    // (needs eBPF gRPC dissection), so they're left OUT of the default bag — /api/transactions/create
-    // stays quiet and the errors board centers on accounts. Re-add 'overdraw' to bring the $100M back
-    // when transactions is the hero again.
+    // Weighted scenario selection — pick from a bag with repeats. Light background noise only;
+    // the hero error for the demo is the AI locale/encoding 5xx, which arises from normal /api/chat
+    // traffic when a provider reply drifts to a language outside the user's locale charset (not a
+    // bag scenario). Keep these minor so none dominates the errors board. Transaction-error
+    // scenarios (overdraw -> $100M 400) remain deferred with the transactions/fraud reproduce.
     const bag = [
-      'missingAccount', 'missingAccount', 'missingAccount',  // 404 /api/accounts/{id}/balance (focus)
+      'missingAccount',                                      // 404 /api/accounts/{id}/balance (a few, not dominant)
       'serviceUnavailable',                                  // 503 /api/accounts/{id}/export-statement
       'badLogin',                                            // 401 (light realism)
       'expiredToken',                                        // 401 (light realism)
