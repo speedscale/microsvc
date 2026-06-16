@@ -1,0 +1,34 @@
+# Prebuilt-image override for docker-compose.yml. Swaps build-from-source for the
+# published ghcr images so the demo (and single-service isolation reproduces) run
+# with no local build and no full stack. Layer it on the base and bring up only the
+# services you need:
+#
+#   full prebuilt stack:    docker compose -f docker-compose.yml -f docker-compose.prebuilt.yml up
+#   accounts isolation:     docker compose -f docker-compose.yml -f docker-compose.prebuilt.yml up postgres accounts-service
+#   transactions reproduce: docker compose -f docker-compose.yml -f docker-compose.prebuilt.yml up postgres fraud-service transactions-service
+#
+# Image tag is overridable: MICROSVC_TAG=v1.4.62 docker compose ... up
+# OTEL is disabled (no jaeger needed in a subset); postgres' host port publish is
+# dropped so it never clashes with a host-local postgres.
+services:
+  postgres:
+    ports: !reset []
+  user-service:
+    build: !reset null
+    image: ghcr.io/speedscale/microsvc/user-service:${MICROSVC_TAG:-v1.4.53}
+    environment: { OTEL_SDK_DISABLED: "true" }
+  accounts-service:
+    build: !reset null
+    image: ghcr.io/speedscale/microsvc/accounts-service:${MICROSVC_TAG:-v1.4.53}
+    environment: { OTEL_SDK_DISABLED: "true" }
+  transactions-service:
+    build: !reset null
+    image: ghcr.io/speedscale/microsvc/transactions-service:${MICROSVC_TAG:-v1.4.53}
+    environment: { OTEL_SDK_DISABLED: "true" }
+  fraud-service:
+    build: !reset null
+    image: ghcr.io/speedscale/microsvc/fraud-service:${MICROSVC_TAG:-v1.4.53}
+  api-gateway:
+    build: !reset null
+    image: ghcr.io/speedscale/microsvc/api-gateway:${MICROSVC_TAG:-v1.4.53}
+    environment: { OTEL_SDK_DISABLED: "true" }
