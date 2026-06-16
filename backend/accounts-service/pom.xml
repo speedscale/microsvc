@@ -14,7 +14,7 @@
 
     <groupId>com.banking</groupId>
     <artifactId>accounts-service</artifactId>
-    <version>1.4.68</version>
+    <version>1.4.69</version>
     <packaging>jar</packaging>
 
     <name>accounts-service</name>
