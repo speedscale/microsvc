@@ -574,11 +574,9 @@ class UserWorkflow {
 
     const account = user.accounts && user.accounts.length > 0 ? user.accounts[0] : null;
 
-    // Weighted scenario selection — pick from a bag with repeats. Light background noise only;
-    // the hero error for the demo is the AI locale/encoding 5xx, which arises from normal /api/chat
-    // traffic when a provider reply drifts to a language outside the user's locale charset (not a
-    // bag scenario). Keep these minor so none dominates the errors board. Transaction-error
-    // scenarios (overdraw -> $100M 400) remain deferred with the transactions/fraud reproduce.
+    // Weighted scenario selection — pick from a bag with repeats. Light background
+    // noise only; the bigger errors are driven by normal /api/chat traffic, not by
+    // this bag. Keep entries here minor so none dominates the errors board.
     const bag = [
       'missingAccount',                                      // 404 /api/accounts/{id}/balance (a few, not dominant)
       'serviceUnavailable',                                  // 503 /api/accounts/{id}/export-statement

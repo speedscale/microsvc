@@ -37,7 +37,7 @@ kubectl apply -k kubernetes/overlays/local/
 | `user-service` | Java (Spring Boot) | Authentication, profile management |
 | `accounts-service` | Java (Spring Boot) | Account + balance management, Plaid integration |
 | `transactions-service` | Java (Spring Boot) | Transaction processing, Stripe / PayPal / ComplyAdvantage integrations |
-| `ai-service` | Python (FastAPI) | Chat endpoint that fans out to 5 LLM providers (Anthropic, OpenAI, Gemini, xAI, OpenRouter) and encodes the reply in the user's locale charset |
+| `ai-service` | Python (FastAPI) | Chat endpoint that fans out to 5 LLM providers (Anthropic, OpenAI, Gemini, xAI, OpenRouter) and aggregates the replies |
 | `fraud-service` | Go (gRPC h2c on :50051) | Fraud risk scoring with Sift / MaxMind / Stripe Radar |
 | `notification-service` | Go | Slack / SendGrid / Twilio fan-out for transaction events from Kafka |
 | `mongo-service` | Java | Mongo-backed user-data store |
