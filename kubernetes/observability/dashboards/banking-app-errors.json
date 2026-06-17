@@ -135,7 +135,7 @@
           "custom": {"drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "pointSize": 5, "showPoints": "auto"},
           "unit": "percent",
           "min": 0,
-          "links": [{"title": "View error logs in Loki", "url": "/explore?schemaVersion=1&panes={%22l%22:{%22datasource%22:%22loki%22,%22queries%22:[{%22refId%22:%22A%22,%22expr%22:%22{namespace%3D%5C%22banking-app%5C%22}%20%7C~%20%5C%22(%3Fi)(error|exception|fail|5..%20)%5C%22%22,%22queryType%22:%22range%22}],%22range%22:{%22from%22:%22now-30m%22,%22to%22:%22now%22}}}", "targetBlank": true}]
+          "links": [{"title": "View traces in Jaeger", "url": "/explore?schemaVersion=1&panes={%22j%22:{%22datasource%22:%22jaeger%22,%22queries%22:[{%22refId%22:%22A%22,%22queryType%22:%22search%22,%22service%22:%22${__series.name}%22,%22tags%22:%22%22}],%22range%22:{%22from%22:%22now-30m%22,%22to%22:%22now%22}}}", "targetBlank": true}]
         }
       },
       "options": {"tooltip": {"mode": "multi"}}
@@ -193,7 +193,7 @@
             {"id": "color", "value": {"mode": "continuous-reds"}}
           ]},
           {"matcher": {"id": "byName", "options": "Service"}, "properties": [
-            {"id": "links", "value": [{"title": "View error logs in Loki", "url": "/explore?schemaVersion=1&panes={%22l%22:{%22datasource%22:%22loki%22,%22queries%22:[{%22refId%22:%22A%22,%22expr%22:%22{namespace%3D%5C%22banking-app%5C%22}%20%7C~%20%5C%22(%3Fi)(error|exception|fail|5..%20)%5C%22%22,%22queryType%22:%22range%22}],%22range%22:{%22from%22:%22now-30m%22,%22to%22:%22now%22}}}", "targetBlank": true}]}
+            {"id": "links", "value": [{"title": "View traces in Jaeger", "url": "/explore?schemaVersion=1&panes={%22j%22:{%22datasource%22:%22jaeger%22,%22queries%22:[{%22refId%22:%22A%22,%22queryType%22:%22search%22,%22service%22:%22${__value.text}%22,%22tags%22:%22%22}],%22range%22:{%22from%22:%22now-30m%22,%22to%22:%22now%22}}}", "targetBlank": true}]}
           ]},
           {"matcher": {"id": "byName", "options": "Status"}, "properties": [{"id": "custom.width", "value": 90}]},
           {"matcher": {"id": "byName", "options": "Method"}, "properties": [{"id": "custom.width", "value": 90}]}
