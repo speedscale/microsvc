@@ -16,6 +16,8 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, Histogram, generate_latest
 from pydantic import BaseModel
 
+from delivery import prepare_for_delivery
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -105,17 +107,6 @@ PROVIDER_URLS = {
     "xai": os.environ.get("XAI_URL", "https://api.x.ai/v1/chat/completions"),
     "openrouter": os.environ.get("OPENROUTER_URL", "https://openrouter.ai/api/v1/chat/completions"),
 }
-
-# Locale-preferred charset for downstream notification / statement pipelines.
-# Asian locales standardized on UTF-8; some Western markets remain on cp1252
-# to stay compatible with older statement renderers.
-LOCALE_CHARSET = {
-    "en-US": "cp1252", "en-GB": "cp1252",
-    "fr-FR": "cp1252", "de-DE": "cp1252", "es-ES": "cp1252", "es-MX": "cp1252",
-    "ja-JP": "utf-8", "zh-CN": "utf-8", "ko-KR": "utf-8",
-}
-DEFAULT_CHARSET = "cp1252"
-
 
 class ChatRequest(BaseModel):
     message: str
@@ -294,12 +285,9 @@ async def chat(req: ChatRequest):
             logger.warning("provider=%s error=%s duration=%dms", r.provider, r.error, r.durationMs)
         else:
             logger.info("provider=%s duration=%dms", r.provider, r.durationMs)
-    # Pre-encode replies in the user's locale charset so downstream consumers
-    # don't have to re-encode per-message.
-    charset = LOCALE_CHARSET.get(req.locale, DEFAULT_CHARSET)
     for r in results:
         if r.message:
-            r.message.encode(charset)
+            prepare_for_delivery(r.message, req.locale)
     return ChatResponse(results=list(results))
 
 

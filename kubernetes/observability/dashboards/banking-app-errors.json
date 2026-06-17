@@ -285,6 +285,40 @@
         "sortOrder": "Descending",
         "dedupStrategy": "none"
       }
+    },
+    {
+      "type": "table",
+      "title": "Trace Inspector — ${service}",
+      "description": "Recent traces for the selected service, longest first (errors usually run longer). Click a Trace ID to open the full span tree in Jaeger — the bad ones surface the exception event + stack trace right on the failing span.",
+      "gridPos": {"h": 12, "w": 24, "x": 0, "y": 39},
+      "datasource": {"type": "jaeger", "uid": "jaeger"},
+      "targets": [
+        {"refId": "A", "datasource": {"type": "jaeger", "uid": "jaeger"}, "queryType": "search", "service": "${service}", "operation": "", "tags": "", "minDuration": "", "maxDuration": "", "limit": 20}
+      ],
+      "options": {"showHeader": true, "cellHeight": "sm"},
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"align": "auto", "filterable": true}
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Duration"},
+            "properties": [
+              {"id": "unit", "value": "ms"},
+              {"id": "custom.cellOptions", "value": {"type": "color-background", "mode": "gradient"}},
+              {"id": "color", "value": {"mode": "continuous-YlOrRd"}}
+            ]
+          },
+          {
+            "matcher": {"id": "byName", "options": "Trace ID"},
+            "properties": [
+              {"id": "links", "value": [
+                {"title": "Open trace + see exception stack trace (if any)", "url": "/explore?schemaVersion=1&panes={%22j%22:{%22datasource%22:%22jaeger%22,%22queries%22:[{%22refId%22:%22A%22,%22queryType%22:%22trace%22,%22query%22:%22${__value.text}%22}],%22range%22:{%22from%22:%22now-1h%22,%22to%22:%22now%22}}}", "targetBlank": true}
+              ]}
+            ]
+          }
+        ]
+      }
     }
   ]
 }
