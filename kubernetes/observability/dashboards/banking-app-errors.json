@@ -228,12 +228,12 @@
     },
     {
       "type": "table",
-      "title": "Recent Traces",
-      "description": "Click a trace ID to view spans in Jaeger",
+      "title": "Recent Traces — ${service}",
+      "description": "Recent traces for the selected service. Picks the first $service when multi-select is in use (Jaeger search takes one service per query).",
       "gridPos": {"h": 10, "w": 12, "x": 0, "y": 29},
       "datasource": {"type": "jaeger", "uid": "jaeger"},
       "targets": [
-        {"refId": "A", "datasource": {"type": "jaeger", "uid": "jaeger"}, "queryType": "search", "service": "api-gateway", "operation": "", "tags": "", "minDuration": "", "maxDuration": "", "limit": 20}
+        {"refId": "A", "datasource": {"type": "jaeger", "uid": "jaeger"}, "queryType": "search", "service": "${service}", "operation": "", "tags": "", "minDuration": "", "maxDuration": "", "limit": 20}
       ],
       "options": {"showHeader": true, "cellHeight": "sm"},
       "fieldConfig": {
