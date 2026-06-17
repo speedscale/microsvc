@@ -180,3 +180,26 @@ data:
   # Next.js configuration
   NODE_ENV: "production"
   NEXT_TELEMETRY_DISABLED: "1"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: banking-ai-config
+  namespace: banking-app
+  labels:
+    app.kubernetes.io/name: banking-app
+    app.kubernetes.io/component: config
+    app.kubernetes.io/service: ai-service
+data:
+  # Python OTel uses http/protobuf to the otel-collector (same shape the
+  # frontend uses) — the SDK appends /v1/traces itself when given the base URL,
+  # but the exporter we pass in main.py is explicit.
+  OTEL_SERVICE_NAME: "ai-service"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability:4318"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+  OTEL_TRACES_EXPORTER: "otlp"
+  OTEL_METRICS_EXPORTER: "none"
+  OTEL_LOGS_EXPORTER: "none"
+  OTEL_TRACES_SAMPLER: "always_on"
+  OTEL_PROPAGATORS: "tracecontext"
+  OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app"
