@@ -4,7 +4,19 @@ metadata:
   name: replay-banking-notification
   namespace: banking-app
 spec:
-  snapshotID: ae1d6748-ae79-4334-9fcc-0d634de79e75
+  # Repointed 2026-06-17 from snapshot ae1d6748 → 13301da0 after a diagnostic
+  # pull (proxymock pull_remote_recording service=banking-notification) showed
+  # the in-repo snapshot's Twilio Account SID + Slack webhook token didn't
+  # match what the live notification service is sending. Responder matches on
+  # host+method+path byte-for-byte → was 16 NO_MATCH passthroughs/min on
+  # Twilio + Slack (Sendgrid /v3/mail/send is constant and matched both ways).
+  #
+  # 13301da0 is a fresh pull of the live traffic: 164 outbound RRPairs
+  # covering all 3 hosts with the current signatures. To redo if the env
+  # changes scrubber output again:
+  #   speedctl pull snapshot --clone <existing>  (or pull_remote_recording)
+  #   update snapshotID below + commit
+  snapshotID: 13301da0-f2ec-43db-a06e-79f44ef09797
   testConfigID: banking-mock-noproxy
   mode: responder-only
   workloadRef:
