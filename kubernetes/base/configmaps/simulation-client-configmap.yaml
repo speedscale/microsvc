@@ -35,12 +35,12 @@ data:
   BURST_DURATION_MS: "30000"      # each burst lasts ~30s
   BURST_JITTER_MS: "60000"        # ±60s randomness on interval
 
-  # Error injection — keep the errors board continuously populated for the demo.
-  # Default is a 5% baseline with 2-min spikes at :10/:40, which leaves /create at
-  # ~0% between spikes (you can't reliably point at the 4xx spike on camera). 0.6
-  # runs an unhappy path on most sessions, reproducing the ~25% /create error board
-  # the demo investigates — continuously, not just for 2 minutes twice an hour.
-  ERROR_INJECTION_PROBABILITY: "0.6"
+  # Error injection — light realistic background only. The AI /api/chat 5xx is the
+  # hero on the errors board now; the previous 0.6 (legacy /create-error demo) put
+  # a 5–7% baseline on every panel and buried the hero. 0.05 = a few realistic 4xx
+  # (bad login / missing account) per minute, enough to populate the board, low
+  # enough that AI errors stand out when present.
+  ERROR_INJECTION_PROBABILITY: "0.05"
 
   # User pool configuration
   USER_PREFIX: "sim_user_"
