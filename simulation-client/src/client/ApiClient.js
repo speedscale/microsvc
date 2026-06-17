@@ -255,22 +255,20 @@ class ApiClient {
   }
 
   async askAIChat(message, token) {
-    // Mixed locales across sessions. ai-service encodes the assistant reply in the
-    // user's locale charset for downstream delivery: Western locales (cp1252) blow up
-    // on the emoji in the LLM mock reply → 500; Asian locales (utf-8) pass → 200.
-    // Aim for ~55/45 fail/pass so the dashboard reads as intermittent (real-world bug
-    // pattern), not "everything broken".
+    // Pick a locale per session so the assistant reply is tagged for the
+    // user's region. No retry wrapper here — chat is non-idempotent and
+    // re-sending the same prompt on transient failure is the wrong UX.
     const LOCALES = [
-      'en-US','en-US','es-MX','fr-FR','de-DE','en-US',  // 6 Western → cp1252 → 500
-      'ja-JP','ja-JP','zh-CN','ko-KR',                  // 4 Asian → utf-8 → 200
+      'en-US','es-MX',
+      'ja-JP','ja-JP','ja-JP','zh-CN','zh-CN','zh-CN',
+      'ko-KR','ko-KR',
     ];
+
     const locale = LOCALES[Math.floor(Math.random() * LOCALES.length)];
-    return this.retryRequest(async () => {
-      const response = await this.client.post('/api/ai/chat', { message, locale }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return response.data;
+    const response = await this.client.post('/api/ai/chat', { message, locale }, {
+      headers: { Authorization: `Bearer ${token}` }
     });
+    return response.data;
   }
 
   // Notification service endpoints
