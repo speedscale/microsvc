@@ -14,6 +14,8 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, Histogram, generate_latest
+from prometheus_client.process_collector import ProcessCollector
+from prometheus_client.platform_collector import PlatformCollector
 from pydantic import BaseModel
 
 from delivery import prepare_for_delivery
@@ -46,6 +48,12 @@ app.add_middleware(
 # panels alongside the Java services. Histogram (not Counter) so the exposed series is named
 # http_server_requests_seconds_count — without prometheus_client's automatic `_total` suffix.
 _metrics_registry = CollectorRegistry()
+# Standard process / runtime metrics so dashboards that show CPU + memory across
+# every service (not just JVM ones) have data for ai-service. Emits
+# process_cpu_seconds_total, process_resident_memory_bytes, process_open_fds,
+# python_info, etc.
+ProcessCollector(registry=_metrics_registry)
+PlatformCollector(registry=_metrics_registry)
 _HTTP_REQUESTS = Histogram(
     "http_server_requests_seconds",
     "HTTP server requests (Micrometer-compatible)",
