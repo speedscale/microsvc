@@ -5,7 +5,7 @@ metadata:
   namespace: banking-app
 spec:
   snapshotID: c3898583-282b-4b82-9bdb-72b7dd45d15c
-  testConfigID: banking-mock-noproxy
+  testConfigID: banking-mock-fail-closed
   mode: responder-only
   workloadRef:
     kind: Deployment
