@@ -1,0 +1,27 @@
+{
+    "id": "banking-mock-fail-closed",
+    "generator": {
+        "stages": [
+            {
+                "virtualUsers": {
+                    "virtualUsers": "1",
+                    "requestDelay": {}
+                }
+            }
+        ]
+    },
+    "rules": [],
+    "version": 3,
+    "assertionGroups": [],
+    "responder": {
+        "numReplicas": 1,
+        "passthrough_mode": false
+    },
+    "cluster": {
+        "replayMode": "responder-only",
+        "logsCollected": false,
+        "sidecar_tls_out": true,
+        "cleanup": "inventory",
+        "logLevel": "info"
+    }
+}
