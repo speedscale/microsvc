@@ -207,7 +207,7 @@ make proxymock-stop    # Stop all proxymock processes
 | user-service | postgres, accounts-service, transactions-service | Auth and user management testing |
 | accounts-service | postgres, user-service, Plaid | Account operations testing |
 | transactions-service | postgres, accounts-service, fraud-service, Stripe / PayPal / ComplyAdvantage | Transaction processing testing |
-| ai-service | 5 LLM provider APIs | Locale / encoding bug reproduction |
+| ai-service | 5 LLM provider APIs | Chat-flow testing with deterministic LLM replies |
 | fraud-service | Sift / MaxMind / Stripe Radar | Risk-scoring testing |
 | notification-service | Kafka, Slack / SendGrid / Twilio | Notification fan-out testing |
 | api-gateway | All backend services | API routing and gateway testing |

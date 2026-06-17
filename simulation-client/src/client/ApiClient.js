@@ -255,20 +255,14 @@ class ApiClient {
   }
 
   async askAIChat(message, token) {
-    // Mixed locales across sessions. ai-service encodes the assistant reply in
-    // the user's locale charset: Western locales (cp1252) blow up on the emoji
-    // in the LLM mock reply → 500; Asian locales (utf-8) pass → 200. Aim for
-    // ~15% failures so the dashboard reads as intermittent (real-world bug
-    // pattern) and Jaeger drill-down shows BOTH error traces and clean ones.
-    //
-    // No retry wrapper here: retries multiply 5xx counts (one bad locale →
-    // 4 errors with maxRetries=3) and skew the observed rate way above the
-    // sampled locale distribution.
+    // Pick a locale per session so the assistant reply is tagged for the
+    // user's region. No retry wrapper — chat is non-idempotent and
+    // re-sending the same prompt on transient failure is the wrong UX.
     const LOCALES = [
-      'en-US','es-MX',                                  // 2 Western → cp1252 → 500
-      'ja-JP','ja-JP','ja-JP','zh-CN','zh-CN','zh-CN',  // 8 Asian → utf-8 → 200
+      'en-US','es-MX',
+      'ja-JP','ja-JP','ja-JP','zh-CN','zh-CN','zh-CN',
       'ko-KR','ko-KR',
-    ];                                                  // 2/10 → ~20% failure rate
+    ];
 
     const locale = LOCALES[Math.floor(Math.random() * LOCALES.length)];
     const response = await this.client.post('/api/ai/chat', { message, locale }, {
