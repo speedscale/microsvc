@@ -15,8 +15,8 @@
         "label": "Service",
         "type": "query",
         "datasource": {"type": "prometheus", "uid": "prometheus"},
-        "definition": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|.*-service\"}, job)",
-        "query": {"qryType": 1, "query": "label_values(http_server_requests_seconds_count{job=~\"api-gateway|.*-service\"}, job)", "refId": "PrometheusVariableQueryEditor-VariableQuery"},
+        "definition": "label_values(http_server_requests_seconds_count{job=~\".*-service\"}, job)",
+        "query": {"qryType": 1, "query": "label_values(http_server_requests_seconds_count{job=~\".*-service\"}, job)", "refId": "PrometheusVariableQueryEditor-VariableQuery"},
         "includeAll": true,
         "multi": true,
         "allValue": null,
@@ -128,14 +128,14 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
-        {"expr": "sum by (job) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[1m])) / sum by (job) (rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[1m])) * 100", "legendFormat": "{{job}}", "refId": "A"}
+        {"expr": "sum by (job) (rate(http_server_requests_seconds_count{job=~\"$service\", status=~\"[45]..\", uri!~\"/actuator.*\"}[5m])) / sum by (job) (rate(http_server_requests_seconds_count{job=~\"$service\", uri!~\"/actuator.*\"}[5m])) * 100", "legendFormat": "{{job}}", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
           "custom": {"drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "pointSize": 5, "showPoints": "auto"},
           "unit": "percent",
           "min": 0,
-          "links": [{"title": "View traces in Jaeger", "url": "/explore?schemaVersion=1&panes={%22j%22:{%22datasource%22:%22jaeger%22,%22queries%22:[{%22refId%22:%22A%22,%22queryType%22:%22search%22,%22service%22:%22${__series.name}%22,%22tags%22:%22error%3Dtrue%22}],%22range%22:{%22from%22:%22${__url_time_range}%22,%22to%22:%22${__url_time_range}%22}}}", "targetBlank": true}]
+          "links": [{"title": "View error logs in Loki", "url": "/explore?schemaVersion=1&panes={%22l%22:{%22datasource%22:%22loki%22,%22queries%22:[{%22refId%22:%22A%22,%22expr%22:%22{namespace%3D%5C%22banking-app%5C%22}%20%7C~%20%5C%22(%3Fi)(error|exception|fail|5..%20)%5C%22%22,%22queryType%22:%22range%22}],%22range%22:{%22from%22:%22now-30m%22,%22to%22:%22now%22}}}", "targetBlank": true}]
         }
       },
       "options": {"tooltip": {"mode": "multi"}}
@@ -193,7 +193,7 @@
             {"id": "color", "value": {"mode": "continuous-reds"}}
           ]},
           {"matcher": {"id": "byName", "options": "Service"}, "properties": [
-            {"id": "links", "value": [{"title": "View traces in Jaeger", "url": "/explore?schemaVersion=1&panes={%22j%22:{%22datasource%22:%22jaeger%22,%22queries%22:[{%22refId%22:%22A%22,%22queryType%22:%22search%22,%22service%22:%22${__value.text}%22,%22tags%22:%22error%3Dtrue%22}],%22range%22:{%22from%22:%22now-30m%22,%22to%22:%22now%22}}}", "targetBlank": true}]}
+            {"id": "links", "value": [{"title": "View error logs in Loki", "url": "/explore?schemaVersion=1&panes={%22l%22:{%22datasource%22:%22loki%22,%22queries%22:[{%22refId%22:%22A%22,%22expr%22:%22{namespace%3D%5C%22banking-app%5C%22}%20%7C~%20%5C%22(%3Fi)(error|exception|fail|5..%20)%5C%22%22,%22queryType%22:%22range%22}],%22range%22:{%22from%22:%22now-30m%22,%22to%22:%22now%22}}}", "targetBlank": true}]}
           ]},
           {"matcher": {"id": "byName", "options": "Status"}, "properties": [{"id": "custom.width", "value": 90}]},
           {"matcher": {"id": "byName", "options": "Method"}, "properties": [{"id": "custom.width", "value": 90}]}
@@ -203,12 +203,12 @@
     },
     {
       "type": "timeseries",
-      "title": "Third-party API Health (fraud-service)",
-      "description": "Outbound call rate from fraud-service to Stripe, Sift, and MaxMind, broken out by response status. Healthy traffic shows as 2xx/201 series; any non-2xx series indicates provider issues or bad credentials.",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 21},
+      "title": "AI Provider Calls (ai-service → LLMs)",
+      "description": "Outbound call rate from ai-service to the 5 LLM providers, broken out by response status. Healthy = 200 series; any non-2xx indicates provider issues, bad credentials, or rate limits.",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 21},
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
-        {"expr": "sum by (provider, status) (rate(fraud_external_requests_total[1m]))", "legendFormat": "{{provider}} {{status}}", "refId": "A"}
+        {"expr": "sum by (provider, status) (rate(ai_provider_requests_total[5m]))", "legendFormat": "{{provider}} {{status}}", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
@@ -217,35 +217,14 @@
           "decimals": 2
         },
         "overrides": [
-          {"matcher": {"id": "byRegexp", "options": "stripe"}, "properties": [{"id": "color", "value": {"fixedColor": "purple", "mode": "fixed"}}]},
-          {"matcher": {"id": "byRegexp", "options": "sift"}, "properties": [{"id": "color", "value": {"fixedColor": "orange", "mode": "fixed"}}]},
-          {"matcher": {"id": "byRegexp", "options": "maxmind"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]}
+          {"matcher": {"id": "byRegexp", "options": "anthropic"}, "properties": [{"id": "color", "value": {"fixedColor": "orange", "mode": "fixed"}}]},
+          {"matcher": {"id": "byRegexp", "options": "openai"}, "properties": [{"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}]},
+          {"matcher": {"id": "byRegexp", "options": "gemini"}, "properties": [{"id": "color", "value": {"fixedColor": "blue", "mode": "fixed"}}]},
+          {"matcher": {"id": "byRegexp", "options": "xai"}, "properties": [{"id": "color", "value": {"fixedColor": "dark-purple", "mode": "fixed"}}]},
+          {"matcher": {"id": "byRegexp", "options": "openrouter"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]}
         ]
       },
       "options": {"tooltip": {"mode": "multi"}}
-    },
-    {
-      "type": "stat",
-      "title": "Fraud Check Rejections",
-      "description": "Transactions rejected by fraud-service, by reason",
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 21},
-      "datasource": {"type": "prometheus", "uid": "prometheus"},
-      "targets": [
-        {"expr": "sum by (reason) (increase(fraud_checks_total{approved=\"false\"}[$__range]))", "legendFormat": "{{reason}}", "refId": "A"}
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "decimals": 0,
-          "thresholds": {"mode": "absolute", "steps": [
-            {"color": "green", "value": null},
-            {"color": "yellow", "value": 10},
-            {"color": "red", "value": 50}
-          ]},
-          "color": {"mode": "thresholds"}
-        }
-      },
-      "options": {"graphMode": "area", "textMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
     },
     {
       "type": "table",
