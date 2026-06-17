@@ -298,10 +298,17 @@ async def chat(req: ChatRequest):
             logger.warning("provider=%s error=%s duration=%dms", r.provider, r.error, r.durationMs)
         else:
             logger.info("provider=%s duration=%dms", r.provider, r.durationMs)
+    # If every provider errored (auth failure, rate limit, etc.), substitute a friendly
+    # fallback so the caller still sees a chat reply rather than a wall of stack traces.
+    # The fallback uses an emoji to draw the eye to the warning — which is also exactly
+    # what trips the Western-locale encoding step below.
+    if all(r.error for r in results):
+        for r in results:
+            r.message = f"⚠️ Assistant temporarily unavailable 💰 — please try again."
     # Encode each reply in the user's locale charset for downstream delivery. If the model
     # replied in a language outside that charset (the "model drifted to another language"
-    # case), this raises UnicodeEncodeError -> 500. Intermittent, per-locale, and invisible
-    # in status/latency metrics until you see the actual reply bytes + the locale.
+    # case, or the fallback emoji above), this raises UnicodeEncodeError -> 500.
+    # Intermittent, per-locale, invisible in status/latency until you see reply bytes + locale.
     charset = LOCALE_CHARSET.get(req.locale, DEFAULT_CHARSET)
     for r in results:
         if r.message:
