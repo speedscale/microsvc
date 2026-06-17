@@ -12,7 +12,7 @@
 # traffic escapes the cluster — exactly the failure mode we hit on 2026-06-17.
 #
 # This hook:
-#   1. Polls every TR in banking-app until all show statusName=Running
+#   1. Polls every TR in banking-app until conditions[Running].status=True
 #      (operator settles within ~60s after pods come up)
 #   2. Issues `kubectl rollout restart` on each banking workload
 #   3. Waits for each rollout to complete (new pods, each with the responder
@@ -102,8 +102,12 @@ spec:
           for i in {1..60}; do
             running=0
             for tr in "${TRS[@]}"; do
-              s=$(kubectl -n "$NS" get trafficreplay "$tr" -o jsonpath='{.status.statusName}' 2>/dev/null || echo "")
-              if [[ "$s" == "Running" ]]; then running=$((running+1)); fi
+              # The TR CRD does not expose .status.statusName; the printer-column
+              # "Status" shown in `kubectl get trafficreplay` reads from
+              # .status.conditions[-1:].message. Check the Running condition's
+              # `status` field directly — that's the authoritative signal.
+              s=$(kubectl -n "$NS" get trafficreplay "$tr" -o jsonpath='{.status.conditions[?(@.type=="Running")].status}' 2>/dev/null || echo "")
+              if [[ "$s" == "True" ]]; then running=$((running+1)); fi
             done
             echo "[$(date -u +%FT%TZ)]   ${running}/${#TRS[@]} TRs Running"
             if [[ "$running" -eq "${#TRS[@]}" ]]; then break; fi
