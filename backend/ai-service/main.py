@@ -6,13 +6,32 @@ import time
 import httpx
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, Histogram, generate_latest
 from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# OpenTelemetry — feed spans to the cluster otel-collector so ai-service shows
+# up in Jaeger alongside the Java services. The collector address comes from
+# OTEL_EXPORTER_OTLP_ENDPOINT (banking-ai-config ConfigMap, http/protobuf on
+# :4318 — same as the frontend Node service uses).
+_otel_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel-collector.observability:4318")
+_otel_service_name = os.environ.get("OTEL_SERVICE_NAME", "ai-service")
+_tracer_provider = TracerProvider(resource=Resource.create({"service.name": _otel_service_name, "service.namespace": "banking-app"}))
+_tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=f"{_otel_endpoint.rstrip('/')}/v1/traces")))
+trace.set_tracer_provider(_tracer_provider)
+HTTPXClientInstrumentor().instrument()
+
 app = FastAPI(title="AI Service")
+FastAPIInstrumentor.instrument_app(app)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
