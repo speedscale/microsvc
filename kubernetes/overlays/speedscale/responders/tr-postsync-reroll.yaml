@@ -1,0 +1,147 @@
+---
+# PostSync hook: after ArgoCD syncs the microsvc app, force every banking-*
+# workload to rollout-restart so its pods get recreated AFTER the TR objects
+# in this overlay are reconciled to Running. Why:
+#
+# The operator's pod-mutating webhook only injects the speedscale-initproxy-
+# responder init container when the matching TrafficReplay is in Running
+# state. During a rolling deploy, the TR briefly transitions out of Running
+# while the old SUT pods terminate. If kustomize rolls a new pod in that
+# window, the webhook sees the TR as non-Running and skips the responder
+# injection. The new pod ships without /etc/hosts redirect + LLM/3rd-party
+# traffic escapes the cluster — exactly the failure mode we hit on 2026-06-17.
+#
+# This hook:
+#   1. Polls every TR in banking-app until all show statusName=Running
+#      (operator settles within ~60s after pods come up)
+#   2. Issues `kubectl rollout restart` on each banking workload
+#   3. Waits for each rollout to complete (new pods, each with the responder
+#      init container, since now the TR is Running)
+#
+# Idempotent: if everything was already correct, step 1 is instant and step 2
+# is a no-op rollout. Runs on every ArgoCD sync; SHA-suffix on the Job name
+# (via generateName) lets multiple syncs queue safely.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: speedscale-postsync-reroll
+  namespace: banking-app
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: speedscale-postsync-reroll
+  namespace: banking-app
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "patch", "watch"]
+- apiGroups: ["speedscale.com"]
+  resources: ["trafficreplays"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: speedscale-postsync-reroll
+  namespace: banking-app
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+subjects:
+- kind: ServiceAccount
+  name: speedscale-postsync-reroll
+  namespace: banking-app
+roleRef:
+  kind: Role
+  name: speedscale-postsync-reroll
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: speedscale-postsync-reroll
+  namespace: banking-app
+  annotations:
+    # BeforeHookCreation deletes the prior Job (same name) before the next sync
+    # creates a new one, so a static name is safe across repeated syncs.
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+spec:
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 2
+  template:
+    spec:
+      serviceAccountName: speedscale-postsync-reroll
+      restartPolicy: Never
+      containers:
+      - name: reroll
+        image: bitnami/kubectl:1.30
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          set -eo pipefail
+
+          DEPLOYMENTS=(banking-accounts banking-ai banking-fraud banking-notification banking-transactions banking-user)
+          TRS=(replay-banking-accounts replay-banking-ai replay-banking-fraud replay-banking-notification replay-banking-transactions replay-banking-user)
+          NS=banking-app
+
+          echo "[$(date -u +%FT%TZ)] waiting for TrafficReplays to reach Running..."
+          for i in {1..60}; do
+            running=0
+            for tr in "${TRS[@]}"; do
+              s=$(kubectl -n "$NS" get trafficreplay "$tr" -o jsonpath='{.status.statusName}' 2>/dev/null || echo "")
+              if [[ "$s" == "Running" ]]; then running=$((running+1)); fi
+            done
+            echo "[$(date -u +%FT%TZ)]   ${running}/${#TRS[@]} TRs Running"
+            if [[ "$running" -eq "${#TRS[@]}" ]]; then break; fi
+            sleep 5
+          done
+          if [[ "$running" -ne "${#TRS[@]}" ]]; then
+            echo "[$(date -u +%FT%TZ)] WARN: only ${running}/${#TRS[@]} TRs Running after 300s — rolling anyway"
+          fi
+
+          echo "[$(date -u +%FT%TZ)] checking each workload for responder init container..."
+          for d in "${DEPLOYMENTS[@]}"; do
+            has_responder=$(kubectl -n "$NS" get pod -l app="$d" -o jsonpath='{.items[0].spec.initContainers[*].name}' 2>/dev/null | tr ' ' '\n' | grep -c "responder" || echo 0)
+            if [[ "$has_responder" -ge 1 ]]; then
+              echo "[$(date -u +%FT%TZ)]   $d: responder OK — skipping rollout"
+            else
+              echo "[$(date -u +%FT%TZ)]   $d: NO responder init — rollout restart"
+              kubectl -n "$NS" rollout restart deployment/"$d"
+            fi
+          done
+
+          echo "[$(date -u +%FT%TZ)] waiting for rollouts to complete..."
+          for d in "${DEPLOYMENTS[@]}"; do
+            kubectl -n "$NS" rollout status deployment/"$d" --timeout=180s || echo "[$(date -u +%FT%TZ)]   $d: rollout-status timed out"
+          done
+
+          echo "[$(date -u +%FT%TZ)] verifying responder injection landed on every workload..."
+          fail=0
+          for d in "${DEPLOYMENTS[@]}"; do
+            has_responder=$(kubectl -n "$NS" get pod -l app="$d" -o jsonpath='{.items[0].spec.initContainers[*].name}' 2>/dev/null | tr ' ' '\n' | grep -c "responder" || echo 0)
+            if [[ "$has_responder" -ge 1 ]]; then
+              echo "[$(date -u +%FT%TZ)]   $d: ✓ responder attached"
+            else
+              echo "[$(date -u +%FT%TZ)]   $d: ✗ STILL missing responder"
+              fail=$((fail+1))
+            fi
+          done
+          exit "$fail"
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi

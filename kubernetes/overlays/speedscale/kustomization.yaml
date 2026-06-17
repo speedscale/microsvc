@@ -14,6 +14,13 @@ resources:
 - responders/replay-banking-notification.yaml
 - responders/replay-banking-user.yaml
 - responders/replay-banking-ai.yaml
+# PostSync hook: after every ArgoCD sync, wait for the TRs above to reach Running,
+# then rollout-restart any banking workload whose pods are missing the responder
+# init container. Without this, a rolling deploy can ship pods that skipped the
+# operator's responder injection (TR was briefly non-Running during the sync),
+# and outbound traffic escapes the cluster until somebody notices and restarts
+# the workload by hand.
+- responders/tr-postsync-reroll.yaml
 
 patches:
 # Add Istio injection and Speedscale labels to the existing banking-app namespace
