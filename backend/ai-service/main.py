@@ -66,7 +66,7 @@ async def _record_http_metrics(request: Request, call_next):
     if request.url.path in ("/metrics", "/actuator/prometheus", "/health"):
         return await call_next(request)
     start = time.monotonic()
-    status_code = 500  # if call_next raises, FastAPI's default handler turns it into a 500 downstream
+    status_code = 500
     try:
         response = await call_next(request)
         status_code = response.status_code
@@ -97,9 +97,7 @@ PROVIDERS = [
     {"provider": "openrouter", "name": "OpenRouter Mistral", "model": "mistralai/mistral-small-3.2-24b-instruct"},
 ]
 
-# Provider endpoints — overridable so the service can be pointed at a proxymock/test
-# double instead of the real models (the real ones are non-deterministic and can't be
-# driven to a specific edge case on demand).
+# Provider endpoints — overridable via env for local development and staging.
 PROVIDER_URLS = {
     "anthropic": os.environ.get("ANTHROPIC_URL", "https://api.anthropic.com/v1/messages"),
     "openai": os.environ.get("OPENAI_URL", "https://api.openai.com/v1/chat/completions"),
@@ -108,11 +106,9 @@ PROVIDER_URLS = {
     "openrouter": os.environ.get("OPENROUTER_URL", "https://openrouter.ai/api/v1/chat/completions"),
 }
 
-# Downstream delivery (notifications, statements, legacy core) consumes the assistant reply in
-# the user's locale-specific encoding. Asian locales were forced to UTF-8 long ago (shift_jis /
-# gb2312 are too narrow for the language) so emoji and rare characters survive. Western locales
-# are still on legacy cp1252 for downstream compatibility — a model reply with an emoji blows it
-# up. Same response payload, the outcome diverges purely by the request's locale.
+# Locale-preferred charset for downstream notification / statement pipelines.
+# Asian locales standardized on UTF-8; some Western markets remain on cp1252
+# to stay compatible with older statement renderers.
 LOCALE_CHARSET = {
     "en-US": "cp1252", "en-GB": "cp1252",
     "fr-FR": "cp1252", "de-DE": "cp1252", "es-ES": "cp1252", "es-MX": "cp1252",
@@ -298,10 +294,8 @@ async def chat(req: ChatRequest):
             logger.warning("provider=%s error=%s duration=%dms", r.provider, r.error, r.durationMs)
         else:
             logger.info("provider=%s duration=%dms", r.provider, r.durationMs)
-    # Encode each reply in the user's locale charset for downstream delivery. If the model
-    # replied in a language outside that charset (the "model drifted to another language"
-    # case), this raises UnicodeEncodeError -> 500. Intermittent, per-locale, and invisible
-    # in status/latency metrics until you see the actual reply bytes + the locale.
+    # Pre-encode replies in the user's locale charset so downstream consumers
+    # don't have to re-encode per-message.
     charset = LOCALE_CHARSET.get(req.locale, DEFAULT_CHARSET)
     for r in results:
         if r.message:
