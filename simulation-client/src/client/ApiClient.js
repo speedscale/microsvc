@@ -255,14 +255,14 @@ class ApiClient {
   }
 
   async askAIChat(message, token) {
-    // Mixed locales across sessions: most users are en-US (some get smart "—"/curly
-    // quotes from the model = ok under cp1252), a real but minority slice are
-    // ja-JP/es-MX etc. Drives an intermittent, per-locale error pattern on the AI
-    // chat endpoint — the demo's investigation hook.
+    // Mixed locales across sessions. ai-service encodes the assistant reply in the
+    // user's locale charset for downstream delivery: Western locales (cp1252) blow up
+    // on the emoji in the LLM mock reply → 500; Asian locales (utf-8) pass → 200.
+    // Aim for ~55/45 fail/pass so the dashboard reads as intermittent (real-world bug
+    // pattern), not "everything broken".
     const LOCALES = [
-      'en-US','en-US','en-US','en-US','en-US','en-US','en-US',  // ~70%
-      'es-MX','es-MX',                                          // ~20%
-      'ja-JP',                                                  // ~10%
+      'en-US','en-US','es-MX','fr-FR','de-DE','en-US',  // 6 Western → cp1252 → 500
+      'ja-JP','ja-JP','zh-CN','ko-KR',                  // 4 Asian → utf-8 → 200
     ];
     const locale = LOCALES[Math.floor(Math.random() * LOCALES.length)];
     return this.retryRequest(async () => {
