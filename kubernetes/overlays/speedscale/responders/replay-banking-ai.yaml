@@ -3,6 +3,9 @@ kind: TrafficReplay
 metadata:
   name: replay-banking-ai
   namespace: banking-app
+  annotations:
+    sidecar.speedscale.com/inject: "true"
+    sidecar.speedscale.com/tls-out: "true"
 spec:
   snapshotID: 7f7256a0-8876-4e3f-aea9-3fd681e0c36a
   testConfigID: banking-mock-fail-closed

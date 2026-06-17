@@ -3,6 +3,9 @@ kind: TrafficReplay
 metadata:
   name: replay-banking-accounts
   namespace: banking-app
+  annotations:
+    sidecar.speedscale.com/inject: "true"
+    sidecar.speedscale.com/tls-out: "true"
 spec:
   # accounts-scoped snapshot (Plaid + OXR + Moody), redacted, pushed to elastic tenant
   snapshotID: 25ef64bf-c07b-4adc-8ae3-33b2d6d5d6cf
