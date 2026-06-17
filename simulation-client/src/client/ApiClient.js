@@ -255,22 +255,26 @@ class ApiClient {
   }
 
   async askAIChat(message, token) {
-    // Mixed locales across sessions. ai-service encodes the assistant reply in the
-    // user's locale charset for downstream delivery: Western locales (cp1252) blow up
-    // on the emoji in the LLM mock reply → 500; Asian locales (utf-8) pass → 200.
-    // Aim for ~55/45 fail/pass so the dashboard reads as intermittent (real-world bug
-    // pattern), not "everything broken".
+    // Mixed locales across sessions. ai-service encodes the assistant reply in
+    // the user's locale charset: Western locales (cp1252) blow up on the emoji
+    // in the LLM mock reply → 500; Asian locales (utf-8) pass → 200. Aim for
+    // ~15% failures so the dashboard reads as intermittent (real-world bug
+    // pattern) and Jaeger drill-down shows BOTH error traces and clean ones.
+    //
+    // No retry wrapper here: retries multiply 5xx counts (one bad locale →
+    // 4 errors with maxRetries=3) and skew the observed rate way above the
+    // sampled locale distribution.
     const LOCALES = [
-      'en-US','en-US','es-MX','fr-FR','de-DE','en-US',  // 6 Western → cp1252 → 500
-      'ja-JP','ja-JP','zh-CN','ko-KR',                  // 4 Asian → utf-8 → 200
-    ];
+      'en-US','es-MX',                                  // 2 Western → cp1252 → 500
+      'ja-JP','ja-JP','ja-JP','zh-CN','zh-CN','zh-CN',  // 8 Asian → utf-8 → 200
+      'ko-KR','ko-KR',
+    ];                                                  // 2/10 → ~20% failure rate
+
     const locale = LOCALES[Math.floor(Math.random() * LOCALES.length)];
-    return this.retryRequest(async () => {
-      const response = await this.client.post('/api/ai/chat', { message, locale }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return response.data;
+    const response = await this.client.post('/api/ai/chat', { message, locale }, {
+      headers: { Authorization: `Bearer ${token}` }
     });
+    return response.data;
   }
 
   // Notification service endpoints
