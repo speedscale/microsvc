@@ -24,8 +24,14 @@ spec:
             secretKeyRef:
               name: banking-thirdparty-keys
               key: TWILIO_AUTH_TOKEN
+        # SLACK_WEBHOOK_URL: literal override that paves the URL into a 3-segment
+        # path so the banking-notification responder snapshot's `hooks.slack.com`
+        # http_url scrubs at index 1, 2, and 3 all fire (they need a segment to
+        # scrub or the chain becomes a no-op). With this, both recorded
+        # `/services/<team>/<bot>/<token>` and live `/services/SET/VIA/SECRET`
+        # normalize to `/services/*/*/*` and signature-match cleanly. Sealed
+        # secret value was a 1-segment placeholder (`/services/SET-VIA-SECRET`)
+        # — leaving it alone for the other environments; only the speedscale
+        # overlay needs the 3-segment shape.
         - name: SLACK_WEBHOOK_URL
-          valueFrom:
-            secretKeyRef:
-              name: banking-thirdparty-keys
-              key: SLACK_WEBHOOK_URL
+          value: "https://hooks.slack.com/services/SET/VIA/SECRET"
