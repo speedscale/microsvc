@@ -1,6 +1,6 @@
 {
   "name": "banking-simulation-client",
-  "version": "1.4.85",
+  "version": "1.4.86",
   "description": "Continuous user simulation client for banking application",
   "main": "src/index.js",
   "scripts": {
