@@ -3,6 +3,9 @@ kind: TrafficReplay
 metadata:
   name: replay-banking-fraud
   namespace: banking-app
+  annotations:
+    sidecar.speedscale.com/inject: "true"
+    sidecar.speedscale.com/tls-out: "true"
 spec:
   snapshotID: c3898583-282b-4b82-9bdb-72b7dd45d15c
   testConfigID: banking-mock-fail-closed
