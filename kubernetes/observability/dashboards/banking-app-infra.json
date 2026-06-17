@@ -104,19 +104,18 @@
     },
     {
       "type": "timeseries",
-      "title": "CPU by Service",
-      "description": "Process CPU utilization per service (0-1 = one core)",
+      "title": "Container CPU — all workloads",
+      "description": "Container-level CPU usage from kubelet's cAdvisor (rate of CPU seconds consumed). Includes every banking workload regardless of language, not just Java services. 1.0 = one full core.",
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
-        {"expr": "process_cpu_usage{job=~\"$service\"}", "legendFormat": "{{job}}", "refId": "A"}
+        {"expr": "sum by (container) (rate(container_cpu_usage_seconds_total{namespace=\"banking-app\", container=~\".+-service|api-gateway\", container!=\"\"}[5m]))", "legendFormat": "{{container}}", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
           "custom": {"drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "showPoints": "never"},
           "unit": "percentunit",
           "min": 0,
-          "max": 1,
           "color": {"mode": "palette-classic"}
         }
       },
@@ -124,26 +123,19 @@
     },
     {
       "type": "timeseries",
-      "title": "Memory by Service — Heap Used vs Max",
-      "description": "JVM heap used (solid) vs max (dashed) per service",
+      "title": "Container Memory — all workloads",
+      "description": "Container working-set memory from kubelet's cAdvisor. Includes every banking workload regardless of language.",
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
-        {"expr": "sum by (job) (jvm_memory_used_bytes{area=\"heap\", job=~\"$service\"})", "legendFormat": "{{job}} used", "refId": "A"},
-        {"expr": "sum by (job) (jvm_memory_max_bytes{area=\"heap\", job=~\"$service\"})", "legendFormat": "{{job}} max", "refId": "B"}
+        {"expr": "sum by (container) (container_memory_working_set_bytes{namespace=\"banking-app\", container=~\".+-service|api-gateway\", container!=\"\"})", "legendFormat": "{{container}}", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {
           "custom": {"drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "showPoints": "never"},
-          "unit": "bytes"
-        },
-        "overrides": [
-          {"matcher": {"id": "byRegexp", "options": ".* max"}, "properties": [
-            {"id": "custom.lineStyle", "value": {"fill": "dash", "dash": [10, 10]}},
-            {"id": "custom.fillOpacity", "value": 0},
-            {"id": "custom.lineWidth", "value": 1}
-          ]}
-        ]
+          "unit": "bytes",
+          "color": {"mode": "palette-classic"}
+        }
       },
       "options": {"tooltip": {"mode": "multi"}}
     },

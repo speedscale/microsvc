@@ -107,12 +107,12 @@
     },
     {
       "type": "stat",
-      "title": "Memory",
-      "description": "JVM heap utilization (used / max) across all services",
+      "title": "Node Memory",
+      "description": "Busiest banking-app node's memory utilization (used / total) from node-exporter. Like Node CPU above, this is a property of the box, so the tile intentionally ignores the Service filter.",
       "gridPos": {"h": 4, "w": 4, "x": 12, "y": 0},
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
-        {"expr": "sum(jvm_memory_used_bytes{area=\"heap\", job=~\"$service\"}) / sum(jvm_memory_max_bytes{area=\"heap\", job=~\"$service\"})", "refId": "A"}
+        {"expr": "max(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))", "refId": "A"}
       ],
       "fieldConfig": {
         "defaults": {

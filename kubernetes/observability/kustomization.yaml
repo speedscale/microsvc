@@ -8,8 +8,10 @@ namespace: observability
 
 resources:
   - namespace.yaml
+  - prometheus-rbac.yaml
   - prometheus-deployment.yaml
   - prometheus-config.yaml
+  - node-exporter.yaml
   - otel-collector.yaml
   - jaeger-deployment.yaml
   - loki.yaml
