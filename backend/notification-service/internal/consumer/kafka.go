@@ -3,11 +3,15 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
 	kafka "github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl"
+	"github.com/segmentio/kafka-go/sasl/plain"
 
 	"github.com/speedscale/microsvc/notification-service/internal/metrics"
 	"github.com/speedscale/microsvc/notification-service/internal/notify"
@@ -93,20 +97,63 @@ type Consumer struct {
 	notifier *notify.Notifier
 }
 
+type AuthConfig struct {
+	Mechanism string
+	Username  string
+	Password  string
+}
+
 func New(brokers []string, topic, groupID string, store Store) *Consumer {
-	r := kafka.NewReader(kafka.ReaderConfig{
+	c, err := NewWithAuth(brokers, topic, groupID, store, AuthConfig{})
+	if err != nil {
+		panic(err)
+	}
+	return c
+}
+
+func NewWithAuth(brokers []string, topic, groupID string, store Store, auth AuthConfig) (*Consumer, error) {
+	cfg := kafka.ReaderConfig{
 		Brokers:        brokers,
 		Topic:          topic,
 		GroupID:        groupID,
 		MinBytes:       1,
 		MaxBytes:       10e6,
 		CommitInterval: time.Second,
-	})
+	}
+
+	if auth.Mechanism != "" {
+		mechanism, err := saslMechanism(auth)
+		if err != nil {
+			return nil, err
+		}
+		cfg.Dialer = &kafka.Dialer{
+			Timeout:       10 * time.Second,
+			DualStack:     true,
+			SASLMechanism: mechanism,
+		}
+	}
+
+	r := kafka.NewReader(cfg)
 	return &Consumer{
 		reader:   r,
 		Buffer:   &RingBuffer{},
 		store:    store,
 		notifier: notify.NewNotifier(),
+	}, nil
+}
+
+func saslMechanism(auth AuthConfig) (sasl.Mechanism, error) {
+	switch strings.ToUpper(auth.Mechanism) {
+	case "PLAIN":
+		if auth.Username == "" || auth.Password == "" {
+			return nil, fmt.Errorf("KAFKA_SASL_USERNAME and KAFKA_SASL_PASSWORD are required for PLAIN")
+		}
+		return plain.Mechanism{
+			Username: auth.Username,
+			Password: auth.Password,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unsupported Kafka SASL mechanism %q", auth.Mechanism)
 	}
 }
 

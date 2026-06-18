@@ -19,6 +19,11 @@ func main() {
 	brokers := strings.Split(envOrDefault("KAFKA_BROKERS", "banking-kafka:9092"), ",")
 	topic := envOrDefault("KAFKA_TOPIC", "transaction-events")
 	mongoURI := envOrDefault("MONGO_URI", "mongodb://banking-mongodb:27017")
+	kafkaAuth := consumer.AuthConfig{
+		Mechanism: os.Getenv("KAFKA_SASL_MECHANISM"),
+		Username:  os.Getenv("KAFKA_SASL_USERNAME"),
+		Password:  os.Getenv("KAFKA_SASL_PASSWORD"),
+	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
@@ -31,7 +36,10 @@ func main() {
 		mongoStore = ms
 	}
 
-	c := consumer.New(brokers, topic, "notification-service", mongoStore)
+	c, err := consumer.NewWithAuth(brokers, topic, "notification-service", mongoStore, kafkaAuth)
+	if err != nil {
+		log.Fatalf("Kafka configuration error: %v", err)
+	}
 	defer c.Close()
 
 	go c.Run(ctx)

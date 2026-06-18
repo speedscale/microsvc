@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-kafka
+  namespace: banking-app
+spec:
+  template:
+    spec:
+      containers:
+      - name: kafka
+        env:
+        - name: ALLOW_PLAINTEXT_LISTENER
+          value: "yes"
+        - name: KAFKA_CFG_LISTENERS
+          value: "SASL_PLAINTEXT://:9092,CONTROLLER://:9093"
+        - name: KAFKA_CFG_ADVERTISED_LISTENERS
+          value: "SASL_PLAINTEXT://banking-kafka:9092"
+        - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
+          value: "CONTROLLER:PLAINTEXT,SASL_PLAINTEXT:SASL_PLAINTEXT"
+        - name: KAFKA_CFG_INTER_BROKER_LISTENER_NAME
+          value: "SASL_PLAINTEXT"
+        - name: KAFKA_CFG_SASL_ENABLED_MECHANISMS
+          value: "PLAIN"
+        - name: KAFKA_CFG_SASL_MECHANISM_INTER_BROKER_PROTOCOL
+          value: "PLAIN"
+        - name: KAFKA_CLIENT_USERS
+          valueFrom:
+            secretKeyRef:
+              name: banking-kafka-sasl
+              key: users
+        - name: KAFKA_CLIENT_PASSWORDS
+          valueFrom:
+            secretKeyRef:
+              name: banking-kafka-sasl
+              key: passwords
+        - name: KAFKA_INTER_BROKER_USER
+          valueFrom:
+            secretKeyRef:
+              name: banking-kafka-sasl
+              key: username
+        - name: KAFKA_INTER_BROKER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: banking-kafka-sasl
+              key: password

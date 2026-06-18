@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-transactions
+  namespace: banking-app
+spec:
+  template:
+    spec:
+      containers:
+      - name: transactions-service
+        env:
+        - name: KAFKA_SASL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: banking-kafka-sasl
+              key: username
+        - name: KAFKA_SASL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: banking-kafka-sasl
+              key: password
+        - name: SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL
+          value: "SASL_PLAINTEXT"
+        - name: SPRING_KAFKA_PROPERTIES_SASL_MECHANISM
+          value: "PLAIN"
+        - name: SPRING_KAFKA_PROPERTIES_SASL_JAAS_CONFIG
+          value: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="$(KAFKA_SASL_USERNAME)" password="$(KAFKA_SASL_PASSWORD)";'
