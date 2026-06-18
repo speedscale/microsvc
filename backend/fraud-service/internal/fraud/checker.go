@@ -13,13 +13,31 @@ type Checker struct {
 	fraudv1.UnimplementedFraudCheckerServer
 }
 
+// highRiskMCCs are merchant category codes (ISO 18245) that warrant
+// external provider verification (Sift / Stripe Radar / MaxMind) on top of
+// rule-based scoring. Low-risk categories are scored on the rule engine
+// alone to keep p99 latency down and reduce per-txn provider cost.
+var highRiskMCCs = map[string]string{
+	"5812": "restaurants",
+	"5912": "drug-stores",
+	"5732": "consumer-electronics",
+	"7995": "gambling",
+	"5410": "grocery-stores",
+}
+
 // CheckTransaction applies rule-based fraud detection and records metrics.
 func (c *Checker) CheckTransaction(ctx context.Context, req *fraudv1.TransactionRequest) (*fraudv1.FraudCheckResponse, error) {
 	start := time.Now()
 	resp := evaluate(req)
-	results := fanOutExternalChecks(ctx, req)
 
-	allFailed := true
+	// Escalate only high-risk merchant categories to external providers.
+	_, escalate := highRiskMCCs[req.GetMerchantCategory()]
+	var results []ExternalResult
+	if escalate {
+		results = fanOutExternalChecks(ctx, req)
+	}
+
+	allFailed := len(results) > 0
 	for _, r := range results {
 		if r.OK() {
 			allFailed = false

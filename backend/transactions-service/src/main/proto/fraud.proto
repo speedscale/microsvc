@@ -12,6 +12,7 @@ message TransactionRequest {
   string user_id = 2;
   double amount = 3;
   string transaction_type = 4;
+  string merchant_category = 5;
 }
 message FraudCheckResponse {
   bool approved = 1;
