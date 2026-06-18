@@ -19,40 +19,93 @@ spec:
             - -c
             - |
               echo "Waiting for user-service..."
-              until wget -q -O- http://banking-gateway:80/api/healthz 2>/dev/null; do sleep 5; done
+              BASE_URL=http://banking-gateway:80
+              until wget -q -O- "$BASE_URL/api/healthz" 2>/dev/null; do sleep 5; done
               echo "Registering Harper Clark..."
               wget -q -O- --post-data='{"username":"harper.clark.001","email":"harper.clark.001@northbridge.example","password":"SimUser123!"}' \
                 --header='Content-Type: application/json' \
-                http://banking-gateway:80/api/users/register 2>&1 || echo "User may already exist"
+                "$BASE_URL/api/users/register" 2>&1 || echo "User may already exist"
               echo "Logging in..."
               TOKEN=$(wget -q -O- --post-data='{"usernameOrEmail":"harper.clark.001","password":"SimUser123!"}' \
                 --header='Content-Type: application/json' \
-                http://banking-gateway:80/api/users/login 2>&1 | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
+                "$BASE_URL/api/users/login" 2>&1 | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
               if [ -z "$TOKEN" ]; then echo "Login failed"; exit 1; fi
-              echo "Creating checking account..."
-              wget -q -O- --post-data='{"accountType":"CHECKING"}' \
-                --header="Authorization: Bearer $TOKEN" \
-                --header='Content-Type: application/json' \
-                http://banking-gateway:80/api/accounts 2>&1 || true
-              echo "Getting account ID..."
-              ACCT_ID=$(wget -q -O- --header="Authorization: Bearer $TOKEN" \
-                http://banking-gateway:80/api/accounts 2>&1 | sed -n 's/.*"id":\([0-9]*\).*/\1/p' | head -1)
-              if [ -z "$ACCT_ID" ]; then echo "No account found"; exit 0; fi
-              echo "Seeding transactions on account $ACCT_ID..."
-              for amt in 5000 2500 800 350; do
-                wget -q -O- --post-data="{\"type\":\"DEPOSIT\",\"amount\":$amt,\"accountId\":$ACCT_ID,\"currency\":\"USD\",\"description\":\"Direct deposit\"}" \
+
+              refresh_accounts() {
+                ACCOUNTS=$(wget -q -O- --header="Authorization: Bearer $TOKEN" "$BASE_URL/api/accounts" 2>&1)
+              }
+
+              account_record() {
+                type="$1"
+                printf '%s' "$ACCOUNTS" | tr '{' '\n' | awk -v type="$type" '$0 ~ "\"accountType\":\"" type "\"" { print; exit }'
+              }
+
+              json_number() {
+                field="$1"
+                record="$2"
+                printf '%s' "$record" | tr ',' '\n' | awk -F: -v field="\"$field\"" '$1 ~ field { gsub(/[^0-9.]/, "", $2); print $2; exit }'
+              }
+
+              deposit_to() {
+                account_id="$1"
+                amount="$2"
+                description="$3"
+                wget -q -O- --post-data="{\"amount\":$amount,\"accountId\":$account_id,\"description\":\"$description\"}" \
                   --header="Authorization: Bearer $TOKEN" \
                   --header='Content-Type: application/json' \
-                  http://banking-gateway:80/api/transactions 2>&1 || true
-                sleep 2
-              done
-              for amt_desc in "45.00:Gas station" "89.75:Grocery store" "12.50:Coffee shop"; do
-                amt=$(echo $amt_desc | cut -d: -f1)
-                desc=$(echo $amt_desc | cut -d: -f2)
-                wget -q -O- --post-data="{\"type\":\"WITHDRAWAL\",\"amount\":$amt,\"accountId\":$ACCT_ID,\"currency\":\"USD\",\"description\":\"$desc\"}" \
-                  --header="Authorization: Bearer $TOKEN" \
-                  --header='Content-Type: application/json' \
-                  http://banking-gateway:80/api/transactions 2>&1 || true
-                sleep 2
-              done
+                  "$BASE_URL/api/transactions/deposit" 2>&1 || {
+                    echo "Deposit failed for account $account_id amount $amount"
+                    exit 1
+                  }
+              }
+
+              top_up_account() {
+                account_id="$1"
+                amount="$2"
+                description="$3"
+                remaining="$amount"
+                while awk -v amount="$remaining" 'BEGIN { exit !(amount > 0.009) }'; do
+                  chunk=$(awk -v amount="$remaining" 'BEGIN { if (amount > 900) printf "900.00"; else printf "%.2f", amount }')
+                  deposit_to "$account_id" "$chunk" "$description"
+                  remaining=$(awk -v amount="$remaining" -v chunk="$chunk" 'BEGIN { printf "%.2f", amount - chunk }')
+                  sleep 1
+                done
+              }
+
+              ensure_account() {
+                type="$1"
+                target_balance="$2"
+                refresh_accounts
+                record=$(account_record "$type")
+
+                if [ -z "$record" ]; then
+                  echo "Creating $type account with initial balance $target_balance..."
+                  created=$(wget -q -O- --post-data="{\"accountType\":\"$type\",\"initialBalance\":$target_balance}" \
+                    --header="Authorization: Bearer $TOKEN" \
+                    --header='Content-Type: application/json' \
+                    "$BASE_URL/api/accounts" 2>&1)
+                  account_id=$(json_number id "$created")
+                  if [ -z "$account_id" ]; then echo "Failed to create $type account: $created"; exit 1; fi
+                  echo "$type account $account_id ready."
+                  return
+                fi
+
+                account_id=$(json_number id "$record")
+                balance=$(json_number balance "$record")
+                if [ -z "$account_id" ] || [ -z "$balance" ]; then
+                  echo "Could not parse $type account from: $record"
+                  exit 1
+                fi
+
+                top_up=$(awk -v target="$target_balance" -v current="$balance" 'BEGIN { if (current < target) printf "%.2f", target - current; else printf "0" }')
+                if awk -v amount="$top_up" 'BEGIN { exit !(amount > 0.009) }'; then
+                  echo "Topping up $type account $account_id by $top_up..."
+                  top_up_account "$account_id" "$top_up" "$type account setup"
+                else
+                  echo "$type account $account_id already funded at $balance."
+                fi
+              }
+
+              ensure_account CHECKING 5000.00
+              ensure_account SAVINGS 1000.00
               echo "Harper Clark is ready."

@@ -8,6 +8,7 @@ import com.banking.transactionsservice.dto.WithdrawRequest;
 import com.banking.transactionsservice.entity.Transaction;
 import com.banking.transactionsservice.event.TransactionEventProducer;
 import com.banking.transactionsservice.repository.TransactionRepository;
+import com.banking.transactionsservice.service.PaymentComplianceService;
 import com.banking.transactionsservice.service.TransactionService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +49,9 @@ class TransactionRollbackTest {
 
     @MockBean
     private TransactionEventProducer transactionEventProducer;
+
+    @MockBean
+    private PaymentComplianceService paymentComplianceService;
 
     @MockBean
     private HttpServletRequest httpServletRequest;

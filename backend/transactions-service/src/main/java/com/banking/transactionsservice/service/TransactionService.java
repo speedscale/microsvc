@@ -257,6 +257,9 @@ public class TransactionService {
         if (toBalance == null) {
             throw new RuntimeException("To account not found or inaccessible");
         }
+
+        paymentComplianceService.verifyTransferCompliance(
+                request.getFromAccountId(), request.getToAccountId());
         
         // Create transaction record
         Transaction transaction = new Transaction(
