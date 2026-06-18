@@ -21,3 +21,9 @@
 - **Evidence**: `kubectl kustomize kubernetes/overlays/speedscale-sidecar` rendered 4,964 lines
 - **Status**: PROVEN
 - **Date**: 2026-06-18
+
+## The replay overlay renders an isolated banking-replay app
+- **Level**: Integration
+- **Evidence**: `thoughts/scripts/verify-replay-overlay.sh` PASS
+- **Status**: PROVEN
+- **Date**: 2026-06-18
