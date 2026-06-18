@@ -99,6 +99,32 @@ patches:
 
   - target:
       kind: Deployment
+      name: banking-fraud
+    patch: |-
+      - op: remove
+        path: /metadata/annotations/capture.speedscale.com~1enabled
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1inject
+        value: "true"
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1tls-out
+        value: "true"
+
+  - target:
+      kind: Deployment
+      name: banking-notification
+    patch: |-
+      - op: remove
+        path: /metadata/annotations/capture.speedscale.com~1enabled
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1inject
+        value: "true"
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1tls-out
+        value: "true"
+
+  - target:
+      kind: Deployment
       name: banking-frontend
     patch: |-
       - op: remove
