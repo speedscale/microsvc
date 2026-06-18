@@ -21,6 +21,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -281,5 +287,59 @@ class TransactionServiceTest {
         verify(paymentComplianceService, times(1)).verifyTransferCompliance(fromAccountId, toAccountId);
         verify(accountsServiceClient, never()).updateAccountBalance(anyLong(), any(Double.class), any(HttpServletRequest.class));
         verify(transactionRepository, never()).save(any(Transaction.class));
+    }
+
+    @Test
+    void testDepositDoesNotBlockUnrelatedAccountDuringSlowFraudCheck() throws Exception {
+        Long slowAccountId = 1L;
+        Long fastAccountId = 2L;
+        CountDownLatch slowFraudStarted = new CountDownLatch(1);
+        CountDownLatch releaseSlowFraud = new CountDownLatch(1);
+        AtomicLong transactionIds = new AtomicLong(1L);
+
+        when(fraudServiceClient.checkTransaction(anyString(), anyString(), anyDouble(), anyString(), anyString()))
+                .thenAnswer(invocation -> {
+                    if (String.valueOf(slowAccountId).equals(invocation.getArgument(0))) {
+                        slowFraudStarted.countDown();
+                        assertTrue(releaseSlowFraud.await(2, TimeUnit.SECONDS));
+                    }
+                    return FraudCheckResponse.newBuilder()
+                            .setApproved(true)
+                            .setRiskScore(0.0)
+                            .setReason("OK")
+                            .build();
+                });
+        when(accountsServiceClient.validateAccountOwnership(anyLong(), eq(httpServletRequest))).thenReturn(true);
+        when(accountsServiceClient.getAccountBalance(anyLong(), eq(httpServletRequest))).thenReturn(500.00);
+        when(accountsServiceClient.updateAccountBalance(anyLong(), any(Double.class), eq(httpServletRequest))).thenReturn(true);
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> {
+            Transaction transaction = invocation.getArgument(0);
+            transaction.setId(transactionIds.getAndIncrement());
+            return transaction;
+        });
+
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        try {
+            Future<TransactionResponse> slowDeposit = executorService.submit(() ->
+                    transactionService.deposit(
+                            new DepositRequest(slowAccountId, 100.00, "Slow fraud check"),
+                            testUserId,
+                            httpServletRequest));
+
+            assertTrue(slowFraudStarted.await(1, TimeUnit.SECONDS));
+
+            Future<TransactionResponse> fastDeposit = executorService.submit(() ->
+                    transactionService.deposit(
+                            new DepositRequest(fastAccountId, 50.00, "Fast unrelated deposit"),
+                            testUserId,
+                            httpServletRequest));
+
+            assertNotNull(fastDeposit.get(500, TimeUnit.MILLISECONDS));
+            releaseSlowFraud.countDown();
+            assertNotNull(slowDeposit.get(1, TimeUnit.SECONDS));
+        } finally {
+            releaseSlowFraud.countDown();
+            executorService.shutdownNow();
+        }
     }
 }
