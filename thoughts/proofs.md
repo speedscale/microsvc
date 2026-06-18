@@ -4,6 +4,12 @@
 - **Status**: PROVEN
 - **Date**: 2026-06-18
 
+## Homepage and login point at the seeded Harper Clark demo user
+- **Level**: Integration
+- **Evidence**: `npm run build` in `frontend`; `thoughts/scripts/verify-named-locale-users.sh`
+- **Status**: PROVEN
+- **Date**: 2026-06-18
+
 ## Harper Clark has exactly one funded checking account and one funded savings account in staging-decoy
 - **Level**: Deployment
 - **Evidence**: `thoughts/scripts/verify-staging-demo-user.sh` PASS against `do-nyc1-staging-decoy`

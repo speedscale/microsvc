@@ -49,9 +49,20 @@ describe('LoginForm Component', () => {
     expect(screen.getByText('create a new account')).toBeInTheDocument()
   })
 
+  it('prefills the seeded demo customer credentials', () => {
+    render(<LoginForm />)
+
+    expect(screen.getByPlaceholderText('Enter your username or email')).toHaveValue('harper.clark.001')
+    expect(screen.getByPlaceholderText('Enter your password')).toHaveValue('SimUser123!')
+    expect(screen.getByText(/Demo customer/)).toBeInTheDocument()
+  })
+
   it('displays validation errors for empty fields', async () => {
     const user = userEvent.setup()
     render(<LoginForm />)
+
+    await user.clear(screen.getByPlaceholderText('Enter your username or email'))
+    await user.clear(screen.getByPlaceholderText('Enter your password'))
     
     const submitButton = screen.getByRole('button', { name: 'Sign in' })
     await user.click(submitButton)
@@ -67,6 +78,7 @@ describe('LoginForm Component', () => {
     render(<LoginForm />)
     
     const passwordInput = screen.getByPlaceholderText('Enter your password')
+    await user.clear(passwordInput)
     await user.type(passwordInput, '123')
     
     const submitButton = screen.getByRole('button', { name: 'Sign in' })
@@ -87,6 +99,8 @@ describe('LoginForm Component', () => {
     const passwordInput = screen.getByPlaceholderText('Enter your password')
     const submitButton = screen.getByRole('button', { name: 'Sign in' })
     
+    await user.clear(usernameInput)
+    await user.clear(passwordInput)
     await user.type(usernameInput, 'testuser')
     await user.type(passwordInput, 'password123')
     await user.click(submitButton)
@@ -109,6 +123,8 @@ describe('LoginForm Component', () => {
     const passwordInput = screen.getByPlaceholderText('Enter your password')
     const submitButton = screen.getByRole('button', { name: 'Sign in' })
     
+    await user.clear(usernameInput)
+    await user.clear(passwordInput)
     await user.type(usernameInput, 'testuser')
     await user.type(passwordInput, 'password123')
     await user.click(submitButton)
@@ -131,6 +147,8 @@ describe('LoginForm Component', () => {
     const passwordInput = screen.getByPlaceholderText('Enter your password')
     const submitButton = screen.getByRole('button', { name: 'Sign in' })
     
+    await user.clear(usernameInput)
+    await user.clear(passwordInput)
     await user.type(usernameInput, 'testuser')
     await user.type(passwordInput, 'wrongpassword')
     await user.click(submitButton)
@@ -150,6 +168,8 @@ describe('LoginForm Component', () => {
     const passwordInput = screen.getByPlaceholderText('Enter your password')
     const submitButton = screen.getByRole('button', { name: 'Sign in' })
     
+    await user.clear(usernameInput)
+    await user.clear(passwordInput)
     await user.type(usernameInput, 'testuser')
     await user.type(passwordInput, 'password123')
     await user.click(submitButton)
@@ -169,6 +189,8 @@ describe('LoginForm Component', () => {
     const passwordInput = screen.getByPlaceholderText('Enter your password')
     const submitButton = screen.getByRole('button', { name: 'Sign in' })
     
+    await user.clear(usernameInput)
+    await user.clear(passwordInput)
     await user.type(usernameInput, 'testuser')
     await user.type(passwordInput, 'password123')
     await user.click(submitButton)
@@ -212,6 +234,8 @@ describe('LoginForm Component', () => {
     const submitButton = screen.getByRole('button', { name: 'Sign in' })
     
     // First submission with error
+    await user.clear(usernameInput)
+    await user.clear(passwordInput)
     await user.type(usernameInput, 'testuser')
     await user.type(passwordInput, 'wrongpassword')
     await user.click(submitButton)

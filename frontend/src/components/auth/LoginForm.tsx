@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth/context';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import ToastContainer, { useToasts } from '@/components/ui/ToastContainer';
+import { demoUser } from '@/lib/demo';
 
 const LoginForm: React.FC = () => {
   const router = useRouter();
@@ -23,6 +24,10 @@ const LoginForm: React.FC = () => {
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      usernameOrEmail: demoUser.username,
+      password: demoUser.password,
+    },
   });
 
   const onSubmit = async (data: LoginFormData) => {
@@ -141,13 +146,13 @@ const LoginForm: React.FC = () => {
 
           <div className="mt-4 p-3 bg-gray-100 rounded-md border border-gray-200">
             <p className="text-xs text-gray-500 text-center">
-              Try Harper Clark:{' '}
+              Demo customer:{' '}
               <span className="font-mono font-medium text-gray-700">
-                harper.clark.001
+                {demoUser.username}
               </span>{' '}
               /{' '}
               <span className="font-mono font-medium text-gray-700">
-                SimUser123!
+                {demoUser.password}
               </span>
             </p>
           </div>
