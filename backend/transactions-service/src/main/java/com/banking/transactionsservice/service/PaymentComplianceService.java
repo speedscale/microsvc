@@ -1,11 +1,14 @@
 package com.banking.transactionsservice.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -18,6 +21,7 @@ public class PaymentComplianceService {
 
     private static final Logger logger = LoggerFactory.getLogger(PaymentComplianceService.class);
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${payment.stripe.api-key:sk_test_dummy_key_for_ebpf_capture}")
     private String stripeApiKey;
@@ -27,6 +31,9 @@ public class PaymentComplianceService {
 
     @Value("${payment.comply.api-key:comply_test_dummy_key_for_ebpf}")
     private String complyApiKey;
+
+    @Value("${payment.comply.base-url:https://api.complyadvantage.com}")
+    private String complyBaseUrl;
 
     private HttpClient httpClient;
 
@@ -53,6 +60,31 @@ public class PaymentComplianceService {
                         logger.info("All payment/compliance calls completed for transaction {}", transactionId);
                     }
                 });
+    }
+
+    public void verifyTransferCompliance(Long fromAccountId, Long toAccountId) {
+        String searchTerm = "Transfer " + fromAccountId + " to " + toAccountId;
+        HttpRequest request = complyRequest(searchTerm);
+
+        try {
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            logger.info("Transfer compliance response for {}: status={}", searchTerm, response.statusCode());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new RuntimeException("Compliance screening unavailable");
+            }
+
+            JsonNode data = objectMapper.readTree(response.body()).path("content").path("data");
+            int totalMatches = data.path("total_matches").asInt(0);
+            String riskLevel = data.path("risk_level").asText("unknown");
+            if (totalMatches > 0 || !"low".equalsIgnoreCase(riskLevel)) {
+                throw new RuntimeException("Compliance screening requires review");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to parse compliance screening response", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Compliance screening interrupted", e);
+        }
     }
 
     private CompletableFuture<Void> callStripe(Long transactionId, Double amount) {
@@ -96,17 +128,7 @@ public class PaymentComplianceService {
     }
 
     private CompletableFuture<Void> callComplyAdvantage(Long transactionId) {
-        String body = """
-                {"search_term":"Transaction %d","search_type":"individual","fuzziness":0.6}"""
-                .formatted(transactionId);
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.complyadvantage.com/searches"))
-                .timeout(REQUEST_TIMEOUT)
-                .header("Authorization", "Token " + complyApiKey)
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(body))
-                .build();
+        HttpRequest request = complyRequest("Transaction " + transactionId);
 
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenAccept(resp -> logger.info("ComplyAdvantage response for tx {}: status={}", transactionId, resp.statusCode()))
@@ -114,5 +136,19 @@ public class PaymentComplianceService {
                     logger.warn("ComplyAdvantage call failed for tx {}: {}", transactionId, ex.getMessage());
                     return null;
                 });
+    }
+
+    private HttpRequest complyRequest(String searchTerm) {
+        String body = """
+                {"search_term":"%s","search_type":"individual","fuzziness":0.6}"""
+                .formatted(searchTerm);
+
+        return HttpRequest.newBuilder()
+                .uri(URI.create(complyBaseUrl + "/searches"))
+                .timeout(REQUEST_TIMEOUT)
+                .header("Authorization", "Token " + complyApiKey)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
     }
 }

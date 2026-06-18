@@ -233,6 +233,7 @@ class TransactionServiceTest {
         verify(accountsServiceClient, times(1)).validateAccountOwnership(fromAccountId, httpServletRequest);
         verify(accountsServiceClient, times(1)).getAccountBalance(fromAccountId, httpServletRequest);
         verify(accountsServiceClient, times(1)).getAccountBalance(toAccountId, httpServletRequest);
+        verify(paymentComplianceService, times(1)).verifyTransferCompliance(fromAccountId, toAccountId);
         verify(accountsServiceClient, times(1)).updateAccountBalance(fromAccountId, 400.00, httpServletRequest);
         verify(accountsServiceClient, times(1)).updateAccountBalance(toAccountId, 300.00, httpServletRequest);
         verify(transactionRepository, times(1)).save(any(Transaction.class));
@@ -256,5 +257,29 @@ class TransactionServiceTest {
         verify(accountsServiceClient, times(1)).validateAccountOwnership(fromAccountId, httpServletRequest);
         verify(accountsServiceClient, times(1)).getAccountBalance(fromAccountId, httpServletRequest);
         verify(accountsServiceClient, never()).updateAccountBalance(anyLong(), any(Double.class), any(HttpServletRequest.class));
+    }
+
+    @Test
+    void testTransferComplianceReview() {
+        // Arrange
+        Long fromAccountId = 1L;
+        Long toAccountId = 2L;
+        TransferRequest request = new TransferRequest(fromAccountId, toAccountId, 100.00, "Test transfer");
+
+        when(accountsServiceClient.validateAccountOwnership(fromAccountId, httpServletRequest)).thenReturn(true);
+        when(accountsServiceClient.getAccountBalance(fromAccountId, httpServletRequest)).thenReturn(500.00);
+        when(accountsServiceClient.getAccountBalance(toAccountId, httpServletRequest)).thenReturn(200.00);
+        doThrow(new RuntimeException("Compliance screening requires review"))
+                .when(paymentComplianceService).verifyTransferCompliance(fromAccountId, toAccountId);
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            transactionService.transfer(request, testUserId, httpServletRequest);
+        });
+        assertTrue(exception.getMessage().contains("Compliance screening requires review"));
+
+        verify(paymentComplianceService, times(1)).verifyTransferCompliance(fromAccountId, toAccountId);
+        verify(accountsServiceClient, never()).updateAccountBalance(anyLong(), any(Double.class), any(HttpServletRequest.class));
+        verify(transactionRepository, never()).save(any(Transaction.class));
     }
 }
