@@ -29,7 +29,7 @@ spec:
         command: ['sh', '-c', 'echo "[notification-service] Waiting for Kafka..."; until nc -z banking-kafka 9092; do sleep 1; done; echo "[notification-service] Kafka ready!"']
       containers:
       - name: notification-service
-        image: ghcr.io/speedscale/microsvc/notification-service:v1.4.94
+        image: ghcr.io/speedscale/microsvc/notification-service:v1.4.95
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
