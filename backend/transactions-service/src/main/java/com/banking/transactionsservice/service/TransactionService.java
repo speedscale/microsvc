@@ -16,7 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 @Service
@@ -70,6 +74,8 @@ public class TransactionService {
 
     @Autowired
     private DoubleHistogram transferAmountHistogram;
+
+    private final ConcurrentMap<Long, ReentrantLock> accountLocks = new ConcurrentHashMap<>();
     
     public List<TransactionResponse> getUserTransactions(Long userId) {
         logger.info("Fetching transactions for user: {}", userId);
@@ -87,7 +93,7 @@ public class TransactionService {
                 .collect(Collectors.toList());
     }
     
-    public synchronized TransactionResponse deposit(DepositRequest request, Long userId, HttpServletRequest httpRequest) {
+    public TransactionResponse deposit(DepositRequest request, Long userId, HttpServletRequest httpRequest) {
         logger.info("Processing deposit for user: {}, account: {}, amount: {}",
                    userId, request.getAccountId(), request.getAmount());
 
@@ -104,56 +110,59 @@ public class TransactionService {
             throw new RuntimeException("Account not found or access denied");
         }
         
-        // Get current balance
-        Double currentBalance = accountsServiceClient.getAccountBalance(request.getAccountId(), httpRequest);
-        if (currentBalance == null) {
-            throw new RuntimeException("Unable to retrieve account balance");
-        }
-        
-        // Create transaction record
-        Transaction transaction = new Transaction(
-            userId, 
-            null, 
-            request.getAccountId(), 
-            request.getAmount(),
-            Transaction.TransactionType.DEPOSIT,
-            request.getDescription()
-        );
-        
-        try {
-            // Calculate new balance
-            Double newBalance = currentBalance + request.getAmount();
-            
-            // Update account balance
-            if (!accountsServiceClient.updateAccountBalance(request.getAccountId(), newBalance, httpRequest)) {
-                throw new RuntimeException("Failed to update account balance");
+        Transaction savedTransaction = withAccountLock(request.getAccountId(), () -> {
+            // Get current balance
+            Double currentBalance = accountsServiceClient.getAccountBalance(request.getAccountId(), httpRequest);
+            if (currentBalance == null) {
+                throw new RuntimeException("Unable to retrieve account balance");
             }
-            
-            // Mark transaction as completed
-            transaction.setStatus(Transaction.TransactionStatus.COMPLETED);
-            transaction.setProcessedAt(LocalDateTime.now());
-            
-            Transaction savedTransaction = transactionRepository.save(transaction);
-            logger.info("Deposit completed successfully for transaction: {}", savedTransaction.getId());
 
-            depositAmountHistogram.record(request.getAmount().doubleValue());
-            transactionEventProducer.publishTransactionEvent(savedTransaction);
-            paymentComplianceService.fanOutPaymentAndCompliance(
-                    savedTransaction.getId(), "DEPOSIT", request.getAmount());
+            // Create transaction record
+            Transaction transaction = new Transaction(
+                userId,
+                null,
+                request.getAccountId(),
+                request.getAmount(),
+                Transaction.TransactionType.DEPOSIT,
+                request.getDescription()
+            );
 
-            return convertToResponse(savedTransaction);
-        } catch (Exception e) {
-            // Mark transaction as failed
-            transaction.setStatus(Transaction.TransactionStatus.FAILED);
-            transaction.setProcessedAt(LocalDateTime.now());
-            transactionRepository.save(transaction);
+            try {
+                // Calculate new balance
+                Double newBalance = currentBalance + request.getAmount();
 
-            logger.error("Deposit failed for user: {}, account: {}", userId, request.getAccountId(), e);
-            throw new RuntimeException("Deposit transaction failed: " + e.getMessage());
-        }
+                // Update account balance
+                if (!accountsServiceClient.updateAccountBalance(request.getAccountId(), newBalance, httpRequest)) {
+                    throw new RuntimeException("Failed to update account balance");
+                }
+
+                // Mark transaction as completed
+                transaction.setStatus(Transaction.TransactionStatus.COMPLETED);
+                transaction.setProcessedAt(LocalDateTime.now());
+
+                Transaction completedTransaction = transactionRepository.save(transaction);
+                logger.info("Deposit completed successfully for transaction: {}", completedTransaction.getId());
+                return completedTransaction;
+            } catch (Exception e) {
+                // Mark transaction as failed
+                transaction.setStatus(Transaction.TransactionStatus.FAILED);
+                transaction.setProcessedAt(LocalDateTime.now());
+                transactionRepository.save(transaction);
+
+                logger.error("Deposit failed for user: {}, account: {}", userId, request.getAccountId(), e);
+                throw new RuntimeException("Deposit transaction failed: " + e.getMessage());
+            }
+        });
+
+        depositAmountHistogram.record(request.getAmount().doubleValue());
+        transactionEventProducer.publishTransactionEvent(savedTransaction);
+        paymentComplianceService.fanOutPaymentAndCompliance(
+                savedTransaction.getId(), "DEPOSIT", request.getAmount());
+
+        return convertToResponse(savedTransaction);
     }
     
-    public synchronized TransactionResponse withdraw(WithdrawRequest request, Long userId, HttpServletRequest httpRequest) {
+    public TransactionResponse withdraw(WithdrawRequest request, Long userId, HttpServletRequest httpRequest) {
         logger.info("Processing withdrawal for user: {}, account: {}, amount: {}",
                    userId, request.getAccountId(), request.getAmount());
 
@@ -170,61 +179,64 @@ public class TransactionService {
             throw new RuntimeException("Account not found or access denied");
         }
         
-        // Get current balance
-        Double currentBalance = accountsServiceClient.getAccountBalance(request.getAccountId(), httpRequest);
-        if (currentBalance == null) {
-            throw new RuntimeException("Unable to retrieve account balance");
-        }
-        
-        // Check sufficient balance
-        if (currentBalance < request.getAmount()) {
-            throw new RuntimeException("Insufficient balance for withdrawal");
-        }
-        
-        // Create transaction record
-        Transaction transaction = new Transaction(
-            userId, 
-            request.getAccountId(), 
-            null, 
-            request.getAmount(),
-            Transaction.TransactionType.WITHDRAWAL,
-            request.getDescription()
-        );
-        
-        try {
-            // Calculate new balance
-            Double newBalance = currentBalance - request.getAmount();
-            
-            // Update account balance
-            if (!accountsServiceClient.updateAccountBalance(request.getAccountId(), newBalance, httpRequest)) {
-                throw new RuntimeException("Failed to update account balance");
+        Transaction savedTransaction = withAccountLock(request.getAccountId(), () -> {
+            // Get current balance
+            Double currentBalance = accountsServiceClient.getAccountBalance(request.getAccountId(), httpRequest);
+            if (currentBalance == null) {
+                throw new RuntimeException("Unable to retrieve account balance");
             }
-            
-            // Mark transaction as completed
-            transaction.setStatus(Transaction.TransactionStatus.COMPLETED);
-            transaction.setProcessedAt(LocalDateTime.now());
-            
-            Transaction savedTransaction = transactionRepository.save(transaction);
-            logger.info("Withdrawal completed successfully for transaction: {}", savedTransaction.getId());
 
-            withdrawAmountHistogram.record(request.getAmount().doubleValue());
-            transactionEventProducer.publishTransactionEvent(savedTransaction);
-            paymentComplianceService.fanOutPaymentAndCompliance(
-                    savedTransaction.getId(), "WITHDRAWAL", request.getAmount());
+            // Check sufficient balance
+            if (currentBalance < request.getAmount()) {
+                throw new RuntimeException("Insufficient balance for withdrawal");
+            }
 
-            return convertToResponse(savedTransaction);
-        } catch (Exception e) {
-            // Mark transaction as failed
-            transaction.setStatus(Transaction.TransactionStatus.FAILED);
-            transaction.setProcessedAt(LocalDateTime.now());
-            transactionRepository.save(transaction);
+            // Create transaction record
+            Transaction transaction = new Transaction(
+                userId,
+                request.getAccountId(),
+                null,
+                request.getAmount(),
+                Transaction.TransactionType.WITHDRAWAL,
+                request.getDescription()
+            );
 
-            logger.error("Withdrawal failed for user: {}, account: {}", userId, request.getAccountId(), e);
-            throw new RuntimeException("Withdrawal transaction failed: " + e.getMessage());
-        }
+            try {
+                // Calculate new balance
+                Double newBalance = currentBalance - request.getAmount();
+
+                // Update account balance
+                if (!accountsServiceClient.updateAccountBalance(request.getAccountId(), newBalance, httpRequest)) {
+                    throw new RuntimeException("Failed to update account balance");
+                }
+
+                // Mark transaction as completed
+                transaction.setStatus(Transaction.TransactionStatus.COMPLETED);
+                transaction.setProcessedAt(LocalDateTime.now());
+
+                Transaction completedTransaction = transactionRepository.save(transaction);
+                logger.info("Withdrawal completed successfully for transaction: {}", completedTransaction.getId());
+                return completedTransaction;
+            } catch (Exception e) {
+                // Mark transaction as failed
+                transaction.setStatus(Transaction.TransactionStatus.FAILED);
+                transaction.setProcessedAt(LocalDateTime.now());
+                transactionRepository.save(transaction);
+
+                logger.error("Withdrawal failed for user: {}, account: {}", userId, request.getAccountId(), e);
+                throw new RuntimeException("Withdrawal transaction failed: " + e.getMessage());
+            }
+        });
+
+        withdrawAmountHistogram.record(request.getAmount().doubleValue());
+        transactionEventProducer.publishTransactionEvent(savedTransaction);
+        paymentComplianceService.fanOutPaymentAndCompliance(
+                savedTransaction.getId(), "WITHDRAWAL", request.getAmount());
+
+        return convertToResponse(savedTransaction);
     }
     
-    public synchronized TransactionResponse transfer(TransferRequest request, Long userId, HttpServletRequest httpRequest) {
+    public TransactionResponse transfer(TransferRequest request, Long userId, HttpServletRequest httpRequest) {
         logger.info("Processing transfer for user: {}, from: {}, to: {}, amount: {}",
                    userId, request.getFromAccountId(), request.getToAccountId(), request.getAmount());
 
@@ -241,79 +253,82 @@ public class TransactionService {
             throw new RuntimeException("From account not found or access denied");
         }
         
-        // Get current balance of from account
-        Double fromBalance = accountsServiceClient.getAccountBalance(request.getFromAccountId(), httpRequest);
-        if (fromBalance == null) {
-            throw new RuntimeException("Unable to retrieve from account balance");
-        }
-        
-        // Check sufficient balance
-        if (fromBalance < request.getAmount()) {
-            throw new RuntimeException("Insufficient balance for transfer");
-        }
-        
-        // Get current balance of to account (validate it exists)
-        Double toBalance = accountsServiceClient.getAccountBalance(request.getToAccountId(), httpRequest);
-        if (toBalance == null) {
-            throw new RuntimeException("To account not found or inaccessible");
-        }
-
         paymentComplianceService.verifyTransferCompliance(
                 request.getFromAccountId(), request.getToAccountId());
         
-        // Create transaction record
-        Transaction transaction = new Transaction(
-            userId, 
-            request.getFromAccountId(), 
-            request.getToAccountId(), 
-            request.getAmount(),
-            Transaction.TransactionType.TRANSFER,
-            request.getDescription()
-        );
-        
-        try {
-            // Calculate new balances
-            Double newFromBalance = fromBalance - request.getAmount();
-            Double newToBalance = toBalance + request.getAmount();
-            
-            // Update from account balance
-            if (!accountsServiceClient.updateAccountBalance(request.getFromAccountId(), newFromBalance, httpRequest)) {
-                throw new RuntimeException("Failed to update from account balance");
+        Transaction savedTransaction = withAccountLocks(request.getFromAccountId(), request.getToAccountId(), () -> {
+            // Get current balance of from account
+            Double fromBalance = accountsServiceClient.getAccountBalance(request.getFromAccountId(), httpRequest);
+            if (fromBalance == null) {
+                throw new RuntimeException("Unable to retrieve from account balance");
             }
-            
-            // Update to account balance
-            if (!accountsServiceClient.updateAccountBalance(request.getToAccountId(), newToBalance, httpRequest)) {
-                // Rollback from account balance
-                accountsServiceClient.updateAccountBalance(request.getFromAccountId(), fromBalance, httpRequest);
-                throw new RuntimeException("Failed to update to account balance");
+
+            // Check sufficient balance
+            if (fromBalance < request.getAmount()) {
+                throw new RuntimeException("Insufficient balance for transfer");
             }
-            
-            // Mark transaction as completed
-            transaction.setStatus(Transaction.TransactionStatus.COMPLETED);
-            transaction.setProcessedAt(LocalDateTime.now());
-            
-            Transaction savedTransaction = transactionRepository.save(transaction);
-            logger.info("Transfer completed successfully for transaction: {}", savedTransaction.getId());
 
-            transferAmountHistogram.record(request.getAmount().doubleValue());
-            transactionEventProducer.publishTransactionEvent(savedTransaction);
-            paymentComplianceService.fanOutPaymentAndCompliance(
-                    savedTransaction.getId(), "TRANSFER", request.getAmount());
+            // Get current balance of to account (validate it exists)
+            Double toBalance = accountsServiceClient.getAccountBalance(request.getToAccountId(), httpRequest);
+            if (toBalance == null) {
+                throw new RuntimeException("To account not found or inaccessible");
+            }
 
-            return convertToResponse(savedTransaction);
-        } catch (Exception e) {
-            // Mark transaction as failed
-            transaction.setStatus(Transaction.TransactionStatus.FAILED);
-            transaction.setProcessedAt(LocalDateTime.now());
-            transactionRepository.save(transaction);
+            // Create transaction record
+            Transaction transaction = new Transaction(
+                userId,
+                request.getFromAccountId(),
+                request.getToAccountId(),
+                request.getAmount(),
+                Transaction.TransactionType.TRANSFER,
+                request.getDescription()
+            );
 
-            logger.error("Transfer failed for user: {}, from: {}, to: {}",
-                        userId, request.getFromAccountId(), request.getToAccountId(), e);
-            throw new RuntimeException("Transfer transaction failed: " + e.getMessage());
-        }
+            try {
+                // Calculate new balances
+                Double newFromBalance = fromBalance - request.getAmount();
+                Double newToBalance = toBalance + request.getAmount();
+
+                // Update from account balance
+                if (!accountsServiceClient.updateAccountBalance(request.getFromAccountId(), newFromBalance, httpRequest)) {
+                    throw new RuntimeException("Failed to update from account balance");
+                }
+
+                // Update to account balance
+                if (!accountsServiceClient.updateAccountBalance(request.getToAccountId(), newToBalance, httpRequest)) {
+                    // Rollback from account balance
+                    accountsServiceClient.updateAccountBalance(request.getFromAccountId(), fromBalance, httpRequest);
+                    throw new RuntimeException("Failed to update to account balance");
+                }
+
+                // Mark transaction as completed
+                transaction.setStatus(Transaction.TransactionStatus.COMPLETED);
+                transaction.setProcessedAt(LocalDateTime.now());
+
+                Transaction completedTransaction = transactionRepository.save(transaction);
+                logger.info("Transfer completed successfully for transaction: {}", completedTransaction.getId());
+                return completedTransaction;
+            } catch (Exception e) {
+                // Mark transaction as failed
+                transaction.setStatus(Transaction.TransactionStatus.FAILED);
+                transaction.setProcessedAt(LocalDateTime.now());
+                transactionRepository.save(transaction);
+
+                logger.error("Transfer failed for user: {}, from: {}, to: {}",
+                            userId, request.getFromAccountId(), request.getToAccountId(), e);
+                throw new RuntimeException("Transfer transaction failed: " + e.getMessage());
+            }
+        });
+
+        transferAmountHistogram.record(request.getAmount().doubleValue());
+        transactionEventProducer.publishTransactionEvent(savedTransaction);
+        paymentComplianceService.fanOutPaymentAndCompliance(
+                savedTransaction.getId(), "TRANSFER", request.getAmount());
+
+        return convertToResponse(savedTransaction);
     }
     
-    public synchronized TransactionResponse createTransaction(CreateTransactionRequest request, Long userId, HttpServletRequest httpRequest) {
+    public TransactionResponse createTransaction(CreateTransactionRequest request, Long userId, HttpServletRequest httpRequest) {
         logger.info("Creating transaction for user: {}, account: {}, type: {}, amount: {}", 
                    userId, request.getAccountId(), request.getType(), request.getAmount());
         
@@ -346,6 +361,52 @@ public class TransactionService {
             default:
                 throw new RuntimeException("Invalid transaction type: " + request.getType());
         }
+    }
+
+    private <T> T withAccountLock(Long accountId, LockedOperation<T> operation) {
+        ReentrantLock lock = getAccountLock(accountId);
+        lock.lock();
+        try {
+            return operation.execute();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private <T> T withAccountLocks(Long firstAccountId, Long secondAccountId, LockedOperation<T> operation) {
+        Objects.requireNonNull(firstAccountId, "firstAccountId must not be null");
+        Objects.requireNonNull(secondAccountId, "secondAccountId must not be null");
+
+        if (Objects.equals(firstAccountId, secondAccountId)) {
+            return withAccountLock(firstAccountId, operation);
+        }
+
+        Long lowerAccountId = Long.compare(firstAccountId, secondAccountId) < 0 ? firstAccountId : secondAccountId;
+        Long higherAccountId = Long.compare(firstAccountId, secondAccountId) < 0 ? secondAccountId : firstAccountId;
+        ReentrantLock firstLock = getAccountLock(lowerAccountId);
+        ReentrantLock secondLock = getAccountLock(higherAccountId);
+
+        firstLock.lock();
+        try {
+            secondLock.lock();
+            try {
+                return operation.execute();
+            } finally {
+                secondLock.unlock();
+            }
+        } finally {
+            firstLock.unlock();
+        }
+    }
+
+    private ReentrantLock getAccountLock(Long accountId) {
+        Objects.requireNonNull(accountId, "accountId must not be null");
+        return accountLocks.computeIfAbsent(accountId, ignored -> new ReentrantLock());
+    }
+
+    @FunctionalInterface
+    private interface LockedOperation<T> {
+        T execute();
     }
     
     private TransactionResponse convertToResponse(Transaction transaction) {
