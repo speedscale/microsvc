@@ -60,7 +60,7 @@ class TransactionRollbackTest {
     void setUp() {
         transactionRepository.deleteAll();
         // Fraud service approves all transactions by default in tests
-        when(fraudServiceClient.checkTransaction(anyString(), anyString(), anyDouble(), anyString()))
+        when(fraudServiceClient.checkTransaction(anyString(), anyString(), anyDouble(), anyString(), anyString()))
                 .thenReturn(FraudCheckResponse.newBuilder().setApproved(true).setRiskScore(0.0).setReason("OK").build());
     }
 
