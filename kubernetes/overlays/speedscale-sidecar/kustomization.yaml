@@ -1,0 +1,111 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Sidecar-mode variant of the speedscale overlay.
+#
+# Inherits the full speedscale overlay (responder TRs, observability, metrics
+# services) and overrides the per-deployment annotation patches so each
+# banking workload runs with the speedscale-goproxy sidecar injected at
+# admission, instead of being routed to nettap (eBPF) by
+# capture.speedscale.com/enabled. eBPF and sidecar injection are mutually
+# exclusive in the operator (operator/webhook/admission.go), so flipping each
+# workload requires removing the capture.speedscale.com/* annotations and
+# adding the sidecar.speedscale.com/* ones.
+#
+# Used by staging-decoy, where we want goproxy in path so outbound rrpairs
+# show up in the live tap and replays can compare per-request bodies.
+# dev-decoy stays on the eBPF overlay.
+
+resources:
+  - ../speedscale
+
+patches:
+  - target:
+      kind: Deployment
+      name: banking-ai
+    patch: |-
+      - op: remove
+        path: /metadata/annotations/capture.speedscale.com~1enabled
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1inject
+        value: "true"
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1tls-out
+        value: "true"
+
+  - target:
+      kind: Deployment
+      name: banking-gateway
+    patch: |-
+      - op: remove
+        path: /metadata/annotations/capture.speedscale.com~1enabled
+      - op: remove
+        path: /metadata/annotations/capture.speedscale.com~1java-agent
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1inject
+        value: "true"
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1tls-out
+        value: "true"
+
+  - target:
+      kind: Deployment
+      name: banking-transactions
+    patch: |-
+      - op: remove
+        path: /metadata/annotations/capture.speedscale.com~1enabled
+      - op: remove
+        path: /metadata/annotations/capture.speedscale.com~1java-agent
+      - op: remove
+        path: /metadata/annotations/capture.speedscale.com~1ignore-ports
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1inject
+        value: "true"
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1tls-out
+        value: "true"
+
+  - target:
+      kind: Deployment
+      name: banking-accounts
+    patch: |-
+      - op: remove
+        path: /metadata/annotations/capture.speedscale.com~1enabled
+      - op: remove
+        path: /metadata/annotations/capture.speedscale.com~1java-agent
+      - op: remove
+        path: /metadata/annotations/capture.speedscale.com~1ignore-ports
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1inject
+        value: "true"
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1tls-out
+        value: "true"
+
+  - target:
+      kind: Deployment
+      name: banking-user
+    patch: |-
+      - op: remove
+        path: /metadata/annotations/capture.speedscale.com~1enabled
+      - op: remove
+        path: /metadata/annotations/capture.speedscale.com~1ignore-ports
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1inject
+        value: "true"
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1tls-out
+        value: "true"
+
+  - target:
+      kind: Deployment
+      name: banking-frontend
+    patch: |-
+      - op: remove
+        path: /metadata/annotations/capture.speedscale.com~1enabled
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1inject
+        value: "true"
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1tls-out
+        value: "true"
