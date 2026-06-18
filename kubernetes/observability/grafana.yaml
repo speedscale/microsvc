@@ -95,7 +95,7 @@ spec:
             - name: GF_USERS_VIEWERS_CAN_EDIT
               value: "true"
             - name: GF_SERVER_ROOT_URL
-              value: https://apex-grafana.trafficreplay.com
+              value: "%(protocol)s://%(domain)s/"
             - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
               value: /var/lib/grafana/dashboards/app/banking-app-health.json
           volumeMounts:

@@ -64,7 +64,7 @@ func fanOutExternalChecks(ctx context.Context, req *fraudv1.TransactionRequest) 
 }
 
 func callStripeRadar(ctx context.Context, req *fraudv1.TransactionRequest) ExternalResult {
-	apiKey := envOrDefault("STRIPE_API_KEY", "sk_test_fake_key_for_demo")
+	apiKey := envOrDefault("STRIPE_API_KEY", "sk_test_placeholder_key")
 
 	form := url.Values{}
 	form.Set("value_list", "rsl_fraud_demo")
@@ -95,7 +95,7 @@ func callStripeRadar(ctx context.Context, req *fraudv1.TransactionRequest) Exter
 }
 
 func callSiftScience(ctx context.Context, req *fraudv1.TransactionRequest) ExternalResult {
-	apiKey := envOrDefault("SIFT_API_KEY", "fake_sift_key_for_demo")
+	apiKey := envOrDefault("SIFT_API_KEY", "placeholder_sift_key")
 
 	body := map[string]interface{}{
 		"$api_key":         apiKey,
@@ -138,7 +138,7 @@ func callSiftScience(ctx context.Context, req *fraudv1.TransactionRequest) Exter
 
 func callMaxMind(ctx context.Context, req *fraudv1.TransactionRequest) ExternalResult {
 	accountID := envOrDefault("MAXMIND_ACCOUNT_ID", "000000")
-	licenseKey := envOrDefault("MAXMIND_LICENSE_KEY", "fake_maxmind_key_for_demo")
+	licenseKey := envOrDefault("MAXMIND_LICENSE_KEY", "placeholder_maxmind_key")
 
 	body := map[string]interface{}{
 		"device": map[string]string{

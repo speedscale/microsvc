@@ -25,10 +25,10 @@ public class FinancialDataService {
     @Value("${PLAID_SECRET:test_secret}")
     private String plaidSecret;
 
-    @Value("${EXCHANGE_RATES_APP_ID:demo_app_id}")
+    @Value("${EXCHANGE_RATES_APP_ID:placeholder_app_id}")
     private String exchangeRatesAppId;
 
-    @Value("${MOODYS_API_KEY:demo_moodys_key}")
+    @Value("${MOODYS_API_KEY:placeholder_moodys_key}")
     private String moodysApiKey;
 
     @Value("${MOODYS_API_URL:https://api.ratings.moodys.com/research/v1/ratings?identifier=test}")

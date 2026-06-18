@@ -141,7 +141,7 @@ const LoginForm: React.FC = () => {
 
           <div className="mt-4 p-3 bg-gray-100 rounded-md border border-gray-200">
             <p className="text-xs text-gray-500 text-center">
-              Demo credentials: <span className="font-mono font-medium text-gray-700">demo_user</span> / <span className="font-mono font-medium text-gray-700">Demo1234!</span>
+              Seeded account: <span className="font-mono font-medium text-gray-700">seed_user</span> / <span className="font-mono font-medium text-gray-700">Seed1234!</span>
             </p>
           </div>
         </div>

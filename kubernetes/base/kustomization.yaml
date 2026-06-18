@@ -52,8 +52,8 @@ resources:
   - services/frontend-service.yaml
   - services/frontend-service-nodeport.yaml
 
-  # Demo data seeding
-  - jobs/seed-demo-user.yaml
+  # Seed user account
+  - jobs/seed-user-pool.yaml
 
 namespace: banking-app
 

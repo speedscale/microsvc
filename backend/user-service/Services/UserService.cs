@@ -25,7 +25,7 @@ public class UserService
         _db = db;
         _idVerification = idVerification;
         _logger = logger;
-        _jwtSecret = configuration["JWT_SECRET"] ?? "demo-jwt-secret-key-for-banking-app";
+        _jwtSecret = configuration["JWT_SECRET"] ?? "local-jwt-secret-key-for-banking-app";
     }
 
     public async Task<User> RegisterUser(string username, string email, string password)

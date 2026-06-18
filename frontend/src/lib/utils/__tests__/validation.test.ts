@@ -66,7 +66,7 @@ describe('Validation Schemas', () => {
         email: 'test@example.com',
         password: 'password123',
         confirmPassword: 'password123',
-        generateDemoData: false,
+        seedAccountData: false,
       };
 
       const result = registerSchema.safeParse(validData);
@@ -79,7 +79,7 @@ describe('Validation Schemas', () => {
         email: 'test@example.com',
         password: 'password123',
         confirmPassword: 'password123',
-        generateDemoData: false,
+        seedAccountData: false,
       };
 
       const result = registerSchema.safeParse(invalidData);
@@ -95,7 +95,7 @@ describe('Validation Schemas', () => {
         email: 'test@example.com',
         password: 'password123',
         confirmPassword: 'password123',
-        generateDemoData: false,
+        seedAccountData: false,
       };
 
       const result = registerSchema.safeParse(invalidData);
@@ -111,7 +111,7 @@ describe('Validation Schemas', () => {
         email: 'invalid-email',
         password: 'password123',
         confirmPassword: 'password123',
-        generateDemoData: false,
+        seedAccountData: false,
       };
 
       const result = registerSchema.safeParse(invalidData);
@@ -127,7 +127,7 @@ describe('Validation Schemas', () => {
         email: 'test@example.com',
         password: 'password123',
         confirmPassword: 'differentpassword',
-        generateDemoData: false,
+        seedAccountData: false,
       };
 
       const result = registerSchema.safeParse(invalidData);
@@ -409,4 +409,4 @@ describe('Validation Schemas', () => {
       expect(result.success).toBe(false);
     });
   });
-}); 
+});

@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: seed-demo-user
+  name: seed-user-pool
   namespace: banking-app
   annotations:
     argocd.argoproj.io/hook: PostSync
@@ -20,12 +20,12 @@ spec:
             - |
               echo "Waiting for user-service..."
               until wget -q -O- http://banking-gateway:80/api/healthz 2>/dev/null; do sleep 5; done
-              echo "Registering demo user..."
-              wget -q -O- --post-data='{"username":"demo_user","email":"demo@apexbanking.com","password":"Demo1234!"}' \
+              echo "Registering seeded user..."
+              wget -q -O- --post-data='{"username":"seed_user","email":"seed.user@apexbanking.com","password":"Seed1234!"}' \
                 --header='Content-Type: application/json' \
                 http://banking-gateway:80/api/users/register 2>&1 || echo "User may already exist"
               echo "Logging in..."
-              TOKEN=$(wget -q -O- --post-data='{"usernameOrEmail":"demo_user","password":"Demo1234!"}' \
+              TOKEN=$(wget -q -O- --post-data='{"usernameOrEmail":"seed_user","password":"Seed1234!"}' \
                 --header='Content-Type: application/json' \
                 http://banking-gateway:80/api/users/login 2>&1 | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
               if [ -z "$TOKEN" ]; then echo "Login failed"; exit 1; fi
@@ -55,4 +55,4 @@ spec:
                   http://banking-gateway:80/api/transactions 2>&1 || true
                 sleep 2
               done
-              echo "Demo user seeded."
+              echo "Seed user ready."

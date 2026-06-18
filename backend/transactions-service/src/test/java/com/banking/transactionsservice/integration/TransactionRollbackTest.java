@@ -252,7 +252,7 @@ class TransactionRollbackTest {
 
         // Act & Assert
         // This test would require injecting a mock repository or using a different approach
-        // For demonstration, we'll test that the transaction is atomic by verifying
+        // Verify the transaction is atomic by checking
         // that either all operations succeed or all fail
     }
 

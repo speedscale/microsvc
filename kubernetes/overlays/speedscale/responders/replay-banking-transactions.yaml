@@ -10,6 +10,9 @@ spec:
   snapshotID: c7bc4b14-40bd-46ae-88fd-f366b36de453
   testConfigID: banking-mock-fail-closed
   mode: responder-only
+  sidecar:
+    tls:
+      out: true
   workloadRef:
     kind: Deployment
     name: banking-transactions
