@@ -122,9 +122,8 @@ The simulation client is configured via environment variables:
 - Amount ranges for each transaction type
 
 ### User Pool Settings
-- `USER_PREFIX`: Prefix for simulation usernames (default: sim_user_)
-- `TOTAL_USERS`: Number of pre-seeded users (default: 1000)
-- `SIM_USER_PASSWORD`: Password for simulation users
+- `TOTAL_USERS`: Number of pre-seeded named users (default: 1000)
+- `SIM_USER_PASSWORD`: Password for pre-seeded users
 
 ## Database Setup
 
@@ -140,7 +139,7 @@ make migrate-simulation-users
 ```
 
 This creates:
-- 1000 simulation users (`sim_user_001` to `sim_user_1000`)
+- 1000 locale-matched named users
 - Realistic account balances ($100 - $50,000)
 - Transaction history
 - Multiple account types (checking, savings, investment)

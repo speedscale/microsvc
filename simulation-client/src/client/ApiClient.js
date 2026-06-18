@@ -254,18 +254,8 @@ class ApiClient {
     });
   }
 
-  async askAIChat(message, token) {
-    // Pick a locale per session so the assistant reply is tagged for the
-    // user's region. No retry wrapper — chat is non-idempotent and
-    // re-sending the same prompt on transient failure is the wrong UX.
-    const LOCALES = [
-      'en-US','es-MX',
-      'ja-JP','ja-JP','ja-JP','zh-CN','zh-CN','zh-CN',
-      'ko-KR','ko-KR',
-    ];
-
-    const locale = LOCALES[Math.floor(Math.random() * LOCALES.length)];
-    const response = await this.client.post('/api/ai/chat', { message, locale }, {
+  async askAIChat(message, token, locale = 'en-US', accountContext = '') {
+    const response = await this.client.post('/api/ai/chat', { message, locale, accountContext }, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;

@@ -139,7 +139,7 @@ check-simulation-users: ## Check if simulation users exist
 	@echo "Checking simulation users in database..."
 	kubectl exec -it deployment/postgres -n $(NAMESPACE) -- \
 		psql -U postgres -d banking_app -c \
-		"SELECT COUNT(*) as simulation_users FROM users WHERE username LIKE 'sim_user_%';"
+		"SELECT COUNT(*) as seeded_users FROM users WHERE email LIKE '%@northbridge.example';"
 
 # Monitoring targets
 .PHONY: metrics
@@ -176,7 +176,6 @@ env-example: ## Create example environment file
 	RETRY_DELAY=1000
 	
 	# User pool
-	USER_PREFIX=sim_user_
 	TOTAL_USERS=1000
 	SIM_USER_PASSWORD=SimUser123!
 	

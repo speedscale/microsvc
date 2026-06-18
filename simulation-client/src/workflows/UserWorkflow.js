@@ -1,6 +1,7 @@
 const logger = require('../utils/logger');
 const config = require('../config');
 const User = require('../models/User');
+const { getQuestionsForLocale } = require('../models/personas');
 
 class UserWorkflow {
   constructor(apiClient) {
@@ -530,19 +531,20 @@ class UserWorkflow {
   }
 
   async askAIAssistant(user) {
-    const questions = [
-      "What's my account balance?",
-      'Show me my recent transactions',
-      'Am I spending too much?',
-      'What are my biggest expenses?',
-    ];
+    const questions = getQuestionsForLocale(user.locale);
     const question = questions[Math.floor(Math.random() * questions.length)];
+    const accountContext = [
+      `Customer: ${user.displayName}`,
+      `Locale: ${user.locale}`,
+      `Account count: ${user.accounts?.length || 0}`,
+    ].join('\n');
 
     try {
-      logger.debug('Asking AI assistant', { userId: user.id, question });
-      const result = await this.apiClient.askAIChat(question, user.token);
+      logger.debug('Asking AI assistant', { userId: user.id, locale: user.locale, question });
+      const result = await this.apiClient.askAIChat(question, user.token, user.locale, accountContext);
       logger.info('AI assistant responded', {
         userId: user.id,
+        locale: user.locale,
         questionLength: question.length,
         responseLength: result?.message?.length || 0,
       });

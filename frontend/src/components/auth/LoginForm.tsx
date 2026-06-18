@@ -141,7 +141,14 @@ const LoginForm: React.FC = () => {
 
           <div className="mt-4 p-3 bg-gray-100 rounded-md border border-gray-200">
             <p className="text-xs text-gray-500 text-center">
-              Seeded account: <span className="font-mono font-medium text-gray-700">seed_user</span> / <span className="font-mono font-medium text-gray-700">Seed1234!</span>
+              Try Harper Clark:{' '}
+              <span className="font-mono font-medium text-gray-700">
+                harper.clark.001
+              </span>{' '}
+              /{' '}
+              <span className="font-mono font-medium text-gray-700">
+                SimUser123!
+              </span>
             </p>
           </div>
         </div>
