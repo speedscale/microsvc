@@ -14,6 +14,11 @@ message TransactionRequest {
   double amount = 3;
   // e.g. "DEPOSIT", "WITHDRAWAL", "TRANSFER"
   string transaction_type = 4;
+  // ISO 18245 merchant category code (4 digits). Used by fraud-service to
+  // decide whether to escalate to external providers (Sift, Stripe Radar,
+  // MaxMind) — high-risk MCCs get the full external check, low-risk ones
+  // are scored on the rule engine alone.
+  string merchant_category = 5;
 }
 
 message FraudCheckResponse {

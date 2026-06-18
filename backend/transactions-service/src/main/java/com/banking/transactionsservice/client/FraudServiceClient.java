@@ -16,13 +16,14 @@ public class FraudServiceClient {
     @GrpcClient("fraud-service")
     private FraudCheckerGrpc.FraudCheckerBlockingStub fraudCheckerStub;
 
-    public FraudCheckResponse checkTransaction(String accountId, String userId, double amount, String transactionType) {
+    public FraudCheckResponse checkTransaction(String accountId, String userId, double amount, String transactionType, String merchantCategory) {
         try {
             TransactionRequest request = TransactionRequest.newBuilder()
                     .setAccountId(accountId)
                     .setUserId(userId)
                     .setAmount(amount)
                     .setTransactionType(transactionType)
+                    .setMerchantCategory(merchantCategory == null ? "" : merchantCategory)
                     .build();
 
             FraudCheckResponse response = fraudCheckerStub.checkTransaction(request);

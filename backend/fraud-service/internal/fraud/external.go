@@ -104,6 +104,7 @@ func callSiftScience(ctx context.Context, req *fraudv1.TransactionRequest) Exter
 		"$user_id":         req.GetUserId(),
 		"$currency_code":   "USD",
 		"$transaction_id":  fmt.Sprintf("%s-%d", req.GetAccountId(), time.Now().UnixMilli()),
+		"$mcc":             req.GetMerchantCategory(),
 	}
 
 	payload, err := json.Marshal(body)

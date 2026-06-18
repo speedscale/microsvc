@@ -69,7 +69,7 @@ class TransactionServiceTest {
     @BeforeEach
     void setUp() {
         // Fraud service approves all transactions by default in unit tests
-        when(fraudServiceClient.checkTransaction(anyString(), anyString(), anyDouble(), anyString()))
+        when(fraudServiceClient.checkTransaction(anyString(), anyString(), anyDouble(), anyString(), anyString()))
                 .thenReturn(FraudCheckResponse.newBuilder().setApproved(true).setRiskScore(0.0).setReason("OK").build());
 
         testTransaction = new Transaction();
