@@ -17,7 +17,7 @@ public class UsersController : ControllerBase
         _logger = logger;
     }
 
-    public record RegisterRequest(string Username, string Email, string Password, bool? GenerateDemoData);
+    public record RegisterRequest(string Username, string Email, string Password, bool? SeedAccountData);
     public record LoginRequest(string UsernameOrEmail, string Password);
 
     [HttpPost("register")]

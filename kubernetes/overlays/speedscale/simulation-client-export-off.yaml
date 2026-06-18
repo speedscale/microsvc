@@ -1,5 +1,4 @@
-# Statement export hits real S3 (not a host the responders mock), so under the
-# responder-only, zero-egress demo it would 500 on dummy AWS creds. Disable it.
+# Statement export needs object storage that is not present in this overlay.
 apiVersion: v1
 kind: ConfigMap
 metadata:

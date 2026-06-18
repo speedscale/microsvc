@@ -33,9 +33,9 @@ type Notifier struct {
 func NewNotifier() *Notifier {
 	return &Notifier{
 		client:          &http.Client{Timeout: 5 * time.Second},
-		sendgridKey:     envOr("SENDGRID_API_KEY", "SG.mock-key-for-speedscale-demo"),
-		twilioSID:       envOr("TWILIO_ACCOUNT_SID", "AC-mock-sid-for-speedscale-demo"),
-		twilioToken:     envOr("TWILIO_AUTH_TOKEN", "mock-token-for-speedscale-demo"),
+		sendgridKey:     envOr("SENDGRID_API_KEY", "SG.placeholder-key"),
+		twilioSID:       envOr("TWILIO_ACCOUNT_SID", "ACplaceholder000000000000000000000"),
+		twilioToken:     envOr("TWILIO_AUTH_TOKEN", "placeholder-token"),
 		slackWebhookURL: envOr("SLACK_WEBHOOK_URL", "https://slack-webhook.example.com/mock-webhook"),
 	}
 }

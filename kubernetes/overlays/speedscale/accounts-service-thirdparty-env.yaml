@@ -30,10 +30,5 @@ spec:
             secretKeyRef:
               name: banking-thirdparty-keys
               key: MOODYS_API_KEY
-        # S3 statement export is intentionally left unconfigured here: there is
-        # no object store in this environment and S3 is not a responder-mocked
-        # host, so a real PutObject would egress to AWS and fail on dummy creds.
-        # With AWS_S3_BUCKET unset, StatementExportService.isConfigured() is
-        # false and the controller returns the statement inline (2xx, zero
-        # egress) instead of 500. Re-add the bucket + working creds (or an
-        # in-cluster/MinIO endpoint) to exercise the real upload path.
+        # Statement export is left unconfigured in this overlay because there
+        # is no object store backing the upload path.

@@ -12,6 +12,9 @@ spec:
   testConfigID: banking-mock-fail-closed
   # responder-only = fail-closed: 404 on no-match, NO passthrough to real dependency
   mode: responder-only
+  sidecar:
+    tls:
+      out: true
   workloadRef:
     kind: Deployment
     name: banking-accounts

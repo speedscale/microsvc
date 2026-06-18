@@ -67,7 +67,7 @@ const config = {
     },
 
     // Scheduled error spikes: crank error probability at fixed minutes each hour
-    // so every 30-min demo window has a visible spike to investigate.
+    // so short observation windows have a visible spike to investigate.
     errorSpike: {
       enabled: (process.env.ERROR_SPIKE_ENABLED || 'true') === 'true',
       probability: parseFloat(process.env.ERROR_SPIKE_PROBABILITY) || 0.6,

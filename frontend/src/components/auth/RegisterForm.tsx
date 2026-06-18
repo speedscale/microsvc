@@ -29,9 +29,8 @@ const RegisterForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Extract registration data, excluding confirmPassword
-      const { confirmPassword, generateDemoData, ...registrationData } = data;
-      const response = await registerUser({ ...registrationData, generateDemoData });
+      const { confirmPassword, seedAccountData, ...registrationData } = data;
+      const response = await registerUser({ ...registrationData, seedAccountData });
       
       if (response.success) {
         showSuccess(
@@ -121,13 +120,13 @@ const RegisterForm: React.FC = () => {
 
               <div className="flex items-center">
                 <input
-                  id="generate-demo-data"
+                  id="seed-account-data"
                   type="checkbox"
-                  {...register('generateDemoData')}
+                  {...register('seedAccountData')}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <label htmlFor="generate-demo-data" className="ml-2 block text-sm text-gray-900">
-                  Generate demo data (2 accounts and 10 transactions)
+                <label htmlFor="seed-account-data" className="ml-2 block text-sm text-gray-900">
+                  Create sample accounts and transactions
                 </label>
               </div>
             </div>

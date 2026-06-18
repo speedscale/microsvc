@@ -1,8 +1,8 @@
-# Banking Application — Microservices Demo
+# Banking Application - Microservices
 
-A multi-language banking application built as a Speedscale demo. Shows a realistic microservices stack with HTTP, gRPC, Kafka, Postgres, MongoDB, and 5 LLM provider integrations — and demonstrates how Speedscale replays captured production traffic against locally isolated services with mocked third-party dependencies.
+A multi-language banking application with HTTP, gRPC, Kafka, Postgres, MongoDB, and LLM provider integrations. The stack is designed for local development, Kubernetes deployment, observability, and traffic-based service isolation.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Run Everything Locally (Docker Compose)
 ```bash
@@ -18,7 +18,7 @@ open http://localhost:16686     # Jaeger
 
 ### Deploy to Kubernetes
 ```bash
-# Deploy the full app + Speedscale overlay (responder mocks for every third party)
+# Deploy the full app with traffic replay support
 kubectl apply -k kubernetes/overlays/speedscale/
 
 # Or deploy without Speedscale routing
@@ -33,7 +33,7 @@ kubectl apply -k kubernetes/overlays/local/
 
 | Service | Language | Purpose |
 |---|---|---|
-| `api-gateway` | Java (Spring Cloud Gateway) | Edge router, JWT auth, optional fault injection |
+| `api-gateway` | Java (Spring Cloud Gateway) | Edge router, JWT auth, and edge resilience controls |
 | `user-service` | Java (Spring Boot) | Authentication, profile management |
 | `accounts-service` | Java (Spring Boot) | Account + balance management, Plaid integration |
 | `transactions-service` | Java (Spring Boot) | Transaction processing, Stripe / PayPal / ComplyAdvantage integrations |
@@ -42,13 +42,13 @@ kubectl apply -k kubernetes/overlays/local/
 | `notification-service` | Go | Slack / SendGrid / Twilio fan-out for transaction events from Kafka |
 | `mongo-service` | Java | Mongo-backed user-data store |
 | `frontend` | Next.js 15 / React 19 | Server-side proxy + UI |
-| `simulation-client` | Node.js | Drives realistic user-session traffic with burst patterns + intentional error injection |
+| `simulation-client` | Node.js | Drives realistic user-session traffic with burst and negative-path patterns |
 
 **Storage / messaging:** PostgreSQL (per-service schemas), MongoDB, Kafka (transaction event stream).
 
-**Observability:** OpenTelemetry → otel-collector → Jaeger (traces) + Prometheus (metrics) + Loki (logs) + Grafana (dashboards).
+**Observability:** OpenTelemetry -> otel-collector -> Jaeger (traces) + Prometheus (metrics) + Loki (logs) + Grafana (dashboards).
 
-How **OpenTelemetry trace data** is processed in-process (SDK) and after export (OTLP → collector on Kubernetes, or direct to Jaeger in Docker Compose) is documented with Mermaid diagrams in [OBSERVABILITY.md — OpenTelemetry trace data processing](./OBSERVABILITY.md#opentelemetry-trace-data-processing) and [architecture.md — OTel trace data processing](./architecture.md#otel-trace-data-processing).
+How **OpenTelemetry trace data** is processed in-process (SDK) and after export (OTLP -> collector on Kubernetes, or direct to Jaeger in Docker Compose) is documented with Mermaid diagrams in [OBSERVABILITY.md - OpenTelemetry trace data processing](./OBSERVABILITY.md#opentelemetry-trace-data-processing) and [architecture.md - OTel trace data processing](./architecture.md#otel-trace-data-processing).
 
 ```mermaid
 flowchart LR
@@ -103,7 +103,7 @@ flowchart LR
   notif --> messaging
 ```
 
-## Speedscale Demo
+## Traffic Replay
 
 The `speedscale` overlay deploys the app alongside the Speedscale operator and binds every service to a recorded snapshot via a `TrafficReplay` (responder-only mode):
 
@@ -116,7 +116,7 @@ The `speedscale` overlay deploys the app alongside the Speedscale operator and b
 | `banking-notification` | Slack, SendGrid, Twilio |
 | `banking-user` | Auth dependencies |
 
-The operator's mutating webhook injects a `speedscale-initproxy-responder` init container into each app pod, which rewrites `/etc/hosts` so outbound third-party hostnames resolve to the in-cluster responder. The responder matches each outbound request by signature (host + method + URL path + body shape) and serves the recorded response — zero egress, deterministic, no real credentials needed.
+The operator's mutating webhook injects a `speedscale-initproxy-responder` init container into each app pod, which rewrites `/etc/hosts` so outbound third-party hostnames resolve to the in-cluster responder. The responder matches each outbound request by signature (host + method + URL path + body shape) and serves the recorded response.
 
 A PostSync hook (`kubernetes/overlays/speedscale/responders/tr-postsync-reroll.yaml`) rolls any workload whose pods are missing the responder init container after every ArgoCD sync, so a webhook race during a rolling deploy can't silently disable the responder for one of the services.
 
@@ -220,7 +220,7 @@ make proxymock-stop    # Stop all proxymock processes
 - **Speedscale integration**: Responder mocks for every third party, deterministic replay
 - **Development Tools**: Service-specific Makefiles with proxymock integration
 - **Container Ready**: Docker and Kubernetes deployment configurations
-- **Load generation**: Simulation client drives realistic burst traffic with configurable error injection
+- **Load generation**: Simulation client drives realistic burst traffic with configurable negative-path coverage
 
 ## Version Management
 

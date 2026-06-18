@@ -45,7 +45,7 @@ describe('RegisterForm', () => {
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/generate demo data/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/create sample accounts/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/agree to the terms/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument();
   });
@@ -95,7 +95,7 @@ describe('RegisterForm', () => {
         username: 'testuser',
         email: 'test@example.com',
         password: 'password123',
-        generateDemoData: false,
+        seedAccountData: false,
       });
     });
 
@@ -165,7 +165,7 @@ describe('RegisterForm', () => {
     });
   });
 
-  it('includes demo data when checkbox is checked', async () => {
+  it('includes seed account data when checkbox is checked', async () => {
     const user = userEvent.setup();
     mockAuth.register.mockResolvedValue({ success: true });
 
@@ -177,9 +177,8 @@ describe('RegisterForm', () => {
     await user.type(screen.getByLabelText(/^password$/i), 'password123');
     await user.type(screen.getByLabelText(/confirm password/i), 'password123');
     
-    // Check demo data checkbox
-    const demoDataCheckbox = screen.getByLabelText(/generate demo data/i);
-    await user.click(demoDataCheckbox);
+    const seedDataCheckbox = screen.getByLabelText(/create sample accounts/i);
+    await user.click(seedDataCheckbox);
     
     // Check terms agreement
     const termsCheckbox = screen.getByLabelText(/agree to the terms/i);
@@ -194,7 +193,7 @@ describe('RegisterForm', () => {
         username: 'testuser',
         email: 'test@example.com',
         password: 'password123',
-        generateDemoData: true,
+        seedAccountData: true,
       });
     });
   });
@@ -258,4 +257,4 @@ describe('RegisterForm', () => {
       expect(screen.getByText(/passwords do not match/i)).toBeInTheDocument();
     });
   });
-}); 
+});

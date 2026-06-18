@@ -17,7 +17,7 @@ data:
   NOTIFICATION_SERVICE_URL: "http://banking-notification:80"
   REQUEST_TIMEOUT: "15000"
 
-  # Simulation settings — burst mode produces spiky, realistic traffic
+  # Simulation settings - burst mode produces spiky, realistic traffic
   CONCURRENT_USERS: "5"
   EXISTING_USER_PERCENTAGE: "80"
   SESSION_DURATION_MS: "300000"
@@ -35,11 +35,7 @@ data:
   BURST_DURATION_MS: "30000"      # each burst lasts ~30s
   BURST_JITTER_MS: "60000"        # ±60s randomness on interval
 
-  # Error injection — light realistic background only. The AI /api/chat 5xx is the
-  # hero on the errors board now; the previous 0.6 (legacy /create-error demo) put
-  # a 5–7% baseline on every panel and buried the hero. 0.05 = a few realistic 4xx
-  # (bad login / missing account) per minute, enough to populate the board, low
-  # enough that AI errors stand out when present.
+  # Negative-path traffic stays light so localized service errors remain visible.
   ERROR_INJECTION_PROBABILITY: "0.05"
 
   # User pool configuration

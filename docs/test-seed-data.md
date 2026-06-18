@@ -1,21 +1,21 @@
-# Demo Data Generation Test Plan
+# Seed Data Generation Test Plan
 
 ## Issue
-User registered with demo data checkbox checked, but no accounts appeared after login.
+User registered with seeded account data enabled, but no accounts appeared after login.
 
 ## Debugging Steps
 
 ### 1. Verify Frontend is Sending Correct Data
 - Check browser network tab during registration
-- Verify `generateDemoData: true` is being sent in the request body
+- Verify `seedAccountData: true` is being sent in the request body
 - Check if the request reaches the backend
 
 ### 2. Verify Backend Processing
 - Check user service logs for:
-  - "Registering new user: {username} with demo data: true"
-  - "Demo data generation requested for user: {username}"
-  - "Generated JWT token for demo data creation, user ID: {id}"
-  - "Demo data generated successfully for user: {username}"
+  - "Registering new user: {username} with seed data: true"
+  - "Seed data generation requested for user: {username}"
+  - "Generated JWT token for seed data creation, user ID: {id}"
+  - "Seed data generated successfully for user: {username}"
 
 ### 3. Verify Service Communication
 - Check if accounts service is running on port 8081
@@ -33,7 +33,7 @@ curl -X POST http://localhost:8080/api/users/register \
     "username": "testuser123",
     "email": "test123@example.com",
     "password": "password123",
-    "generateDemoData": true
+    "seedAccountData": true
   }'
 ```
 
@@ -48,10 +48,10 @@ After registration, verify:
 2. **JWT Token**: Ensure the generated token is valid and has correct permissions
 3. **Database Connections**: Verify all services can connect to their respective database schemas
 4. **CORS/Headers**: Check if X-User-Id header is being processed correctly
-5. **Error Handling**: Demo data generation failures might be silently ignored
+5. **Error Handling**: Seed data generation failures might be silently ignored
 
 ## Expected Behavior
-1. User registers with demo data checkbox checked
+1. User registers with seeded account data enabled
 2. User service creates user account
 3. User service generates JWT token
 4. User service calls accounts service to create 2 accounts

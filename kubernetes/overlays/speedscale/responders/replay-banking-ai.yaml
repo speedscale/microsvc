@@ -10,6 +10,9 @@ spec:
   snapshotID: 7f7256a0-8876-4e3f-aea9-3fd681e0c36a
   testConfigID: banking-mock-fail-closed
   mode: responder-only
+  sidecar:
+    tls:
+      out: true
   workloadRef:
     kind: Deployment
     name: banking-ai
