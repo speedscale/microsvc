@@ -1,0 +1,60 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: banking-app-replay
+
+resources:
+  - ../../base
+
+namespace: banking-replay
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/name: banking-app-replay
+      app.kubernetes.io/managed-by: kustomize
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: banking-sim
+        namespace: banking-app
+      $patch: delete
+  - patch: |-
+      apiVersion: autoscaling/v2
+      kind: HorizontalPodAutoscaler
+      metadata:
+        name: simulation-client-hpa
+        namespace: banking-app
+      $patch: delete
+  - patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: banking-sim-config
+        namespace: banking-app
+      $patch: delete
+  - patch: |-
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: banking-sim-secret
+        namespace: banking-app
+      $patch: delete
+  - target:
+      version: v1
+      kind: Namespace
+      name: banking-app
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: banking-replay
+      - op: replace
+        path: /metadata/labels/name
+        value: banking-replay
+      - op: replace
+        path: /metadata/labels/app.kubernetes.io~1name
+        value: banking-app-replay
