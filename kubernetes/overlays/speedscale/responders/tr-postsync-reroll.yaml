@@ -89,7 +89,27 @@ spec:
             kubectl -n "$NS" get pod -l app="$1" \
               --field-selector=status.phase=Running \
               -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.initContainers[*].name}{" "}{.spec.containers[*].name}{"\n"}{end}' 2>/dev/null \
-              | awk '/responder|speedscale-goproxy/ { n++ } END { print n+0 }'
+              | awk '/speedscale-initproxy-responder/ && /speedscale-goproxy/ { n++ } END { print n+0 }'
+          }
+
+          tr_report_id() {
+            kubectl -n "$NS" get trafficreplay "$1" \
+              -o go-template='{{ .status.reportID }}' 2>/dev/null || true
+          }
+
+          deployment_replay_env() {
+            kubectl -n "$NS" get deployment "$1" \
+              -o go-template='{{ index .metadata.labels "replay.speedscale.com/env-id" }}' 2>/dev/null || true
+          }
+
+          deployment_replay_report() {
+            kubectl -n "$NS" get deployment "$1" \
+              -o go-template='{{ index .metadata.labels "replay.speedscale.com/report-id" }}' 2>/dev/null || true
+          }
+
+          deployment_responder_ip() {
+            kubectl -n "$NS" get deployment "$1" \
+              -o go-template='{{ index .metadata.annotations "replay.speedscale.com/responder-ip" }}' 2>/dev/null || true
           }
 
           echo "[$(date -u +%FT%TZ)] waiting for TrafficReplays to reach Running..."
@@ -111,14 +131,42 @@ spec:
             echo "[$(date -u +%FT%TZ)] WARN: only ${running}/${#TRS[@]} TRs Running after 300s; rolling anyway"
           fi
 
+          echo "[$(date -u +%FT%TZ)] claiming workloads for their intended TrafficReplays..."
+          for i in "${!DEPLOYMENTS[@]}"; do
+            d="${DEPLOYMENTS[$i]}"
+            tr="${TRS[$i]}"
+            report_id=$(tr_report_id "$tr")
+            env_id=$(deployment_replay_env "$d")
+            active_report_id=$(deployment_replay_report "$d")
+
+            if [[ -z "$report_id" ]]; then
+              echo "[$(date -u +%FT%TZ)]   $d: $tr has no report id yet; rollout will verify later"
+              continue
+            fi
+
+            if [[ "$env_id" != "$tr" || "$active_report_id" != "$report_id" ]]; then
+              echo "[$(date -u +%FT%TZ)]   $d: claiming $tr report $report_id (was env=${env_id:-none} report=${active_report_id:-none})"
+              kubectl -n "$NS" label deployment/"$d" \
+                "replay.speedscale.com/env-id=$tr" \
+                "replay.speedscale.com/report-id=$report_id" \
+                --overwrite
+            else
+              echo "[$(date -u +%FT%TZ)]   $d: already claimed by $tr"
+            fi
+          done
+
           echo "[$(date -u +%FT%TZ)] checking each workload for Speedscale routing..."
-          for d in "${DEPLOYMENTS[@]}"; do
+          for i in "${!DEPLOYMENTS[@]}"; do
+            d="${DEPLOYMENTS[$i]}"
+            tr="${TRS[$i]}"
             pods=$(count_pods "$d")
             with_speedscale=$(count_pods_with_speedscale "$d")
-            if [[ "$pods" -gt 0 && "$with_speedscale" -eq "$pods" ]]; then
-              echo "[$(date -u +%FT%TZ)]   $d: Speedscale OK on ${with_speedscale}/${pods} pods; skipping rollout"
+            env_id=$(deployment_replay_env "$d")
+            responder_ip=$(deployment_responder_ip "$d")
+            if [[ "$pods" -gt 0 && "$with_speedscale" -eq "$pods" && "$env_id" == "$tr" && -n "$responder_ip" ]]; then
+              echo "[$(date -u +%FT%TZ)]   $d: responder routing OK on ${with_speedscale}/${pods} pods; skipping rollout"
             else
-              echo "[$(date -u +%FT%TZ)]   $d: Speedscale present on ${with_speedscale}/${pods} pods; rollout restart"
+              echo "[$(date -u +%FT%TZ)]   $d: responder routing incomplete (pods=${with_speedscale}/${pods}, env=${env_id:-none}, responder_ip=${responder_ip:-none}); rollout restart"
               kubectl -n "$NS" rollout restart deployment/"$d"
             fi
           done
@@ -130,13 +178,17 @@ spec:
 
           echo "[$(date -u +%FT%TZ)] verifying Speedscale routing landed on every workload..."
           fail=0
-          for d in "${DEPLOYMENTS[@]}"; do
+          for i in "${!DEPLOYMENTS[@]}"; do
+            d="${DEPLOYMENTS[$i]}"
+            tr="${TRS[$i]}"
             pods=$(count_pods "$d")
             with_speedscale=$(count_pods_with_speedscale "$d")
-            if [[ "$pods" -gt 0 && "$with_speedscale" -eq "$pods" ]]; then
-              echo "[$(date -u +%FT%TZ)]   $d: Speedscale attached on ${with_speedscale}/${pods} pods"
+            env_id=$(deployment_replay_env "$d")
+            responder_ip=$(deployment_responder_ip "$d")
+            if [[ "$pods" -gt 0 && "$with_speedscale" -eq "$pods" && "$env_id" == "$tr" && -n "$responder_ip" ]]; then
+              echo "[$(date -u +%FT%TZ)]   $d: responder attached on ${with_speedscale}/${pods} pods"
             else
-              echo "[$(date -u +%FT%TZ)]   $d: still missing Speedscale on $((pods-with_speedscale)) pods"
+              echo "[$(date -u +%FT%TZ)]   $d: still missing responder routing (pods=${with_speedscale}/${pods}, env=${env_id:-none}, responder_ip=${responder_ip:-none})"
               fail=$((fail+1))
             fi
           done
