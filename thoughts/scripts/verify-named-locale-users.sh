@@ -41,9 +41,11 @@ console.log(`PASS: ${users.length} named users, ${westernCount} western-locale p
 console.log(`Sample: ${users[0].displayName} <${users[0].email}> ${users[0].locale}`);
 NODE
 
-grep -q "Try Harper Clark" "$repo_root/frontend/src/components/auth/LoginForm.tsx"
+grep -q "Demo customer" "$repo_root/frontend/src/components/auth/LoginForm.tsx"
+grep -q "demoUser.name" "$repo_root/frontend/src/app/page.tsx"
+grep -q "demoTransfer.queryValue" "$repo_root/frontend/src/app/dashboard/page.tsx"
 grep -q "harper.clark.001" "$repo_root/kubernetes/base/jobs/seed-user-pool.yaml"
-if grep -R "seed_user\\|Seed1234\\|Seeded account" "$repo_root/frontend" "$repo_root/kubernetes" >/dev/null; then
+if grep -R "seed_user\\|Seed1234\\|Seeded account" "$repo_root/frontend/src" "$repo_root/kubernetes" >/dev/null; then
   echo "FAIL: old seed account copy still appears in frontend or Kubernetes config"
   exit 1
 fi

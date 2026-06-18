@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import Button from '@/components/ui/Button';
@@ -9,10 +9,12 @@ import Input from '@/components/ui/Input';
 import Link from 'next/link';
 import { TransactionsAPI } from '@/lib/api/transactions';
 import { AccountsAPI, Account } from '@/lib/api/accounts';
+import { demoTransfer } from '@/lib/demo';
 
 const TransferPage: React.FC = () => {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [fromAccount, setFromAccount] = useState<Account | null>(null);
   const [toAccountId, setToAccountId] = useState('');
   const [amount, setAmount] = useState('');
@@ -24,6 +26,7 @@ const TransferPage: React.FC = () => {
   const [availableAccounts, setAvailableAccounts] = useState<Account[]>([]);
 
   const fromAccountId = params.id as string;
+  const isDemoTransfer = searchParams.get('demo') === demoTransfer.queryValue;
 
   useEffect(() => {
     const fetchAccountDetails = async () => {
@@ -44,7 +47,14 @@ const TransferPage: React.FC = () => {
         }
 
         if (listRes.success && listRes.data) {
-          setAvailableAccounts(listRes.data.filter((a) => a.id !== id));
+          const destinations = listRes.data.filter((a) => a.id !== id);
+          setAvailableAccounts(destinations);
+
+          if (isDemoTransfer && destinations.length > 0) {
+            setToAccountId(String(destinations[0].id));
+            setAmount(demoTransfer.amount);
+            setDescription(demoTransfer.description);
+          }
         }
       } catch {
         setError('Failed to load account details');
@@ -56,7 +66,7 @@ const TransferPage: React.FC = () => {
     if (fromAccountId) {
       fetchAccountDetails();
     }
-  }, [fromAccountId]);
+  }, [fromAccountId, isDemoTransfer]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -340,4 +350,4 @@ const TransferPage: React.FC = () => {
   );
 };
 
-export default TransferPage; 
+export default TransferPage;
