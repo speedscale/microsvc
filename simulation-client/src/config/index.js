@@ -78,9 +78,6 @@ const config = {
 
   // Pre-existing user pool
   userPool: {
-    // Pattern for pre-existing usernames
-    usernamePrefix: process.env.USER_PREFIX || 'sim_user_',
-    
     // Total number of pre-existing users in database
     totalUsers: parseInt(process.env.TOTAL_USERS) || 1000,
     

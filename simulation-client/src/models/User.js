@@ -1,8 +1,16 @@
+const config = require('../config');
+const { getProfileForUserNumber, getRandomProfile } = require('./personas');
+
 class User {
   constructor(data = {}) {
     this.id = data.id || null;
     this.username = data.username || null;
     this.email = data.email || null;
+    this.firstName = data.firstName || null;
+    this.lastName = data.lastName || null;
+    this.displayName = data.displayName || this.username;
+    this.locale = data.locale || 'en-US';
+    this.language = data.language || 'English';
     this.password = data.password || null;
     this.roles = data.roles || [];
     this.token = data.token || null;
@@ -13,27 +21,21 @@ class User {
   }
 
   static generateSimulationUser(userNumber) {
-    const username = `sim_user_${userNumber.toString().padStart(3, '0')}`;
-    const email = `${username}@simulation.local`;
+    const profile = getProfileForUserNumber(userNumber);
     
     return new User({
-      username,
-      email,
-      password: 'NewUser123!',
+      ...profile,
+      password: config.userPool.password,
       isPreExisting: true
     });
   }
 
   static generateNewUser() {
-    const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 1000);
-    const username = `new_user_${timestamp}_${random}`;
-    const email = `${username}@example.com`;
+    const profile = getRandomProfile();
     
     return new User({
-      username,
-      email,
-      password: 'NewUser123!',
+      ...profile,
+      password: config.userPool.password,
       isPreExisting: false
     });
   }
@@ -64,6 +66,8 @@ class User {
     return {
       id: this.id,
       username: this.username,
+      displayName: this.displayName,
+      locale: this.locale,
       isPreExisting: this.isPreExisting,
       isAuthenticated: this.isAuthenticated(),
       sessionDuration: this.getSessionDuration()

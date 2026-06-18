@@ -20,12 +20,12 @@ spec:
             - |
               echo "Waiting for user-service..."
               until wget -q -O- http://banking-gateway:80/api/healthz 2>/dev/null; do sleep 5; done
-              echo "Registering seeded user..."
-              wget -q -O- --post-data='{"username":"seed_user","email":"seed.user@apexbanking.com","password":"Seed1234!"}' \
+              echo "Registering Harper Clark..."
+              wget -q -O- --post-data='{"username":"harper.clark.001","email":"harper.clark.001@northbridge.example","password":"SimUser123!"}' \
                 --header='Content-Type: application/json' \
                 http://banking-gateway:80/api/users/register 2>&1 || echo "User may already exist"
               echo "Logging in..."
-              TOKEN=$(wget -q -O- --post-data='{"usernameOrEmail":"seed_user","password":"Seed1234!"}' \
+              TOKEN=$(wget -q -O- --post-data='{"usernameOrEmail":"harper.clark.001","password":"SimUser123!"}' \
                 --header='Content-Type: application/json' \
                 http://banking-gateway:80/api/users/login 2>&1 | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
               if [ -z "$TOKEN" ]; then echo "Login failed"; exit 1; fi
@@ -55,4 +55,4 @@ spec:
                   http://banking-gateway:80/api/transactions 2>&1 || true
                 sleep 2
               done
-              echo "Seed user ready."
+              echo "Harper Clark is ready."

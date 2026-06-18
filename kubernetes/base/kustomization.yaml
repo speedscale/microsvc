@@ -52,7 +52,7 @@ resources:
   - services/frontend-service.yaml
   - services/frontend-service-nodeport.yaml
 
-  # Seed user account
+  # Customer account
   - jobs/seed-user-pool.yaml
 
 namespace: banking-app
