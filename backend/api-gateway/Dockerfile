@@ -17,7 +17,7 @@ RUN mvn clean package -DskipTests
 RUN java -Djarmode=layertools -jar target/api-gateway-*.jar extract
 
 # Runtime image - use Amazon Corretto Alpine for Colima compatibility
-FROM --platform=$TARGETPLATFORM amazoncorretto:17-alpine
+FROM amazoncorretto:17-alpine
 
 WORKDIR /app
 

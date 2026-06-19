@@ -106,6 +106,9 @@ application-local.properties
 
 # proxymock (results and logs — recordings used by CI stay tracked)
 **/proxymock/results/
+**/proxymock/live-*/
+**/proxymock/imported-s3-*/
+**/proxymock/local-transfer-*/
 **/*proxymock*.log
 **/*.log
 

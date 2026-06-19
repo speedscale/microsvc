@@ -59,14 +59,32 @@ spec:
                   }
               }
 
-              top_up_account() {
+              withdraw_from() {
                 account_id="$1"
                 amount="$2"
                 description="$3"
+                wget -q -O- --post-data="{\"amount\":$amount,\"accountId\":$account_id,\"description\":\"$description\"}" \
+                  --header="Authorization: Bearer $TOKEN" \
+                  --header='Content-Type: application/json' \
+                  "$BASE_URL/api/transactions/withdraw" 2>&1 || {
+                    echo "Withdrawal failed for account $account_id amount $amount"
+                    exit 1
+                  }
+              }
+
+              adjust_account() {
+                account_id="$1"
+                amount="$2"
+                direction="$3"
+                description="$4"
                 remaining="$amount"
                 while awk -v amount="$remaining" 'BEGIN { exit !(amount > 0.009) }'; do
                   chunk=$(awk -v amount="$remaining" 'BEGIN { if (amount > 900) printf "900.00"; else printf "%.2f", amount }')
-                  deposit_to "$account_id" "$chunk" "$description"
+                  if [ "$direction" = "deposit" ]; then
+                    deposit_to "$account_id" "$chunk" "$description"
+                  else
+                    withdraw_from "$account_id" "$chunk" "$description"
+                  fi
                   remaining=$(awk -v amount="$remaining" -v chunk="$chunk" 'BEGIN { printf "%.2f", amount - chunk }')
                   sleep 1
                 done
@@ -97,12 +115,16 @@ spec:
                   exit 1
                 fi
 
-                top_up=$(awk -v target="$target_balance" -v current="$balance" 'BEGIN { if (current < target) printf "%.2f", target - current; else printf "0" }')
-                if awk -v amount="$top_up" 'BEGIN { exit !(amount > 0.009) }'; then
-                  echo "Topping up $type account $account_id by $top_up..."
-                  top_up_account "$account_id" "$top_up" "$type account setup"
+                adjustment=$(awk -v target="$target_balance" -v current="$balance" 'BEGIN { printf "%.2f", target - current }')
+                if awk -v amount="$adjustment" 'BEGIN { exit !(amount > 0.009) }'; then
+                  echo "Topping up $type account $account_id by $adjustment..."
+                  adjust_account "$account_id" "$adjustment" deposit "$type account setup"
+                elif awk -v amount="$adjustment" 'BEGIN { exit !(amount < -0.009) }'; then
+                  withdrawal=$(awk -v amount="$adjustment" 'BEGIN { printf "%.2f", -amount }')
+                  echo "Reducing $type account $account_id by $withdrawal..."
+                  adjust_account "$account_id" "$withdrawal" withdraw "$type account reset"
                 else
-                  echo "$type account $account_id already funded at $balance."
+                  echo "$type account $account_id already at $balance."
                 fi
               }
 

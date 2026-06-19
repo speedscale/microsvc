@@ -1,0 +1,96 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../local
+
+images:
+- name: ghcr.io/speedscale/microsvc/accounts-service
+  newTag: local
+- name: ghcr.io/speedscale/microsvc/ai-service
+  newTag: local
+- name: ghcr.io/speedscale/microsvc/api-gateway
+  newTag: local
+- name: ghcr.io/speedscale/microsvc/fraud-service
+  newTag: local
+- name: ghcr.io/speedscale/microsvc/frontend
+  newTag: local
+- name: ghcr.io/speedscale/microsvc/notification-service
+  newTag: local
+- name: ghcr.io/speedscale/microsvc/simulation-client
+  newTag: local
+- name: ghcr.io/speedscale/microsvc/transactions-service
+  newTag: local
+- name: ghcr.io/speedscale/microsvc/user-service
+  newTag: local
+
+patches:
+- target:
+    kind: Deployment
+  patch: |-
+    - op: add
+      path: /spec/template/spec/terminationGracePeriodSeconds
+      value: 5
+- target:
+    kind: Deployment
+    name: banking-accounts
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/imagePullPolicy
+      value: IfNotPresent
+- target:
+    kind: Deployment
+    name: banking-ai
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/imagePullPolicy
+      value: IfNotPresent
+- target:
+    kind: Deployment
+    name: banking-gateway
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/imagePullPolicy
+      value: IfNotPresent
+- target:
+    kind: Deployment
+    name: banking-fraud
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/imagePullPolicy
+      value: IfNotPresent
+- target:
+    kind: Deployment
+    name: banking-frontend
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/imagePullPolicy
+      value: IfNotPresent
+- target:
+    kind: Deployment
+    name: banking-notification
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/imagePullPolicy
+      value: IfNotPresent
+- target:
+    kind: Deployment
+    name: banking-sim
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/imagePullPolicy
+      value: IfNotPresent
+- target:
+    kind: Deployment
+    name: banking-transactions
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/imagePullPolicy
+      value: IfNotPresent
+- target:
+    kind: Deployment
+    name: banking-user
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/imagePullPolicy
+      value: IfNotPresent
