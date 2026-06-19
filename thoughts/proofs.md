@@ -33,3 +33,9 @@
 - **Evidence**: `thoughts/scripts/verify-replay-overlay.sh` PASS
 - **Status**: PROVEN
 - **Date**: 2026-06-18
+
+## Banking AI locale delivery errors are limited to the Korean user slice
+- **Level**: Integration
+- **Evidence**: `thoughts/scripts/verify-ai-locale-error-rate.sh` PASS
+- **Status**: PROVEN
+- **Date**: 2026-06-18
