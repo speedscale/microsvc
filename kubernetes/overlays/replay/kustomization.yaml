@@ -58,3 +58,30 @@ patches:
       - op: replace
         path: /metadata/labels/app.kubernetes.io~1name
         value: banking-app-replay
+  - patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: banking-user-config
+        namespace: banking-app
+      data:
+        SPRING_FLYWAY_ENABLED: "false"
+        SPRING_JPA_HIBERNATE_DDL_AUTO: "none"
+  - patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: banking-accounts-config
+        namespace: banking-app
+      data:
+        SPRING_FLYWAY_ENABLED: "false"
+        SPRING_JPA_HIBERNATE_DDL_AUTO: "none"
+  - patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: banking-transactions-config
+        namespace: banking-app
+      data:
+        SPRING_FLYWAY_ENABLED: "false"
+        SPRING_JPA_HIBERNATE_DDL_AUTO: "none"
