@@ -72,6 +72,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+SELECT setseed(0.42);
+
 -- Insert reusable customer users
 INSERT INTO user_service.users (username, email, password_hash, roles, created_at, updated_at)
 SELECT 
