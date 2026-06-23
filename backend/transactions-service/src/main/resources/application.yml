@@ -57,7 +57,7 @@ accounts:
 grpc:
   client:
     fraud-service:
-      address: static://${FRAUD_SERVICE_HOST:banking-fraud}:${FRAUD_SERVICE_PORT:50051}
+      address: static://${FRAUD_SERVICE_HOST:banking-fraud}:${FRAUD_SERVICE_PORT:8080}
       negotiation-type: plaintext
 
 kafka:

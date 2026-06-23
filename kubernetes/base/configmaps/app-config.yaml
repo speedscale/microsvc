@@ -17,7 +17,7 @@ data:
   ACCOUNTS_SERVICE_URL: "http://banking-accounts:80"
   TRANSACTIONS_SERVICE_URL: "http://banking-transactions:80"
   FRAUD_SERVICE_HOST: "banking-fraud"
-  FRAUD_SERVICE_PORT: "50051"
+  FRAUD_SERVICE_PORT: "8080"
   NOTIFICATION_SERVICE_URL: "http://banking-notification:80"
   KAFKA_BROKERS: "banking-kafka:9092"
 
