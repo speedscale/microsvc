@@ -74,9 +74,18 @@ $$ LANGUAGE plpgsql;
 
 SELECT setseed(0.42);
 
--- Insert reusable customer users
-INSERT INTO user_service.users (username, email, password_hash, roles, created_at, updated_at)
-SELECT 
+-- Insert reusable customer users.
+--
+-- Pin the id to the seed number (1..1000) instead of letting BIGSERIAL assign it.
+-- Why: recorded traffic carries JWTs whose `userId` claim is the seeded user's id,
+-- and downstream account ownership is keyed on that id. With an unpinned BIGSERIAL,
+-- every reseed hands a given seed user a different id, so previously-recorded JWTs
+-- (and the accounts they own) go stale -- which makes traffic replay non-deterministic
+-- (ownership checks return 404). Pinning id = generate_series keeps each seeded
+-- identity stable across reseeds so e.g. `harry.evans.986` is always id 986.
+INSERT INTO user_service.users (id, username, email, password_hash, roles, created_at, updated_at)
+SELECT
+    generate_series as id,
     customer_seed_username(generate_series) as username,
     customer_seed_username(generate_series) || '@northbridge.example' as email,
     -- BCrypt hash for 'SimUser123!'
@@ -85,6 +94,10 @@ SELECT
     NOW() - (RANDOM() * INTERVAL '365 days') as created_at,
     NOW() - (RANDOM() * INTERVAL '90 days') as updated_at
 FROM generate_series(1, 1000);
+
+-- Advance the identity sequence past the pinned seed block so users registered at
+-- runtime never collide with (or get assigned into) a seeded id.
+SELECT setval(pg_get_serial_sequence('user_service.users', 'id'), 1000, true);
 
 -- Create accounts for simulation users with realistic balances
 INSERT INTO accounts_service.accounts (user_id, account_number, account_type, balance, created_at, updated_at)
