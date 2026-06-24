@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -75,6 +76,12 @@ public class TransactionService {
     @Autowired
     private DoubleHistogram transferAmountHistogram;
 
+    // Demo fixture flag (default OFF). When enabled, deposit() normalizes the
+    // memo for the ledger feed and trips on a null description. Used to stage a
+    // reproducible bug for the Replay Lab demo. Never enable in production.
+    @Value("${demo.memo-bug.enabled:false}")
+    private boolean memoBugEnabled;
+
     private final ConcurrentMap<Long, ReentrantLock> accountLocks = new ConcurrentHashMap<>();
     
     public List<TransactionResponse> getUserTransactions(Long userId) {
@@ -96,6 +103,12 @@ public class TransactionService {
     public TransactionResponse deposit(DepositRequest request, Long userId, HttpServletRequest httpRequest) {
         logger.info("Processing deposit for user: {}, account: {}, amount: {}",
                    userId, request.getAccountId(), request.getAmount());
+
+        if (memoBugEnabled) {
+            // Normalize the transaction memo for the downstream ledger feed.
+            String memo = request.getDescription().trim().toUpperCase();
+            logger.debug("Normalized ledger memo ({} chars) for account {}", memo.length(), request.getAccountId());
+        }
 
         // Fraud check before processing
         var fraudResult = fraudServiceClient.checkTransaction(

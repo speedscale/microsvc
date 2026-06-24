@@ -584,6 +584,7 @@ class UserWorkflow {
       'serviceUnavailable',                                  // 503 /api/accounts/{id}/export-statement
       'badLogin',                                            // 401 (light realism)
       'expiredToken',                                        // 401 (light realism)
+      'nullDescriptionDeposit',                              // 200 normally; 500 when demo.memo-bug.enabled (Replay Lab fixture)
     ];
     const scenario = bag[Math.floor(Math.random() * bag.length)];
 
@@ -598,6 +599,18 @@ class UserWorkflow {
 
         case 'expiredToken':
           await this.apiClient.getAccounts('invalid.expired.token');
+          break;
+
+        case 'nullDescriptionDeposit':
+          // Replay Lab fixture: a deposit with no description field. Succeeds (200)
+          // normally; returns 500 only when transactions-service runs with
+          // demo.memo-bug.enabled=true (the planted null-memo regression).
+          if (account) {
+            await this.apiClient.deposit({
+              amount: 50,
+              accountId: account.id,
+            }, user.token);
+          }
           break;
 
         case 'missingAccount':
