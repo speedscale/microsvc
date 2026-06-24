@@ -119,3 +119,10 @@ otel:
   span:
     name:
       pattern: "{http.method} {http.route}"
+
+# Demo fixtures (default OFF). Enable for the Replay Lab demo only: deposit()
+# normalizes the memo and NPEs (-> 500) on a null description. Set
+# DEMO_MEMO_BUG_ENABLED=true on staging-decoy during recording. Never in prod.
+demo:
+  memo-bug:
+    enabled: ${DEMO_MEMO_BUG_ENABLED:false}
