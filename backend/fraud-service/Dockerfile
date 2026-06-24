@@ -17,6 +17,6 @@ COPY --from=builder /fraud-service /usr/local/bin/fraud-service
 
 USER fraud
 
-EXPOSE 50051 9091
+EXPOSE 8080 9091
 
 ENTRYPOINT ["fraud-service"]

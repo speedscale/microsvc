@@ -103,7 +103,7 @@ services:
       # Service URLs
       - ACCOUNTS_SERVICE_URL=http://accounts-service:8080
       - FRAUD_SERVICE_HOST=fraud-service
-      - FRAUD_SERVICE_PORT=50051
+      - FRAUD_SERVICE_PORT=8080
       # OpenTelemetry Configuration
       - OTEL_SERVICE_NAME=transactions-service
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
@@ -129,10 +129,10 @@ services:
       dockerfile: Dockerfile
     container_name: banking-fraud-service
     environment:
-      - GRPC_PORT=50051
+      - GRPC_PORT=8080
       - METRICS_PORT=9091
     ports:
-      - "50051:50051"
+      - "8086:8080"
     networks:
       - banking-network
 

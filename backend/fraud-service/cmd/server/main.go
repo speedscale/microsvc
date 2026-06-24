@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	port := envOrDefault("GRPC_PORT", "50051")
+	port := envOrDefault("GRPC_PORT", "8080")
 	metricsPort := envOrDefault("METRICS_PORT", "9091")
 
 	go serveMetrics(metricsPort)

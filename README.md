@@ -38,7 +38,7 @@ kubectl apply -k kubernetes/overlays/local/
 | `accounts-service` | Java (Spring Boot) | Account + balance management, Plaid integration |
 | `transactions-service` | Java (Spring Boot) | Transaction processing, Stripe / PayPal / ComplyAdvantage integrations |
 | `ai-service` | Python (FastAPI) | Chat endpoint that fans out to 5 LLM providers (Anthropic, OpenAI, Gemini, xAI, OpenRouter) and aggregates the replies |
-| `fraud-service` | Go (gRPC h2c on :50051) | Fraud risk scoring with Sift / MaxMind / Stripe Radar |
+| `fraud-service` | Go (gRPC h2c on :8080) | Fraud risk scoring with Sift / MaxMind / Stripe Radar |
 | `notification-service` | Go | Slack / SendGrid / Twilio fan-out for transaction events from Kafka |
 | `mongo-service` | Java | Mongo-backed user-data store |
 | `frontend` | Next.js 15 / React 19 | Server-side proxy + UI |
@@ -270,7 +270,7 @@ curl http://localhost:8083/actuator/health  # Transactions Service
 curl http://localhost:8084/health           # AI Service (FastAPI)
 curl http://localhost:8085/health           # Notification Service (Go)
 curl http://localhost:3000/api/health       # Frontend
-# fraud-service speaks gRPC; use `grpcurl localhost:50051 list`
+# fraud-service speaks gRPC; use `grpcurl localhost:8086 list`
 ```
 
 ---

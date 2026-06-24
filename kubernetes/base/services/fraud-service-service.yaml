@@ -10,8 +10,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 50051
-    targetPort: 50051
+  - port: 8080
+    targetPort: grpc
     protocol: TCP
     name: grpc
   - port: 9091
