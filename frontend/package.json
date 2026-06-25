@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "1.4.101",
+  "version": "1.4.102",
   "private": true,
   "engines": {
     "node": ">=20"
