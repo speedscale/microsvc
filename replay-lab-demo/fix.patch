@@ -1,0 +1,13 @@
+diff --git a/backend/transactions-service/src/main/java/com/banking/transactionsservice/service/TransactionService.java b/backend/transactions-service/src/main/java/com/banking/transactionsservice/service/TransactionService.java
+index 4368c81..a58f7f5 100644
+--- a/backend/transactions-service/src/main/java/com/banking/transactionsservice/service/TransactionService.java
++++ b/backend/transactions-service/src/main/java/com/banking/transactionsservice/service/TransactionService.java
+@@ -106,7 +106,7 @@ public class TransactionService {
+ 
+         if (memoBugEnabled) {
+             // Normalize the transaction memo for the downstream ledger feed.
+-            String memo = request.getDescription().trim().toUpperCase();
++            String memo = request.getDescription() == null ? "" : request.getDescription().trim().toUpperCase();
+             logger.debug("Normalized ledger memo ({} chars) for account {}", memo.length(), request.getAccountId());
+         }
+ 
