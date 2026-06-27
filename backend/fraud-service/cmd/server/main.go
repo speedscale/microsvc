@@ -5,9 +5,11 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 
 	"github.com/speedscale/microsvc/fraud-service/internal/fraud"
 
@@ -25,7 +27,14 @@ func main() {
 		log.Fatalf("failed to listen on :%s: %v", port, err)
 	}
 
-	srv := grpc.NewServer()
+	// ebpf observability: force connections to recycle after 1 minute so nettap can observe the connection
+	// start and allow rrpairs to be correctly identified and parsed
+	srv := grpc.NewServer(
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionAge:      1 * time.Minute,
+			MaxConnectionAgeGrace: 5 * time.Second,
+		}),
+	)
 	fraudv1.RegisterFraudCheckerServer(srv, &fraud.Checker{})
 
 	log.Printf("fraud-service listening on :%s", port)
