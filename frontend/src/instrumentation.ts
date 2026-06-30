@@ -18,6 +18,17 @@ function log(message: string, ...args: unknown[]) {
   }
 }
 
+function resourceAttribute(name: string, fallback: string): string {
+  const attributes = process.env.OTEL_RESOURCE_ATTRIBUTES || '';
+  for (const item of attributes.split(',')) {
+    const [key, ...valueParts] = item.split('=');
+    if (key?.trim() === name) {
+      return valueParts.join('=').trim() || fallback;
+    }
+  }
+  return fallback;
+}
+
 // Register the SDK - only runs on the server side
 export async function register() {
   // Only initialize on server side to avoid bundling issues with browser
@@ -72,7 +83,8 @@ export async function register() {
       resource: new Resource({
         [SemanticResourceAttributes.SERVICE_NAME]: process.env.OTEL_SERVICE_NAME || 'frontend',
         [SemanticResourceAttributes.SERVICE_VERSION]: '1.0.0',
-        [SemanticResourceAttributes.SERVICE_NAMESPACE]: process.env.OTEL_RESOURCE_ATTRIBUTES?.split('=')[1] || 'banking-app',
+        [SemanticResourceAttributes.SERVICE_NAMESPACE]: resourceAttribute('service.namespace', 'banking-app'),
+        'deployment.environment': resourceAttribute('deployment.environment', 'decoy'),
       }),
     });
 
@@ -126,7 +138,7 @@ export async function register() {
 
     log('✅ OpenTelemetry instrumentation registered successfully for frontend server');
     log('🔧 Service name:', process.env.OTEL_SERVICE_NAME || 'frontend');
-    log('🔧 Service namespace:', process.env.OTEL_RESOURCE_ATTRIBUTES?.split('=')[1] || 'banking-app');
+    log('🔧 Service namespace:', resourceAttribute('service.namespace', 'banking-app'));
 
     // Gracefully shutdown the tracer provider on process exit
     process.on('SIGTERM', () => {

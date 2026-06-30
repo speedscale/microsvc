@@ -99,7 +99,7 @@ otel:
   exporter:
     otlp:
       protocol: grpc
-      endpoint: http://localhost:4317
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}
   traces:
     exporter: otlp
     propagators: tracecontext

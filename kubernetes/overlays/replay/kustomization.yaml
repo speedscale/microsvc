@@ -58,6 +58,9 @@ patches:
       - op: replace
         path: /metadata/labels/app.kubernetes.io~1name
         value: banking-app-replay
+      - op: add
+        path: /metadata/labels/istio-injection
+        value: enabled
   - patch: |-
       apiVersion: v1
       kind: ConfigMap

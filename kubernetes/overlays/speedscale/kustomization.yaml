@@ -32,6 +32,9 @@ patches:
     - op: add
       path: /metadata/labels/speedscale
       value: "true"
+    - op: add
+      path: /metadata/labels/istio-injection
+      value: enabled
 - path: user-service-annotations.yaml
 - path: accounts-service-annotations.yaml
 - path: transactions-service-annotations.yaml

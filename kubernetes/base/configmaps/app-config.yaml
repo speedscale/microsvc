@@ -37,7 +37,7 @@ data:
   OTEL_LOGS_EXPORTER: "otlp"
   OTEL_TRACES_SAMPLER: "always_on"
   OTEL_PROPAGATORS: "tracecontext"
-  OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app"
+  OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app,deployment.environment=decoy"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -175,7 +175,7 @@ data:
   OTEL_LOGS_EXPORTER: "otlp"
   OTEL_TRACES_SAMPLER: "always_on"
   OTEL_PROPAGATORS: "tracecontext"
-  OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app"
+  OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app,deployment.environment=decoy"
   
   # Next.js configuration
   NODE_ENV: "production"
@@ -202,4 +202,4 @@ data:
   OTEL_LOGS_EXPORTER: "none"
   OTEL_TRACES_SAMPLER: "always_on"
   OTEL_PROPAGATORS: "tracecontext"
-  OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app"
+  OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app,deployment.environment=decoy"
