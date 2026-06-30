@@ -65,7 +65,7 @@ data:
   OTEL_LOGS_EXPORTER: "otlp"
   OTEL_TRACES_SAMPLER: "always_on"
   OTEL_PROPAGATORS: "tracecontext"
-  OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app"
+  OTEL_RESOURCE_ATTRIBUTES: "service.namespace=banking-app,deployment.environment=decoy"
 
   # Metrics reporting
   METRICS_INTERVAL: "30000"

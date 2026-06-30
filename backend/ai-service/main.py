@@ -29,7 +29,14 @@ logger = logging.getLogger(__name__)
 # :4318 — same as the frontend Node service uses).
 _otel_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel-collector.observability:4318")
 _otel_service_name = os.environ.get("OTEL_SERVICE_NAME", "ai-service")
-_tracer_provider = TracerProvider(resource=Resource.create({"service.name": _otel_service_name, "service.namespace": "banking-app"}))
+_otel_resource_attributes = {
+    key.strip(): value.strip()
+    for item in os.environ.get("OTEL_RESOURCE_ATTRIBUTES", "service.namespace=banking-app").split(",")
+    if "=" in item
+    for key, value in [item.split("=", 1)]
+}
+_otel_resource_attributes["service.name"] = _otel_service_name
+_tracer_provider = TracerProvider(resource=Resource.create(_otel_resource_attributes))
 _tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=f"{_otel_endpoint.rstrip('/')}/v1/traces")))
 trace.set_tracer_provider(_tracer_provider)
 HTTPXClientInstrumentor().instrument()

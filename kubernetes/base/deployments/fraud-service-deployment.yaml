@@ -37,6 +37,8 @@ spec:
           value: "8080"
         - name: METRICS_PORT
           value: "9091"
+        - name: OTEL_SERVICE_NAME
+          value: "fraud-service"
         envFrom:
         - configMapRef:
             name: app-config
