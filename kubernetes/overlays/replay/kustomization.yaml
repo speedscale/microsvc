@@ -44,6 +44,21 @@ patches:
         name: banking-sim-secret
         namespace: banking-app
       $patch: delete
+  - patch: |-
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: banking-frontend-nodeport
+        namespace: banking-app
+      $patch: delete
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: banking-fraud
+        namespace: banking-app
+        annotations:
+          argocd.argoproj.io/sync-options: Replace=true
   - target:
       version: v1
       kind: Namespace
