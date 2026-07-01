@@ -63,3 +63,33 @@ labels:
     app.kubernetes.io/name: banking-app
     app.kubernetes.io/version: v1.0.0
     app.kubernetes.io/managed-by: kustomize
+
+patches:
+- target:
+    group: apps
+    version: v1
+    kind: Deployment
+  patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ignored
+    spec:
+      template:
+        metadata:
+          annotations:
+            sidecar.istio.io/inject: "true"
+- target:
+    group: batch
+    version: v1
+    kind: Job
+  patch: |-
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: ignored
+    spec:
+      template:
+        metadata:
+          annotations:
+            sidecar.istio.io/inject: "true"

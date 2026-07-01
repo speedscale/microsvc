@@ -61,6 +61,9 @@ spec:
   ttlSecondsAfterFinished: 600
   backoffLimit: 2
   template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
     spec:
       serviceAccountName: speedscale-postsync-reroll
       restartPolicy: Never
