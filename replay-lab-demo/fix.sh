@@ -16,4 +16,4 @@ echo ">> recompiling (spring-boot devtools hot-restarts the running service)"
 
 echo ">> waiting for hot-restart..."
 sleep 10
-PORT="${PORT:-8080}" ./reproduce.sh
+PORT="${PORT:-8087}" ./reproduce.sh
