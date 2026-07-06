@@ -27,12 +27,14 @@ speedctl push test-config banking-mock-fail-closed.json
 ```
 
 `banking-mock-fail-closed.json` (in this directory) is a fail-closed mock
-config: `responder.passthrough_mode: false` (404 on no-match, no real egress)
-plus `cluster.sidecar_tls_out: true` so the operator still injects the
-`speedscale-goproxy` sidecar. With the sidecar in path goproxy captures each
-outbound rrpair and surfaces it in the live tap. The previous
-`banking-mock-noproxy` config skipped the sidecar, which is why outbound was
-invisible to capture.
+config: no passthrough (404 on no-match, no real egress). Do NOT set
+`cluster.sidecarTlsOut` for tenants running this overlay: these workloads
+carry eBPF capture annotations (`capture.speedscale.com/*`), and the operator
+webhook rejects sidecar injection alongside them ("cannot be used in
+conjunction with sidecar.speedscale.com/inject"), which fails every
+TrafficReplay at init. Outbound visibility here comes from the eBPF tap, not
+a goproxy sidecar; the sidecar-based variant belongs to the
+`speedscale-sidecar` overlay's tenant.
 
 The Speedscale operator must be installed in the cluster.
 
