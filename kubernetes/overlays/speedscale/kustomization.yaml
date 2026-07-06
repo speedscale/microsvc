@@ -35,14 +35,8 @@ patches:
     - op: add
       path: /metadata/labels/istio-injection
       value: enabled
-- path: user-service-annotations.yaml
-- path: accounts-service-annotations.yaml
-- path: transactions-service-annotations.yaml
-- path: ai-service-annotations.yaml
 - path: api-gateway-annotations.yaml
 - path: frontend-annotations.yaml
-- path: fraud-service-annotations.yaml
-- path: notification-service-annotations.yaml
 # Wire third-party API keys into each service (sourced from the base
 # banking-thirdparty-keys secret — dummy values; calls are responder-mocked)
 - path: accounts-service-thirdparty-env.yaml
