@@ -3,9 +3,6 @@ kind: TrafficReplay
 metadata:
   name: replay-banking-notification
   namespace: banking-app
-  annotations:
-    sidecar.speedscale.com/inject: "true"
-    sidecar.speedscale.com/tls-out: "true"
 spec:
   snapshotID: ae1d6748-ae79-4334-9fcc-0d634de79e75
   testConfigID: banking-mock-fail-closed
