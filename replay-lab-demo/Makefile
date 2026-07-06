@@ -20,10 +20,10 @@ SHELL := /bin/bash
 SVC   := backend/transactions-service/src/main/java/com/banking/transactionsservice/service/TransactionService.java
 PORT  ?= 8087
 export PORT
-# build flags for run.sh; empty means "use the script default"
-export MEMO_BUG CONTRACT_REFACTOR
+# flags for run.sh/reproduce.sh; empty means "use the script default"
+export MEMO_BUG CONTRACT_REFACTOR MOCKS IN
 
-.PHONY: help setup run reproduce fix reset down gate record-suite
+.PHONY: help setup run reproduce fix reset down gate record-suite incident
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/' | column -t -s "$$(printf '\t')"
 
@@ -38,6 +38,9 @@ gate: ## release gate: replay prod-suite/ against the running build; exit code =
 
 record-suite: ## re-record prod-suite/ from the running CLEAN build (make run MEMO_BUG=false)
 	@./record-suite.sh
+
+incident: ## pull the live failing traffic from the replay-lab BYOC export + craft mocks
+	@./incident.sh
 
 reproduce: ## terminal 2: replay the captured prod failure against the service
 	@./reproduce.sh

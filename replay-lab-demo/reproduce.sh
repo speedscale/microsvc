@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 # Replay the captured production failure against the local service and report the result.
+# IN=incident/localhost replays a snapshot freshly pulled by incident.sh instead
+# of the committed capture.
 set -euo pipefail
 cd "$(dirname "$0")"
 PM="$HOME/.speedscale/proxymock"
 PORT="${PORT:-8087}"
+IN="${IN:-captured}"
 
 ./warmup.sh
 
 rm -rf out
-"$PM" replay --in captured --test-against "http://localhost:$PORT" --out out >/dev/null 2>&1 || true
+"$PM" replay --in "$IN" --test-against "http://localhost:$PORT" --out out >/dev/null 2>&1 || true
 code=$(grep -rohE '"statusCode":[0-9]+' out 2>/dev/null | grep -oE '[0-9]+' | head -1)
 
 echo
