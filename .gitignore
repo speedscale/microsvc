@@ -112,3 +112,4 @@ application-local.properties
 # Claude Code
 .claude/
 thoughts/
+gate-out/

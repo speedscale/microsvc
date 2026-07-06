@@ -3,7 +3,9 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 PM="$HOME/.speedscale/proxymock"
-PORT="${PORT:-8080}"
+PORT="${PORT:-8087}"
+
+./warmup.sh
 
 rm -rf out
 "$PM" replay --in captured --test-against "http://localhost:$PORT" --out out >/dev/null 2>&1 || true
