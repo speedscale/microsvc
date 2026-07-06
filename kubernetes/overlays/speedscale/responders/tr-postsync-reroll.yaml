@@ -89,10 +89,15 @@ spec:
           }
 
           count_pods_with_speedscale() {
+            # Responder routing needs only the initproxy init container. Do NOT
+            # require the goproxy sidecar here: this overlay captures via eBPF
+            # annotations (capture.speedscale.com/*), and the operator webhook
+            # rejects sidecar injection on those workloads, so a goproxy check
+            # can never pass and wedges the sync.
             kubectl -n "$NS" get pod -l app="$1" \
               --field-selector=status.phase=Running \
               -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.initContainers[*].name}{" "}{.spec.containers[*].name}{"\n"}{end}' 2>/dev/null \
-              | awk '/speedscale-initproxy-responder/ && /speedscale-goproxy/ { n++ } END { print n+0 }'
+              | awk '/speedscale-initproxy-responder/ { n++ } END { print n+0 }'
           }
 
           tr_report_id() {
