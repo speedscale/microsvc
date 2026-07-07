@@ -71,12 +71,34 @@ String memo = request.getDescription().trim().toUpperCase();   // NPE when descr
 Real clients sometimes POST a deposit with no `description`. The agent that wrote
 the memo feature never sent one that way, and neither did its tests.
 
+**Live pull** (staging-decoy access required): grab the actual failing requests
+from the BYOC bucket via the Replay Lab export, with dependency mocks crafted to
+match whatever account the incident hit:
+
 ```bash
-# terminal 1: the prod build, bug armed
-make run
-# terminal 2: replay the captured prod failure
-make reproduce    #  RED   — HTTP 400, reproduced on your laptop in seconds
-make fix          #  GREEN — null-guard applied, hot-restarted, same request now 201
+make incident     # port-forward, export failing traffic, craft matched mocks
+# terminal 1: the prod build, bug armed, deps from the incident pull
+make run MOCKS=incident-mocks
+# terminal 2: replay the pulled prod failure
+make reproduce IN=incident/localhost   #  RED   — the production 400, on your laptop
+make fix IN=incident/localhost         #  GREEN — null-guard applied, same request now 201
+make reset && make down
+```
+
+The pulled RRPair carries the same `traceparent` as the failing span in the
+tracing backend, so the evidence chain is: dashboard shows the error rate, the
+trace shows a 48-byte request body it cannot give you, the RRPair is those 48
+bytes. Errors fire in bursts, so if `make incident` reports no failing traffic,
+rerun it a few minutes after the next burst (the export's `window` param widens
+the scan once replay-lab !61 is deployed).
+
+**Offline fallback**: a committed capture of the same failure ships in
+`captured/`, so the loop also runs with no cluster access at all:
+
+```bash
+make run          # terminal 1
+make reproduce    #  RED   — HTTP 400
+make fix          #  GREEN — HTTP 201
 make reset        #  put the bug back for the next run
 make down         # stop the service + mock
 ```
@@ -88,19 +110,20 @@ author can bend.
 
 ## Where the traffic comes from
 
-In this demo the RRPairs are committed files so everything runs offline. In a real
-deployment they come out of your own infrastructure. This is the BYOC model:
+`make incident` does the pull for real — this is the BYOC model end to end:
 
-1. Speedscale capture (sidecar or eBPF tap) records traffic in your cluster.
+1. Speedscale capture (sidecar or eBPF tap) records traffic in the cluster.
 2. Traffic lands in **your** object-storage bucket, DLP-redacted before it is
-   written, so tokens, PII, and API keys never leave your account in the clear.
-3. `proxymock pull` (or a Replay Lab snapshot export) brings a time-window of that
-   traffic to a laptop or CI runner as the same RRPair files you see here.
+   written, so keys and PII never leave your account in the clear.
+3. The Replay Lab export endpoint filters that bucket by service, route, and
+   status and streams back a tar.gz of RRPairs plus downstream mocks —
+   `incident.sh` is a port-forward and one `curl` around it.
 
-So `captured/` stands in for "the failing request from this morning's incident" and
-`prod-suite/` stands in for "yesterday's good traffic", each one `proxymock pull`
-away. Nothing in either loop touches Speedscale's cloud: capture, storage, and
-replay all run on infrastructure you own.
+The committed `captured/` and `prod-suite/` files are earlier pulls of the same
+traffic, kept so the loops run offline. Nothing in either loop touches
+Speedscale's cloud: capture, storage, and replay all run on infrastructure you
+own. Incident pulls land in `incident/` and `incident-mocks/`, which are
+gitignored — they carry live (short-lived) bearer tokens from the capture.
 
 ## What is real vs mocked
 
@@ -124,6 +147,8 @@ mocks/localhost/*.md          recorded accounts-service responses (validate, get
 mocks/api.*/*.md              recorded payment/compliance responses
 fix.patch                     the one-line null-guard fix (applied by `make fix`)
 gate.sh                       the CI release gate (replay + --fail-if, exit code = verdict)
+incident.sh                   pull the live failing traffic from the replay-lab BYOC export
+craft-mocks.py                derive account-matched accounts mocks for a pulled incident
 record-suite.sh               re-record prod-suite/ from a healthy build
 warmup.sh                     readiness probe shared by the replay scripts
 setup.sh run.sh reproduce.sh fix.sh   the steps, as plain scripts (make just calls them)

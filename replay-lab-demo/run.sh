@@ -20,10 +20,12 @@ if lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
 fi
 
 # proxymock mock: app -> proxy :4140 -> recorded response (accounts, stripe, paypal, complyadvantage)
-"$PM" mock --in mocks --no-out >/tmp/replay-lab-mock.log 2>&1 &
+# MOCKS=incident-mocks serves the account-matched set staged by incident.sh
+MOCKS="${MOCKS:-mocks}"
+"$PM" mock --in "$MOCKS" --no-out >/tmp/replay-lab-mock.log 2>&1 &
 MOCK_PID=$!
 trap 'kill $MOCK_PID 2>/dev/null || true' EXIT
-echo ">> proxymock mock serving deps on :4140  (accounts, stripe, paypal, complyadvantage)"
+echo ">> proxymock mock serving deps on :4140 from $MOCKS/"
 
 # Which build is running? memo-bug defaults ON for the classic reproduce/fix loop;
 # the gate demo overrides per scenario (MEMO_BUG=false, CONTRACT_REFACTOR=true, ...).
