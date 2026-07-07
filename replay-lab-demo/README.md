@@ -123,7 +123,13 @@ The committed `captured/` and `prod-suite/` files are earlier pulls of the same
 traffic, kept so the loops run offline. Nothing in either loop touches
 Speedscale's cloud: capture, storage, and replay all run on infrastructure you
 own. Incident pulls land in `incident/` and `incident-mocks/`, which are
-gitignored — they carry live (short-lived) bearer tokens from the capture.
+gitignored because they carry real captured bearer tokens.
+
+Captured tokens expire ~24h after they were minted in staging, so `make incident`
+re-signs each one with a far-future expiry using the demo JWT secret (the local
+equivalent of the capture-token blueprint a redacted BYOC replay uses). A pull is
+therefore good indefinitely, and re-running `make incident` regenerates it from
+current traffic regardless.
 
 ## What is real vs mocked
 
@@ -149,6 +155,7 @@ fix.patch                     the one-line null-guard fix (applied by `make fix`
 gate.sh                       the CI release gate (replay + --fail-if, exit code = verdict)
 incident.sh                   pull the live failing traffic from the replay-lab BYOC export
 craft-mocks.py                derive account-matched accounts mocks for a pulled incident
+refresh-tokens.py             re-sign pulled bearer tokens with a far-future expiry
 record-suite.sh               re-record prod-suite/ from a healthy build
 warmup.sh                     readiness probe shared by the replay scripts
 setup.sh run.sh reproduce.sh fix.sh   the steps, as plain scripts (make just calls them)
