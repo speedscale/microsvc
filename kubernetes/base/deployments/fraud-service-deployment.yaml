@@ -25,7 +25,7 @@ spec:
       serviceAccountName: banking-app-sa
       containers:
       - name: fraud-service
-        image: ghcr.io/speedscale/microsvc/fraud-service:v1.4.111
+        image: ghcr.io/speedscale/microsvc/fraud-service:v1.4.112
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
