@@ -89,8 +89,8 @@ The pulled RRPair carries the same `traceparent` as the failing span in the
 tracing backend, so the evidence chain is: dashboard shows the error rate, the
 trace shows a 48-byte request body it cannot give you, the RRPair is those 48
 bytes. Errors fire in bursts, so if `make incident` reports no failing traffic,
-rerun it a few minutes after the next burst (the export's `window` param widens
-the scan once replay-lab !61 is deployed).
+widen the scan with `WINDOW=6h make incident` (or rerun a few minutes after the
+next burst).
 
 **Offline fallback**: a committed capture of the same failure ships in
 `captured/`, so the loop also runs with no cluster access at all:
