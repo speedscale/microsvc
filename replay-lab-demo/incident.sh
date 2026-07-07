@@ -86,6 +86,7 @@ if [ "$N" = "0" ]; then
 fi
 echo ">> pulled $N failing request(s) into incident/ ($(du -sh incident | cut -f1))"
 
+python3 ./refresh-tokens.py incident
 python3 ./craft-mocks.py incident incident-mocks
 
 echo
