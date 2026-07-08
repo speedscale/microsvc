@@ -5,11 +5,11 @@
 #
 #   ./gate.sh            # against localhost:$PORT (default 8087)
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 PM="$HOME/.speedscale/proxymock"
 PORT="${PORT:-8087}"
 
-./warmup.sh
+scripts/warmup.sh
 
 echo ">> replaying recorded production traffic against the candidate build"
 rm -rf gate-out

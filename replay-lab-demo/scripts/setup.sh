@@ -3,7 +3,7 @@
 # Brings up the one real dependency (Postgres) and builds the service.
 # Everything else (the accounts dependency) is mocked by proxymock — see the Makefile.
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"   # microsvc repo root
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"   # microsvc repo root
 cd "$ROOT"
 
 echo "[1/3] Postgres — the only real dependency transactions-service needs to boot"
