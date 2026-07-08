@@ -3,7 +3,7 @@
 This demo replays real production traffic against a service on your laptop to
 reproduce a bug and prove the fix, and to gate a bad change before it ships. The
 demo is **raw `proxymock` commands**. One helper script (`start-app.sh`) stands
-up the app under test — that is Java/Spring plumbing, not proxymock.
+up the app under test (Java/Spring plumbing, not proxymock).
 
 Two independent places, traffic flows one way:
 
@@ -20,19 +20,19 @@ optional (last section).
 
 Docker (for Postgres), Java 17+, Maven, and `proxymock` (`~/.speedscale/proxymock`).
 
-## Workflow B — reproduce a production bug, prove the fix
+## Workflow B: reproduce a production bug, prove the fix
 
 The bug: `transactions-service` normalizes a deposit memo and trips on a null
 `description`. Real clients POST deposits without one; the agent that wrote it
 never tested that shape.
 
 ```bash
-# terminal 1 — bring up the app (buggy build) with its dependencies mocked
+# terminal 1: bring up the app (buggy build) with its dependencies mocked
 ./start-app.sh
 ```
 
 ```bash
-# terminal 2 — replay the captured production failure against it
+# terminal 2: replay the captured production failure against it
 proxymock replay --in captured --test-against http://localhost:8087
 #   -> the deposit returns HTTP 400: the production bug, reproduced on your laptop
 ```
@@ -64,7 +64,7 @@ proxymock web --in web
 #   -> browse the requests and responses, status per request, request/response bodies
 ```
 
-## Workflow A — the release gate
+## Workflow A: the release gate
 
 Replay recorded production traffic against a candidate build and fail on any
 status-code divergence. This is a CI step: the exit code is the verdict.
@@ -81,7 +81,7 @@ proxymock replay --in prod-suite --test-against http://localhost:8087 \
 ./start-app.sh --refactor
 proxymock replay --in prod-suite --test-against http://localhost:8087 \
   --fail-if "requests.result-match-pct != 100"
-#   -> EVALS FAILED, 33% match, exit 1 — blocked before merge
+#   -> EVALS FAILED, 33% match, exit 1 (blocked before merge)
 ```
 
 ## What is real vs mocked
@@ -109,7 +109,7 @@ craft-mocks.py      pull helper: account-matched mocks for the pulled traffic
 refresh-tokens.py   pull helper: re-sign pulled bearer tokens to a far-future expiry
 ```
 
-## Optional — pull live traffic from your BYOC bucket
+## Optional: pull live traffic from your BYOC bucket
 
 Instead of the committed `captured/`, pull real failing traffic from the cluster's
 bucket via the Replay Lab export (needs staging-decoy kube access):
