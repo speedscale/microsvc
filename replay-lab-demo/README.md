@@ -53,7 +53,7 @@ make gate
 
 The same gate catches the workflow-B bug before release (`make run` with the memo
 bug armed fails the gate on exactly the request shape that triggers it). In CI this
-is one step: build, start, `./gate.sh`, and the exit code blocks the merge.
+is one step: build, start, `scripts/gate.sh`, and the exit code blocks the merge.
 
 The suite in `prod-suite/` ships with the demo. To re-record it against a healthy
 build: `make run MEMO_BUG=false` then `make record-suite`.
@@ -117,7 +117,7 @@ author can bend.
    written, so keys and PII never leave your account in the clear.
 3. The Replay Lab export endpoint filters that bucket by service, route, and
    status and streams back a tar.gz of RRPairs plus downstream mocks —
-   `incident.sh` is a port-forward and one `curl` around it.
+   `scripts/incident.sh` is a port-forward and one `curl` around it.
 
 The committed `captured/` and `prod-suite/` files are earlier pulls of the same
 traffic, kept so the loops run offline. Nothing in either loop touches
