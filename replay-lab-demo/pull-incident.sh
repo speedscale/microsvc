@@ -5,17 +5,16 @@
 #   2. export the failing traffic window from the BYOC bucket (RRPairs + mocks)
 #   3. craft account-matched accounts-service mocks for the post-fix replay
 #
-# Then, in two terminals:
-#   make run MOCKS=incident-mocks            # buggy build + incident deps
-#   make reproduce IN=incident/localhost     # RED  (the captured prod 400)
-#   make fix                                 # GREEN (same request, 201)
+# Then (see README): start the app on the pulled mocks and replay with raw proxymock:
+#   MOCKS=incident-mocks ./start-app.sh
+#   proxymock replay --in incident/localhost --test-against http://localhost:8087
 #
 # The errors fire in ~10 minute bursts. Pass WINDOW to widen the export scan
 # past the newest few minutes (deployed since replay-lab v0.0.44) so the pull is
 # not sensitive to burst timing; a 404 or mocks-only result means no matching
 # failures in that window.
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")"
 
 CTX="${CTX:-do-nyc1-staging-decoy}"
 SERVICE="${SERVICE:-banking-transactions}"
@@ -86,11 +85,10 @@ if [ "$N" = "0" ]; then
 fi
 echo ">> pulled $N failing request(s) into incident/ ($(du -sh incident | cut -f1))"
 
-python3 scripts/refresh-tokens.py incident
-python3 scripts/craft-mocks.py incident incident-mocks
+python3 ./refresh-tokens.py incident
+python3 ./craft-mocks.py incident incident-mocks
 
 echo
-echo "Next:"
-echo "  terminal 1:  make run MOCKS=incident-mocks"
-echo "  terminal 2:  make reproduce IN=incident/localhost   ->  RED  (prod failure, on your laptop)"
-echo "               make fix                                ->  GREEN (same request, 201)"
+echo "Next (raw proxymock):"
+echo "  terminal 1:  MOCKS=incident-mocks ./start-app.sh"
+echo "  terminal 2:  proxymock replay --in incident/localhost --test-against http://localhost:8087"
