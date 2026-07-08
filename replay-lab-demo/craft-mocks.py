@@ -81,7 +81,7 @@ def craft(template_path, out_path, swaps):
 
 def main():
     incident_dir, out_dir = sys.argv[1], sys.argv[2]
-    demo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    demo = os.path.dirname(os.path.abspath(__file__))
     src = os.path.join(demo, "mocks")
 
     # start from the committed mocks (payment/compliance hosts stay as-is)

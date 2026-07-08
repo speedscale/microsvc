@@ -1,197 +1,128 @@
-# Replay Lab: verify AI-generated code against production reality
+# Replay Lab: verify code against real production traffic with proxymock
 
-Coding agents make shipping code cheap. Shipped code still has to survive production
-traffic, and new code fails there more often than code review or dashboards catch.
-This demo shows the two loops that close that gap, on your laptop, with **proxymock**
-and traffic captured from a production-like banking app. No cluster, no staging
-environment, no hand-written tests.
+This demo replays real production traffic against a service on your laptop to
+reproduce a bug and prove the fix, and to gate a bad change before it ships. The
+demo is **raw `proxymock` commands**. One helper script (`start-app.sh`) stands
+up the app under test (Java/Spring plumbing, not proxymock).
 
-- **Workflow A, the release gate.** Replay yesterday's production traffic against a
-  candidate build before it merges. A change that passes its own unit tests but
-  breaks real request shapes goes RED in CI, not in prod.
-- **Workflow B, incident reproduction.** A captured production failure replays
-  locally with every dependency mocked: reproduce (RED), fix, prove (GREEN) with the
-  exact request that hurt a real customer.
+Two independent places, traffic flows one way:
 
-Both loops run against `transactions-service` from this repo, with every downstream
-dependency (accounts-service, Stripe, PayPal, ComplyAdvantage) served by proxymock
-from recorded traffic. Postgres is the only real dependency.
+- A banking app runs in a **staging cluster** with a bug armed; a simulator drives
+  it, some deposits fail, and Speedscale capture records that traffic into a cloud
+  bucket. This runs on its own.
+- **On your laptop** you replay that traffic against one service in local Docker.
+  The laptop only reads captured traffic; it never touches the cluster.
 
-## Setup (once)
+Everything below runs offline against committed traffic. The live bucket pull is
+optional (last section).
 
-Prereqs: Docker (for Postgres), Java 17+, Maven, and `proxymock`
-(`~/.speedscale/proxymock`).
+## Prereqs
+
+Docker (for Postgres), Java 17+, Maven, and `proxymock` (`~/.speedscale/proxymock`).
+
+## Workflow B: reproduce a production bug, prove the fix
+
+The bug: `transactions-service` normalizes a deposit memo and trips on a null
+`description`. Real clients POST deposits without one; the agent that wrote it
+never tested that shape.
 
 ```bash
-make setup        # start Postgres, create the service DB user, build the jar
+# terminal 1: bring up the app (buggy build) with its dependencies mocked
+./start-app.sh
 ```
 
-Every target takes `PORT=…` if 8087 is busy (`make run PORT=8090`, `make gate PORT=8090`).
-`make run` refuses to start if anything else is listening on the port. A half-claimed
-port (say, a container publishing the same port on IPv4 only) answers some clients and
-not others, which is much worse than a clean failure.
+```bash
+# terminal 2: replay the captured production failure against it
+proxymock replay --in captured --test-against http://localhost:8087
+#   -> the deposit returns HTTP 400: the production bug, reproduced on your laptop
+```
+
+Fix it and replay the same request:
+
+```bash
+# terminal 1: Ctrl-C, then apply the fix and restart
+(cd .. && git apply replay-lab-demo/fix.patch)
+./start-app.sh
+
+# terminal 2: same command, now green
+proxymock replay --in captured --test-against http://localhost:8087
+#   -> HTTP 201. The exact production request that was failing now succeeds.
+
+# put the bug back when you are done
+(cd .. && git checkout -- backend/transactions-service)
+```
+
+The proof is the real production request, not a test written to pass.
+
+### See it in the UI
+
+`proxymock web` reads a workspace folder, so write the replay results into one:
+
+```bash
+proxymock replay --in captured --test-against http://localhost:8087 --out web/proxymock/run
+proxymock web --in web
+#   -> browse the requests and responses, status per request, request/response bodies
+```
 
 ## Workflow A: the release gate
 
-The story: an agent "standardized" the deposit API response. It wrapped the body in a
-`{"status", "data"}` envelope and returned `200 OK` instead of `201 Created`. It
-updated the unit tests to match, so CI is green. Every existing consumer of the API
-is now broken. The gate replays recorded production traffic against the candidate
-build and fails unless every request gets the status code production gave it.
+Replay recorded production traffic against a candidate build and fail on any
+status-code divergence. This is a CI step: the exit code is the verdict.
 
 ```bash
-# terminal 1: the build currently in prod
-make run MEMO_BUG=false
-# terminal 2: gate passes — traffic-proven safe
-make gate
+# the build currently in prod: gate passes
+./start-app.sh --clean
+proxymock replay --in prod-suite --test-against http://localhost:8087 \
+  --fail-if "requests.result-match-pct != 100"
+#   -> EVALS PASSED, exit 0
 
-# terminal 1 (Ctrl-C, then): the agent's candidate build
-make run MEMO_BUG=false CONTRACT_REFACTOR=true
-# terminal 2: gate fails — 33% match, both deposits flagged, exit code 1
-make gate
+# the agent's "standardize the response" refactor (200 + envelope): gate fails
+# terminal 1: Ctrl-C, then
+./start-app.sh --refactor
+proxymock replay --in prod-suite --test-against http://localhost:8087 \
+  --fail-if "requests.result-match-pct != 100"
+#   -> EVALS FAILED, 33% match, exit 1 (blocked before merge)
 ```
-
-The same gate catches the workflow-B bug before release (`make run` with the memo
-bug armed fails the gate on exactly the request shape that triggers it). In CI this
-is one step: build, start, `scripts/gate.sh`, and the exit code blocks the merge.
-
-The suite in `prod-suite/` ships with the demo. To re-record it against a healthy
-build: `make run MEMO_BUG=false` then `make record-suite`.
-
-## Workflow B: reproduce the production incident
-
-The story: deposits from one client are failing in production right now.
-Observability shows a `NullPointerException` count going up; it does not hand you
-the request that causes it. The captured RRPair does:
-
-```java
-String memo = request.getDescription().trim().toUpperCase();   // NPE when description is null
-```
-
-Real clients sometimes POST a deposit with no `description`. The agent that wrote
-the memo feature never sent one that way, and neither did its tests.
-
-**Live pull** (staging-decoy access required): grab the actual failing requests
-from the BYOC bucket via the Replay Lab export, with dependency mocks crafted to
-match whatever account the incident hit:
-
-```bash
-make incident     # port-forward, export failing traffic, craft matched mocks
-# terminal 1: the prod build, bug armed, deps from the incident pull
-make run MOCKS=incident-mocks
-# terminal 2: replay the pulled prod failure
-make reproduce IN=incident/localhost   #  RED   — the production 400, on your laptop
-make fix IN=incident/localhost         #  GREEN — null-guard applied, same request now 201
-make reset && make down
-```
-
-The pulled RRPair carries the same `traceparent` as the failing span in the
-tracing backend, so the evidence chain is: dashboard shows the error rate, the
-trace shows a 48-byte request body it cannot give you, the RRPair is those 48
-bytes. Errors fire in bursts, so if `make incident` reports no failing traffic,
-widen the scan with `WINDOW=6h make incident` (or rerun a few minutes after the
-next burst).
-
-**Offline fallback**: a committed capture of the same failure ships in
-`captured/`, so the loop also runs with no cluster access at all:
-
-```bash
-make run          # terminal 1
-make reproduce    #  RED   — HTTP 400
-make fix          #  GREEN — HTTP 201
-make reset        #  put the bug back for the next run
-make down         # stop the service + mock
-```
-
-The fix is proven with the exact production request, not a test someone wrote to
-pass. That distinction is the point: an agent grading its own homework proves
-nothing; recorded production traffic is ground truth neither the agent nor the
-author can bend.
-
-## Where the traffic comes from
-
-`make incident` does the pull for real — this is the BYOC model end to end:
-
-1. Speedscale capture (sidecar or eBPF tap) records traffic in the cluster.
-2. Traffic lands in **your** object-storage bucket, DLP-redacted before it is
-   written, so keys and PII never leave your account in the clear.
-3. The Replay Lab export endpoint filters that bucket by service, route, and
-   status and streams back a tar.gz of RRPairs plus downstream mocks —
-   `scripts/incident.sh` is a port-forward and one `curl` around it.
-
-The committed `captured/` and `prod-suite/` files are earlier pulls of the same
-traffic, kept so the loops run offline. Nothing in either loop touches
-Speedscale's cloud: capture, storage, and replay all run on infrastructure you
-own. Incident pulls land in `incident/` and `incident-mocks/`, which are
-gitignored because they carry real captured bearer tokens.
-
-Captured tokens expire ~24h after they were minted in staging, so `make incident`
-re-signs each one with a far-future expiry using the demo JWT secret (the local
-equivalent of the capture-token blueprint a redacted BYOC replay uses). A pull is
-therefore good indefinitely, and re-running `make incident` regenerates it from
-current traffic regardless.
 
 ## What is real vs mocked
 
 | Dependency | In this demo |
 |---|---|
-| **Postgres** | **real**: local container (`make setup`). JDBC ignores the HTTP proxy, so it stays live. |
-| accounts-service | **mocked** by proxymock from recorded traffic (`mocks/localhost/`) |
-| Stripe / PayPal / ComplyAdvantage | **mocked** by proxymock (`mocks/api.*`), the deposit's payment/compliance fan-out |
-| fraud-service (gRPC) | absent → the client **fails open**, exactly as in production |
+| Postgres | real local container (started by `start-app.sh`) |
+| accounts-service | mocked by proxymock from recorded traffic (`mocks/localhost/`) |
+| Stripe / PayPal / ComplyAdvantage | mocked by proxymock (`mocks/api.*`) |
+| fraud-service (gRPC) | absent; the client fails open, as in production |
 
-The service talks to its dependencies through proxymock on `:4140`
-(`-Dhttp.proxyHost=localhost -Dhttp.proxyPort=4140`). proxymock answers each outbound
-call with the **recorded** response, so both loops run offline and deterministically.
+The app's outbound calls route through proxymock on `:4140`; proxymock answers
+each with the recorded response, so the loop runs offline and deterministically.
 
-## What's in the box
-
-You run two things: the `Makefile` (terminal loop) and `uidemo.sh` (proxymock web
-loop). Everything else is plumbing in `scripts/` that those two call.
+## Files
 
 ```
-Makefile                      the terminal loop: make setup / run / reproduce / fix / gate
-uidemo.sh                     the proxymock web loop: ./uidemo.sh setup / web / reproduce / fix
-fix.patch                     the one-line null-guard fix (applied by make fix)
-captured/deposit-failure.md   the captured production failure (POST /deposit, no description -> 400)
-prod-suite/localhost/*.md     recorded production traffic for the release gate (3 requests)
-mocks/localhost/*.md          recorded accounts-service responses (validate, get-balance, update-balance)
-mocks/api.*/*.md              recorded payment/compliance responses
-scripts/                      plumbing the Makefile and uidemo.sh call:
-  setup.sh run.sh reproduce.sh fix.sh   the terminal steps
-  gate.sh                     the CI release gate (replay + --fail-if, exit code = verdict)
-  incident.sh                 pull the live failing traffic from the replay-lab BYOC export
-  craft-mocks.py              derive account-matched accounts mocks for a pulled incident
-  refresh-tokens.py           re-sign pulled bearer tokens with a far-future expiry
-  warmup.sh                   readiness probe shared by the replay scripts
-  record-suite.sh             re-record prod-suite/ from a healthy build
+start-app.sh        stand up the app under proxymock mocks (--clean / --refactor for the gate)
+captured/           the committed production failure (POST /deposit, no description)
+prod-suite/         recorded good production traffic for the release gate
+mocks/              recorded dependency responses proxymock serves
+fix.patch           the one-line null-guard fix
+pull-incident.sh    OPTIONAL: pull live failing traffic from the BYOC bucket (below)
+craft-mocks.py      pull helper: account-matched mocks for the pulled traffic
+refresh-tokens.py   pull helper: re-sign pulled bearer tokens to a far-future expiry
 ```
 
-Both staged defects are env-gated so the same jar plays every role:
-`DEMO_MEMO_BUG_ENABLED` (workflow B's NPE) and `DEMO_CONTRACT_REFACTOR_ENABLED`
-(workflow A's envelope change). `run.sh` exposes them as `MEMO_BUG` / `CONTRACT_REFACTOR`.
+## Optional: pull live traffic from your BYOC bucket
 
-The mocks were produced by recording one successful deposit against the real services:
+Instead of the committed `captured/`, pull real failing traffic from the cluster's
+bucket via the Replay Lab export (needs staging-decoy kube access):
 
 ```bash
-proxymock record --app-port 8087 -- java -Dhttp.proxyHost=localhost -Dhttp.proxyPort=4140 -jar <service>.jar
-# drive one good deposit through :4143, then reuse the recorded OUT pairs as mocks
+WINDOW=6h ./pull-incident.sh
+#   -> pulls the last several hours of failing deposits into incident/,
+#      re-signs the tokens, and crafts matching dependency mocks in incident-mocks/
+
+MOCKS=incident-mocks ./start-app.sh
+proxymock replay --in incident/localhost --test-against http://localhost:8087
 ```
 
-Because they are real recordings (not hand-written), proxymock matches them by
-signature with no fix-ups. One constraint that keeps the suite deterministic: the
-recorded accounts-service mock matches the downstream balance update by exact body,
-so suite deposits stay at amount `3.33` on account `70668`.
-
-## Where the Replay Lab fits
-
-- **proxymock** is the **replay engine**, the thing you just ran on your laptop. It
-  captures traffic, mocks dependencies, and replays requests against your code.
-- **Replay Lab** is the **product** that runs these exact loops **continuously,
-  against live production traffic**: capture streams into your bucket, a work queue
-  picks failing requests, each one replays in an isolated runner (deps mocked, just
-  like here), and the release gate runs on every merge request.
-
-This demo is both loops, by hand, on one service: **gate before release, reproduce
-when something slips through**. The Replay Lab is the same two loops, automated and
-always-on.
+The pulled RRPair carries the same traceparent as the failing span in your tracing
+backend, closing the loop from dashboard error to the exact request. `incident/`
+and `incident-mocks/` are gitignored (they hold real captured tokens).
