@@ -2,7 +2,7 @@
 # Terminal 1: start proxymock mock (serves every downstream dependency from recorded
 # traffic) and the transactions-service (deps mocked, bug armed). Ctrl-C stops both.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 DEMO="$PWD"
 ROOT="$(cd .. && pwd)"
 TX="$ROOT/backend/transactions-service"

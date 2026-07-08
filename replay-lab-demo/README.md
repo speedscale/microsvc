@@ -146,19 +146,25 @@ call with the **recorded** response, so both loops run offline and deterministic
 
 ## What's in the box
 
+You run two things: the `Makefile` (terminal loop) and `uidemo.sh` (proxymock web
+loop). Everything else is plumbing in `scripts/` that those two call.
+
 ```
+Makefile                      the terminal loop: make setup / run / reproduce / fix / gate
+uidemo.sh                     the proxymock web loop: ./uidemo.sh setup / web / reproduce / fix
+fix.patch                     the one-line null-guard fix (applied by make fix)
 captured/deposit-failure.md   the captured production failure (POST /deposit, no description -> 400)
 prod-suite/localhost/*.md     recorded production traffic for the release gate (3 requests)
 mocks/localhost/*.md          recorded accounts-service responses (validate, get-balance, update-balance)
 mocks/api.*/*.md              recorded payment/compliance responses
-fix.patch                     the one-line null-guard fix (applied by `make fix`)
-gate.sh                       the CI release gate (replay + --fail-if, exit code = verdict)
-incident.sh                   pull the live failing traffic from the replay-lab BYOC export
-craft-mocks.py                derive account-matched accounts mocks for a pulled incident
-refresh-tokens.py             re-sign pulled bearer tokens with a far-future expiry
-record-suite.sh               re-record prod-suite/ from a healthy build
-warmup.sh                     readiness probe shared by the replay scripts
-setup.sh run.sh reproduce.sh fix.sh   the steps, as plain scripts (make just calls them)
+scripts/                      plumbing the Makefile and uidemo.sh call:
+  setup.sh run.sh reproduce.sh fix.sh   the terminal steps
+  gate.sh                     the CI release gate (replay + --fail-if, exit code = verdict)
+  incident.sh                 pull the live failing traffic from the replay-lab BYOC export
+  craft-mocks.py              derive account-matched accounts mocks for a pulled incident
+  refresh-tokens.py           re-sign pulled bearer tokens with a far-future expiry
+  warmup.sh                   readiness probe shared by the replay scripts
+  record-suite.sh             re-record prod-suite/ from a healthy build
 ```
 
 Both staged defects are env-gated so the same jar plays every role:

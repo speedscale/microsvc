@@ -15,7 +15,7 @@
 # not sensitive to burst timing; a 404 or mocks-only result means no matching
 # failures in that window.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 CTX="${CTX:-do-nyc1-staging-decoy}"
 SERVICE="${SERVICE:-banking-transactions}"
@@ -86,8 +86,8 @@ if [ "$N" = "0" ]; then
 fi
 echo ">> pulled $N failing request(s) into incident/ ($(du -sh incident | cut -f1))"
 
-python3 ./refresh-tokens.py incident
-python3 ./craft-mocks.py incident incident-mocks
+python3 scripts/refresh-tokens.py incident
+python3 scripts/craft-mocks.py incident incident-mocks
 
 echo
 echo "Next:"

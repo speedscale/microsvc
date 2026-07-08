@@ -20,14 +20,14 @@ ROOT="$(cd .. && pwd)"
 
 case "${1:-}" in
   setup)
-    [ -d incident/localhost ] || WINDOW="${WINDOW:-6h}" ./incident.sh
+    [ -d incident/localhost ] || WINDOW="${WINDOW:-6h}" scripts/incident.sh
     rm -rf uidemo && mkdir -p "$WS"
     # the pulled PRODUCTION traffic (failing deposits, as captured = 400) is the
     # opening view: "here is your production traffic, from your own bucket"
     cp -R incident/localhost "$WS/captured-production"
     cp -R incident/banking-accounts "$WS/dependencies" 2>/dev/null || true
     make down >/dev/null 2>&1 || true
-    MOCKS=incident-mocks ./run.sh > /tmp/uidemo-run.log 2>&1 &
+    MOCKS=incident-mocks scripts/run.sh > /tmp/uidemo-run.log 2>&1 &
     echo ">> workspace built at $WS ; buggy service starting (see /tmp/uidemo-run.log)"
     echo ">> next: ./uidemo.sh web"
     ;;
@@ -36,7 +36,7 @@ case "${1:-}" in
     exec "$PM" web --in uidemo --forwarder-addr "" --port 7799
     ;;
   reproduce)
-    ./warmup.sh
+    scripts/warmup.sh
     rm -rf "$WS/reproduced"
     "$PM" replay --in incident/localhost --test-against "http://localhost:$PORT" --out "$WS/reproduced" >/dev/null 2>&1 || true
     n=$(grep -rl '"statusCode":400' "$WS/reproduced" 2>/dev/null | wc -l | tr -d ' ')
@@ -45,7 +45,7 @@ case "${1:-}" in
   fix)
     ( cd "$ROOT" && git apply replay-lab-demo/fix.patch && ( cd backend/transactions-service && mvn -q -o compile ) )
     echo ">> fix applied, hot-restarting"; sleep 12
-    ./warmup.sh
+    scripts/warmup.sh
     rm -rf "$WS/fixed"
     "$PM" replay --in incident/localhost --test-against "http://localhost:$PORT" --out "$WS/fixed" >/dev/null 2>&1 || true
     n=$(grep -rl '"statusCode":201' "$WS/fixed" 2>/dev/null | wc -l | tr -d ' ')

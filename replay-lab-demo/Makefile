@@ -28,25 +28,25 @@ help: ## list targets
 	@grep -hE '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/' | column -t -s "$$(printf '\t')"
 
 setup: ## one-time prereqs: postgres + db user + build (single script)
-	@./setup.sh
+	@scripts/setup.sh
 
 run: ## terminal 1: proxymock mock (deps) + the service; flags: MEMO_BUG, CONTRACT_REFACTOR
-	@./run.sh
+	@scripts/run.sh
 
 gate: ## release gate: replay prod-suite/ against the running build; exit code = verdict
-	@./gate.sh
+	@scripts/gate.sh
 
 record-suite: ## re-record prod-suite/ from the running CLEAN build (make run MEMO_BUG=false)
-	@./record-suite.sh
+	@scripts/record-suite.sh
 
 incident: ## pull the live failing traffic from the replay-lab BYOC export + craft mocks
-	@./incident.sh
+	@scripts/incident.sh
 
 reproduce: ## terminal 2: replay the captured prod failure against the service
-	@./reproduce.sh
+	@scripts/reproduce.sh
 
 fix: ## apply the agent's fix (fix.patch), hot-restart, replay -> GREEN
-	@./fix.sh
+	@scripts/fix.sh
 
 reset: ## revert the fix (back to the bug)
 	@cd .. && git checkout -- $(SVC) && echo ">> reverted to the buggy version"

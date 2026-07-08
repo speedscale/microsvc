@@ -2,7 +2,7 @@
 # Apply the agent's fix (fix.patch), let spring-boot devtools hot-restart the running
 # service, then replay the same captured failure to prove it is GREEN.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 DEMO="$PWD"
 ROOT="$(cd .. && pwd)"
 TX="$ROOT/backend/transactions-service"
@@ -16,4 +16,4 @@ echo ">> recompiling (spring-boot devtools hot-restarts the running service)"
 
 echo ">> waiting for hot-restart..."
 sleep 10
-PORT="${PORT:-8087}" IN="${IN:-captured}" ./reproduce.sh
+PORT="${PORT:-8087}" IN="${IN:-captured}" scripts/reproduce.sh

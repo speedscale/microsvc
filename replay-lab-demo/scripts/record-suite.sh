@@ -9,12 +9,12 @@
 # proxymock record puts an inbound proxy on :4143 in front of the app; requests
 # driven through it are captured as localhost RRPairs, which become the suite.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 PM="$HOME/.speedscale/proxymock"
 PORT="${PORT:-8087}"
 JWT_TOKEN='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyZXBsYXktbGFiLWRlbW8iLCJ1c2VySWQiOiIxIiwicm9sZXMiOiJVU0VSIiwiZXhwIjoxODkzNDU2MDAwfQ.ZgLN1WSTSnb4u6vvk-z4k8eX7_FIRiK_Uijb0Jkk3Ck'
 
-./warmup.sh
+scripts/warmup.sh
 
 REC=$(mktemp -d)
 # --proxy-out-port: the mock already owns :4140 (the app's outbound proxy); the
