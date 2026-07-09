@@ -35,8 +35,11 @@ data:
   BURST_DURATION_MS: "30000"      # each burst lasts ~30s
   BURST_JITTER_MS: "60000"        # ±60s randomness on interval
 
-  # Negative-path traffic stays light so localized service errors remain visible.
-  ERROR_INJECTION_PROBABILITY: "0.05"
+  # Per session, chance of running one injected "unhappy path". One of five is the
+  # null-description deposit (the Replay Lab 400 fixture), so failing deposits land
+  # on ~ERROR_INJECTION_PROBABILITY/5 of sessions. Raised from 0.05 so the deposit
+  # errors are dense enough to find and pull in the Replay Lab demo.
+  ERROR_INJECTION_PROBABILITY: "0.3"
 
   # User pool configuration
   TOTAL_USERS: "1000"
