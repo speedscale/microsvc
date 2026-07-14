@@ -9,9 +9,10 @@ spec:
   testConfigID: banking-mock-fail-closed
   # responder-only = fail-closed: 404 on no-match, NO passthrough to real dependency
   mode: responder-only
-  sidecar:
-    tls:
-      out: true
+  # No sidecar block: these workloads use eBPF/java-agent capture
+  # (capture.speedscale.com/*), and the operator webhook rejects goproxy
+  # inject alongside capture annotations. Responder reroute attaches via the
+  # initproxy whenever the replay has a responder service - no sidecar needed.
   workloadRef:
     kind: Deployment
     name: banking-accounts
