@@ -19,9 +19,15 @@ cd "$ROOT"
 
 export PATH="${HOME}/.speedscale:${PATH}"
 
+# Installing unpinned made this job a moving target: v2.5.768 passed on
+# 2026-07-14 and v2.5.846 fails the Postgres step, with Npgsql reporting
+# "Severity not received in server error message" against the mock on 5432.
+# Pin to the last known-good build; override to retest a newer one.
+PROXYMOCK_VERSION="${PROXYMOCK_VERSION:-v2.5.768}"
+
 if ! command -v proxymock >/dev/null 2>&1; then
-  echo "Installing proxymock to ${HOME}/.speedscale ..."
-  curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh
+  echo "Installing proxymock ${PROXYMOCK_VERSION} to ${HOME}/.speedscale ..."
+  curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh -s -- "${PROXYMOCK_VERSION}"
   export PATH="${HOME}/.speedscale:${PATH}"
 fi
 
