@@ -559,7 +559,7 @@ class UserWorkflow {
 
   // Generate one realistic "unhappy path" request so error-rate panels show
   // non-zero, service-attributed errors that scale with traffic. Weighted
-  // distribution across status codes: 401, 400, 404, 409, 503.
+  // distribution across status codes: 401, 400, 404.
   // (The gateway FaultInjectionFilter adds independent 500/503 noise.)
   async generateErrorTraffic(user) {
     if (!config.simulation.errorInjection.enabled) return;
@@ -581,10 +581,10 @@ class UserWorkflow {
     // this bag. Keep entries here minor so none dominates the errors board.
     const bag = [
       'missingAccount',                                      // 404 /api/accounts/{id}/balance (a few, not dominant)
-      'serviceUnavailable',                                  // 503 /api/accounts/{id}/export-statement
+      'statementExport',                                     // 200 /api/accounts/{id}/export-statement unless S3 is wired up
       'badLogin',                                            // 401 (light realism)
       'expiredToken',                                        // 401 (light realism)
-      'nullDescriptionDeposit',                              // 200 normally; 500 when demo.memo-bug.enabled (Replay Lab fixture)
+      'nullDescriptionDeposit',                              // 201 normally; 400 when demo.memo-bug.enabled (Replay Lab fixture)
     ];
     const scenario = bag[Math.floor(Math.random() * bag.length)];
 
@@ -602,9 +602,10 @@ class UserWorkflow {
           break;
 
         case 'nullDescriptionDeposit':
-          // Replay Lab fixture: a deposit with no description field. Succeeds (200)
-          // normally; returns 500 only when transactions-service runs with
-          // demo.memo-bug.enabled=true (the planted null-memo regression).
+          // Replay Lab fixture: a deposit with no description field. Succeeds (201)
+          // normally. With demo.memo-bug.enabled=true the planted null-memo
+          // regression throws an NPE, and TransactionController catches
+          // RuntimeException as BAD_REQUEST, so the fixture surfaces as 400.
           if (account) {
             await this.apiClient.deposit({
               amount: 50,
@@ -635,8 +636,10 @@ class UserWorkflow {
           }, user.token);
           break;
 
-        case 'serviceUnavailable':
-          // Export statement with S3 not configured -> 503.
+        case 'statementExport':
+          // Export statement. With no object store wired up accounts-service
+          // returns the statement inline (200); it only errors (500) when
+          // AWS_S3_BUCKET is set and the upload fails.
           // Uses rawRequest to avoid retry amplification on 5xx.
           if (account) {
             await this.apiClient.rawRequest(
