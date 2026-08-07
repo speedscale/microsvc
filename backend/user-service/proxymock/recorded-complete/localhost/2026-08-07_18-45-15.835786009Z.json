@@ -1,0 +1,83 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-08-07T18:45:15.835786009Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.846",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "94",
+    "source": "goproxy"
+  },
+  "uuid": "mHRibtzuRpabn1VPTlPHwQ==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "Describe Portal",
+  "location": "INSERT INTO user_service.users (username, email, password_hash, roles, created_at, updated_at) VALUES ($1, $2, $3, 'USER', NOW(), NOW()) ON CONFLICT (username) DO NOTHING",
+  "status": "ERR:42P01",
+  "postgres": {
+    "request": {
+      "describe": {
+        "objectType": "OBJECT_TYPE_PORTAL",
+        "parseRequest": {
+          "query": "\n                INSERT INTO user_service.users (username, email, password_hash, roles, created_at, updated_at)\n                VALUES ($1, $2, $3, 'USER', NOW(), NOW())\n                ON CONFLICT (username) DO NOTHING",
+          "parameterOids": [
+            25,
+            25,
+            25
+          ]
+        }
+      }
+    },
+    "response": {
+      "describe": {
+        "messages": [
+          {
+            "error": {
+              "severity": "ERROR",
+              "severityUnlocalized": "ERROR",
+              "code": "42P01",
+              "msg": "relation \"user_service.users\" does not exist",
+              "position": 30,
+              "file": "parse_relation.c",
+              "line": 1371,
+              "routine": "parserOpenTable"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RGVzY3JpYmUgUG9ydGFs",
+    "postgres:query": "SU5TRVJUIElOVE8gdXNlcl9zZXJ2aWNlLnVzZXJzICggdXNlcm5hbWUsIGVtYWlsLCBwYXNzd29yZF9oYXNoLCByb2xlcywgY3JlYXRlZF9hdCwgdXBkYXRlZF9hdCApIFZBTFVFUyAoICQxLCAkMiwgJDMsICdVU0VSJywgTk9XICggKSwgTk9XICggKSApIE9OIENPTkZMSUNUICggdXNlcm5hbWUgKSBETyBOT1RISU5H",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2026-08-07T18:44:59.565197460Z",
+    "downstream": {
+      "established": "2026-08-07T18:44:59.557318001Z",
+      "ipAddress": "127.0.0.1",
+      "port": 53936,
+      "bytesSent": "8098"
+    },
+    "upstream": {
+      "established": "2026-08-07T18:44:59.557465543Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "11734"
+    }
+  }
+}
