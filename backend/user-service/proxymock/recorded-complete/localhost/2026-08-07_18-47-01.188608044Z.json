@@ -1,0 +1,90 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-08-07T18:47:01.188608044Z",
+  "l7protocol": "http",
+  "duration": 109,
+  "tags": {
+    "captureMode": "proxy",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "in",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.846",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "111",
+    "source": "goproxy"
+  },
+  "uuid": "nz2zuFAwTPiEC3NPYaH3Mw==",
+  "direction": "IN",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "GET",
+  "location": "/api/users/check-username",
+  "status": "500",
+  "http": {
+    "req": {
+      "url": "/api/users/check-username",
+      "uri": "/api/users/check-username?username=recordprobe",
+      "version": "1.1",
+      "method": "GET",
+      "host": "localhost:8080",
+      "headers": {
+        "Accept": [
+          "*/*"
+        ],
+        "Host": [
+          "localhost:8080"
+        ],
+        "User-Agent": [
+          "curl/7.88.1"
+        ]
+      },
+      "queryParams": {
+        "username": [
+          "recordprobe"
+        ]
+      }
+    },
+    "res": {
+      "statusCode": 500,
+      "statusMessage": "500 Internal Server Error",
+      "headers": {
+        "Content-Length": [
+          "0"
+        ],
+        "Date": [
+          "Fri, 07 Aug 2026 18:47:00 GMT"
+        ],
+        "Server": [
+          "Kestrel"
+        ]
+      }
+    }
+  },
+  "signature": {
+    "http:host": "bG9jYWxob3N0",
+    "http:method": "R0VU",
+    "http:queryparams:username": "cmVjb3JkcHJvYmU=",
+    "http:url": "L2FwaS91c2Vycy9jaGVjay11c2VybmFtZQ=="
+  },
+  "netinfo": {
+    "id": "5",
+    "startTime": "2026-08-07T18:47:01.188574252Z",
+    "downstream": {
+      "established": "2026-08-07T18:47:01.188355835Z",
+      "ipAddress": "127.0.0.1",
+      "port": 46492,
+      "bytesSent": "123"
+    },
+    "upstream": {
+      "established": "2026-08-07T18:47:01.188519002Z",
+      "ipAddress": "127.0.0.1",
+      "port": 8080,
+      "hostname": "localhost",
+      "bytesSent": "111"
+    }
+  }
+}
