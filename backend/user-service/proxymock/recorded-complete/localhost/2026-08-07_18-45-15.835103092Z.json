@@ -1,0 +1,67 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-08-07T18:45:15.835103092Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.846",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "89",
+    "source": "goproxy"
+  },
+  "uuid": "v4pid2EjRiqMtiztGUiuJg==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "Query",
+  "location": "BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "query": {
+        "query": "BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED"
+      }
+    },
+    "response": {
+      "query": {
+        "messages": [
+          {
+            "complete": {
+              "tag": "DISCARD ALL"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "UXVlcnk=",
+    "postgres:query": "QkVHSU4gVFJBTlNBQ1RJT04gSVNPTEFUSU9OIExFVkVMIFJFQUQgQ09NTUlUVEVE"
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2026-08-07T18:44:59.565197460Z",
+    "downstream": {
+      "established": "2026-08-07T18:44:59.557318001Z",
+      "ipAddress": "127.0.0.1",
+      "port": 53936,
+      "bytesSent": "8098"
+    },
+    "upstream": {
+      "established": "2026-08-07T18:44:59.557465543Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "11610"
+    }
+  }
+}

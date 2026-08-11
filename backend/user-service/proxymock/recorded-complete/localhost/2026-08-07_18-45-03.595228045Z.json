@@ -1,0 +1,60 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-08-07T18:45:03.595228045Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.846",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "29",
+    "source": "goproxy"
+  },
+  "uuid": "Q/II1oXdSaaL8zBNvWBYWw==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "Prepare Statement",
+  "location": "CREATE TABLE IF NOT EXISTS user_service.users (id BIGSERIAL PRIMARY KEY, username VARCHAR(50) UNIQUE NOT NULL, email VARCHAR(100) UNIQUE NOT NULL, password_hash VARCHAR(255) NOT NULL, roles VARCHAR(50) NOT NULL DEFAULT 'USER', created_at TIMESTAMP NOT NULL DEFAULT NOW(), updated_at TIMESTAMP)",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "parse": {
+        "query": "\n        CREATE TABLE IF NOT EXISTS user_service.users (\n            id            BIGSERIAL PRIMARY KEY,\n            username      VARCHAR(50)  UNIQUE NOT NULL,\n            email         VARCHAR(100) UNIQUE NOT NULL,\n            password_hash VARCHAR(255) NOT NULL,\n            roles         VARCHAR(50)  NOT NULL DEFAULT 'USER',\n            created_at    TIMESTAMP    NOT NULL DEFAULT NOW(),\n            updated_at    TIMESTAMP\n        )"
+      }
+    },
+    "response": {
+      "parse": {}
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "UHJlcGFyZSBTdGF0ZW1lbnQ=",
+    "postgres:query": "Q1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgdXNlcl9zZXJ2aWNlLnVzZXJzICggaWQgQklHU0VSSUFMIFBSSU1BUlkgS0VZLCB1c2VybmFtZSBWQVJDSEFSICggNTAgKSBVTklRVUUgTk9UIE5VTEwsIGVtYWlsIFZBUkNIQVIgKCAxMDAgKSBVTklRVUUgTk9UIE5VTEwsIHBhc3N3b3JkX2hhc2ggVkFSQ0hBUiAoIDI1NSApIE5PVCBOVUxMLCByb2xlcyBWQVJDSEFSICggNTAgKSBOT1QgTlVMTCBERUZBVUxUICdVU0VSJywgY3JlYXRlZF9hdCBUSU1FU1RBTVAgTk9UIE5VTEwgREVGQVVMVCBOT1cgKCApLCB1cGRhdGVkX2F0IFRJTUVTVEFNUCAp",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2026-08-07T18:44:59.565197460Z",
+    "downstream": {
+      "established": "2026-08-07T18:44:59.557318001Z",
+      "ipAddress": "127.0.0.1",
+      "port": 53936,
+      "bytesSent": "5116"
+    },
+    "upstream": {
+      "established": "2026-08-07T18:44:59.557465543Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "10687"
+    }
+  }
+}

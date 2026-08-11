@@ -1,0 +1,66 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-08-07T18:47:01.283148794Z",
+  "l7protocol": "postgres",
+  "duration": 22,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.846",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "114",
+    "source": "goproxy"
+  },
+  "uuid": "yOaRtR4BSiCuirIxf8WTrg==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "Describe Portal",
+  "location": "SELECT EXISTS (SELECT 1 FROM user_service.users AS u WHERE u.username = $1)",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "describe": {
+        "objectType": "OBJECT_TYPE_PORTAL",
+        "parseRequest": {
+          "query": "SELECT EXISTS (\n    SELECT 1\n    FROM user_service.users AS u\n    WHERE u.username = $1)",
+          "parameterOids": [
+            1043
+          ]
+        }
+      }
+    },
+    "response": {
+      "describe": {}
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RGVzY3JpYmUgUG9ydGFs",
+    "postgres:query": "U0VMRUNUIEVYSVNUUyAoIFNFTEVDVCAxIEZST00gdXNlcl9zZXJ2aWNlLnVzZXJzIFdIRVJFIHUudXNlcm5hbWUgPSAkMSAp",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2026-08-07T18:44:59.565197460Z",
+    "downstream": {
+      "established": "2026-08-07T18:44:59.557318001Z",
+      "ipAddress": "127.0.0.1",
+      "port": 53936,
+      "bytesSent": "8282"
+    },
+    "upstream": {
+      "established": "2026-08-07T18:44:59.557465543Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "12048"
+    }
+  }
+}
