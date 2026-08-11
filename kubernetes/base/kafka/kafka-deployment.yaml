@@ -57,12 +57,17 @@ spec:
           value: "CONTROLLER"
         - name: KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE
           value: "true"
+        # The image defaults the heap to 1g, which cannot fit the container
+        # limit below. Left unset the broker OOMKilled under load (88 restarts
+        # in staging); pin the heap so heap plus off-heap stays under the limit.
+        - name: KAFKA_HEAP_OPTS
+          value: "-Xmx512m -Xms256m"
         resources:
           requests:
-            memory: "256Mi"
+            memory: "512Mi"
             cpu: "100m"
           limits:
-            memory: "512Mi"
+            memory: "1Gi"
             cpu: "300m"
         readinessProbe:
           tcpSocket:

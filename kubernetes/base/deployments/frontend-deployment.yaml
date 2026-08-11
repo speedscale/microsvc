@@ -39,10 +39,12 @@ spec:
           value: "http://banking-ai:8080"
         resources:
           requests:
-            memory: "128Mi"
+            # Steady state sits near 200Mi, so the old 256Mi ceiling OOMKilled
+            # the container on every traffic burst (160 restarts in staging).
+            memory: "256Mi"
             cpu: "100m"
           limits:
-            memory: "256Mi"
+            memory: "512Mi"
             cpu: "200m"
         livenessProbe:
           httpGet:
