@@ -34,7 +34,7 @@ spec:
         fsGroup: 1001
       containers:
       - name: simulation-client
-        image: ghcr.io/speedscale/microsvc/simulation-client:v1.4.119
+        image: ghcr.io/speedscale/microsvc/simulation-client:v1.4.120
         imagePullPolicy: Always
         
         ports:
