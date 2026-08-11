@@ -1,0 +1,74 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-08-07T18:47:01.282909586Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.846",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "107",
+    "source": "goproxy"
+  },
+  "uuid": "99lXFdvTR/uBUnMjVU/V1w==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "Prepare Statement",
+  "location": "SELECT EXISTS (SELECT 1 FROM user_service.users AS u WHERE u.username = $1)",
+  "status": "ERR:42P01",
+  "postgres": {
+    "request": {
+      "parse": {
+        "query": "SELECT EXISTS (\n    SELECT 1\n    FROM user_service.users AS u\n    WHERE u.username = $1)",
+        "parameterOids": [
+          1043
+        ]
+      }
+    },
+    "response": {
+      "parse": {
+        "error": {
+          "severity": "ERROR",
+          "severityUnlocalized": "ERROR",
+          "code": "42P01",
+          "msg": "relation \"user_service.users\" does not exist",
+          "position": 39,
+          "file": "parse_relation.c",
+          "line": 1371,
+          "routine": "parserOpenTable"
+        }
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "UHJlcGFyZSBTdGF0ZW1lbnQ=",
+    "postgres:query": "U0VMRUNUIEVYSVNUUyAoIFNFTEVDVCAxIEZST00gdXNlcl9zZXJ2aWNlLnVzZXJzIFdIRVJFIHUudXNlcm5hbWUgPSAkMSAp",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2026-08-07T18:44:59.565197460Z",
+    "downstream": {
+      "established": "2026-08-07T18:44:59.557318001Z",
+      "ipAddress": "127.0.0.1",
+      "port": 53936,
+      "bytesSent": "8282"
+    },
+    "upstream": {
+      "established": "2026-08-07T18:44:59.557465543Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "11901"
+    }
+  }
+}
