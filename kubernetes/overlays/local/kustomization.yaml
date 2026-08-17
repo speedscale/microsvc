@@ -5,3 +5,4 @@ namespace: banking-app
 
 resources:
 - ../../base
+- frontend-service-nodeport.yaml

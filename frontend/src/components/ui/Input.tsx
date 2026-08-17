@@ -1,6 +1,6 @@
 'use client';
 
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useId } from 'react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -19,9 +19,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
   const baseStyles = 'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-900 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors';
   const errorStyles = error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : '';
   const combinedClassName = `${baseStyles} ${errorStyles} ${className}`;
-  
-  // Generate unique ID if not provided
-  const inputId = id || `input-${Math.random().toString(36).substring(2, 9)}`;
+  const generatedId = useId();
+  const inputId = id || generatedId;
 
   return (
     <div className="space-y-1">
