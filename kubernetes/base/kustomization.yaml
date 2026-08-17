@@ -50,7 +50,6 @@ resources:
   - services/ai-service-service.yaml
   - services/api-gateway-service.yaml
   - services/frontend-service.yaml
-  - services/frontend-service-nodeport.yaml
 
   # Customer account
   - jobs/seed-user-pool.yaml
@@ -79,6 +78,8 @@ patches:
         metadata:
           annotations:
             sidecar.istio.io/inject: "true"
+        spec:
+          automountServiceAccountToken: false
 - target:
     group: batch
     version: v1

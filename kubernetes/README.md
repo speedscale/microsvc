@@ -44,7 +44,7 @@ kubectl port-forward -n banking-app service/api-gateway 8080:8080
 ### NodePort (if using minikube/Colima)
 ```bash
 # Get frontend URL
-kubectl get svc frontend-nodeport -n banking-app -o jsonpath='{.spec.ports[0].nodePort}'
+kubectl get svc banking-frontend-nodeport -n banking-app -o jsonpath='{.spec.ports[0].nodePort}'
 # Access at http://localhost:<nodePort>
 ```
 
