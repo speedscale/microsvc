@@ -2,33 +2,34 @@
 
 Source: `sample`  
 Window: 2026-08-06T20:00:12.438851+00:00 to 2026-08-06T20:04:59.929276+00:00  
-Calls: 594 across 14 endpoints, 52 identities, 52 sessions  
-Identity from: token 493, payload 93, none 8
+Calls: 594 across 14 endpoints, 53 identities, 53 sessions  
+Identity from: session 501, payload 93
 
 ## Workflows
 
 | # | Workflow | Kind | Sessions | Calls | Steps | Errors | Data tier | Priority |
 | - | --- | --- | ---: | ---: | ---: | ---: | --- | --- |
-| 1 | User Dashboard Overview | action | 34 | 225 | 5 | 1.3% | restricted | high |
-| 2 | Fund Deposit | action | 23 | 43 | 1 | 27.9% | restricted | high |
-| 3 | Transfer Funds & Verify | action | 20 | 104 | 5 | 7.7% | restricted | high |
-| 4 | Login & Account Summary | action | 12 | 36 | 3 | 0.0% | restricted | medium |
+| 1 | Login & Dashboard Overview | action | 34 | 225 | 5 | 1.3% | restricted | high |
+| 2 | Fund Account Deposit | action | 23 | 43 | 1 | 27.9% | restricted | high |
+| 3 | Transfer Funds & Verify Balance | action | 20 | 104 | 5 | 7.7% | restricted | high |
+| 4 | Login & Account Overview | action | 12 | 36 | 3 | 0.0% | restricted | medium |
 | 5 | Registration Availability Check | journey | 12 | 24 | 2 | 0.0% | restricted | medium |
 | 6 | User Registration | action | 12 | 12 | 1 | 0.0% | restricted | high |
-| 7 | Transfer & Balance Check | action | 11 | 37 | 3 | 10.8% | restricted | high |
-| 8 | Transfer & History View | action | 11 | 22 | 2 | 0.0% | restricted | high |
+| 7 | Transfer Funds & Check Balance | action | 11 | 37 | 3 | 10.8% | restricted | high |
+| 8 | Transfer Funds & View History | action | 11 | 22 | 2 | 0.0% | restricted | high |
 | 9 | User Authentication | action | 9 | 9 | 1 | 88.9% | restricted | high |
-| 10 | Initiate Transfer | action | 8 | 8 | 1 | 12.5% | restricted | high |
-| 11 | Open New Account & Review | action | 7 | 35 | 5 | 0.0% | restricted | high |
-| 12 | Open Account & Verify Balance | action | 6 | 18 | 3 | 0.0% | restricted | high |
-| 13 | Login & Profile View | action | 2 | 4 | 2 | 0.0% | restricted | medium |
-| 14 | Export Account Statement | action | 2 | 2 | 1 | 0.0% | restricted | low |
+| 10 | Initiate Fund Transfer | action | 8 | 8 | 1 | 12.5% | restricted | high |
+| 11 | Create Account & Full Review | action | 7 | 35 | 5 | 0.0% | restricted | high |
+| 12 | Create Account & Verify Balance | action | 6 | 18 | 3 | 0.0% | restricted | high |
+| 13 | Account List Polling | polling | 2 | 8 | 1 | 100.0% | restricted | low |
+| 14 | Login & Profile Retrieval | action | 2 | 4 | 2 | 0.0% | restricted | medium |
+| 15 | Export Account Statement | action | 2 | 2 | 1 | 0.0% | restricted | medium |
 
 ## Workflow detail
 
-### 1. User Dashboard Overview
+### 1. Login & Dashboard Overview
 
-User logs in, retrieves their profile and account list, checks a specific account balance, and views transaction history.
+The user authenticates, retrieves their profile, views their account list and balances, and checks recent transaction history.
 
 1. `POST /api/users/login`
 2. `GET /api/users/profile`
@@ -38,17 +39,17 @@ User logs in, retrieves their profile and account list, checks a specific accoun
 
 Data classes: `auth_token` (confidential), `bank_account` (restricted), `credential` (restricted), `credentials_hint` (internal), `email` (confidential), `free_text` (confidential), `identifier` (internal), `money` (confidential), `timestamp` (internal)
 
-### 2. Fund Deposit
+### 2. Fund Account Deposit
 
-User initiates a direct deposit or fund addition into a specific account.
+The user initiates a direct deposit or funding transaction into a specific account.
 
 1. `POST /api/transactions/deposit`
 
 Data classes: `bank_account` (restricted), `credential` (restricted), `free_text` (confidential), `identifier` (internal), `money` (confidential), `timestamp` (internal)
 
-### 3. Transfer Funds & Verify
+### 3. Transfer Funds & Verify Balance
 
-User creates a fund transfer, then verifies the updated account balances and transaction records.
+The user creates a fund transfer, then verifies the updated account balances and transaction history.
 
 1. `POST /api/transactions/create`
 2. `GET /api/accounts`
@@ -58,9 +59,9 @@ User creates a fund transfer, then verifies the updated account balances and tra
 
 Data classes: `bank_account` (restricted), `credential` (restricted), `free_text` (confidential), `identifier` (internal), `money` (confidential), `timestamp` (internal)
 
-### 4. Login & Account Summary
+### 4. Login & Account Overview
 
-User authenticates and immediately views their profile and linked accounts without checking transactions.
+The user authenticates and immediately views their profile and list of associated accounts.
 
 1. `POST /api/users/login`
 2. `GET /api/users/profile`
@@ -70,7 +71,7 @@ Data classes: `auth_token` (confidential), `bank_account` (restricted), `credent
 
 ### 5. Registration Availability Check
 
-System checks username and email availability during the sign-up process.
+The system validates the availability of a chosen username and email address before registration.
 
 1. `GET /api/users/check-username`
 2. `GET /api/users/check-email`
@@ -79,15 +80,15 @@ Data classes: `credential` (restricted), `free_text` (confidential)
 
 ### 6. User Registration
 
-New user creates an account by submitting credentials and profile information.
+A new user creates an account by submitting registration details.
 
 1. `POST /api/users/register`
 
 Data classes: `credential` (restricted), `credentials_hint` (internal), `email` (confidential), `identifier` (internal), `timestamp` (internal)
 
-### 7. Transfer & Balance Check
+### 7. Transfer Funds & Check Balance
 
-User initiates a transfer and immediately checks the updated account list and specific balance.
+The user initiates a fund transfer and immediately checks the updated account list and balance.
 
 1. `POST /api/transactions/create`
 2. `GET /api/accounts`
@@ -95,9 +96,9 @@ User initiates a transfer and immediately checks the updated account list and sp
 
 Data classes: `bank_account` (restricted), `credential` (restricted), `free_text` (confidential), `identifier` (internal), `money` (confidential), `timestamp` (internal)
 
-### 8. Transfer & History View
+### 8. Transfer Funds & View History
 
-User creates a transaction and immediately views the updated transaction history.
+The user creates a fund transfer and then retrieves the updated transaction history.
 
 1. `POST /api/transactions/create`
 2. `GET /api/transactions`
@@ -106,23 +107,23 @@ Data classes: `credential` (restricted), `free_text` (confidential), `identifier
 
 ### 9. User Authentication
 
-User logs into the system with credentials to obtain an access token.
+The user submits credentials to authenticate and receive an access token.
 
 1. `POST /api/users/login`
 
 Data classes: `auth_token` (confidential), `credential` (restricted), `credentials_hint` (internal), `email` (confidential), `free_text` (confidential), `identifier` (internal)
 
-### 10. Initiate Transfer
+### 10. Initiate Fund Transfer
 
-User submits a request to move funds between accounts without immediate verification calls.
+The user submits a request to transfer funds between accounts.
 
 1. `POST /api/transactions/create`
 
 Data classes: `credential` (restricted), `free_text` (confidential), `identifier` (internal), `money` (confidential), `timestamp` (internal)
 
-### 11. Open New Account & Review
+### 11. Create Account & Full Review
 
-User creates a new account and immediately reviews the account list, balance, details, and transaction history.
+The user opens a new account and then reviews the account list, balance, details, and transaction history.
 
 1. `POST /api/accounts`
 2. `GET /api/accounts`
@@ -132,9 +133,9 @@ User creates a new account and immediately reviews the account list, balance, de
 
 Data classes: `bank_account` (restricted), `credential` (restricted), `free_text` (confidential), `identifier` (internal), `money` (confidential), `timestamp` (internal)
 
-### 12. Open Account & Verify Balance
+### 12. Create Account & Verify Balance
 
-User opens a new account and confirms it appears in their list with the correct initial balance.
+The user opens a new account and immediately checks the updated account list and initial balance.
 
 1. `POST /api/accounts`
 2. `GET /api/accounts`
@@ -142,18 +143,26 @@ User opens a new account and confirms it appears in their list with the correct 
 
 Data classes: `bank_account` (restricted), `credential` (restricted), `identifier` (internal), `money` (confidential), `timestamp` (internal)
 
-### 13. Login & Profile View
+### 13. Account List Polling
 
-User authenticates and immediately retrieves their personal profile information.
+The client repeatedly fetches the account list to monitor for updates or synchronization.
+
+1. `GET /api/accounts`
+
+Data classes: `bank_account` (restricted), `credential` (restricted), `identifier` (internal), `money` (confidential), `timestamp` (internal)
+
+### 14. Login & Profile Retrieval
+
+The user authenticates and fetches their personal profile information.
 
 1. `POST /api/users/login`
 2. `GET /api/users/profile`
 
 Data classes: `auth_token` (confidential), `credential` (restricted), `credentials_hint` (internal), `email` (confidential), `free_text` (confidential), `identifier` (internal), `timestamp` (internal)
 
-### 14. Export Account Statement
+### 15. Export Account Statement
 
-User requests a downloadable statement for a specific account.
+The user requests a formal statement export for a specific account.
 
 1. `POST /api/accounts/{id}/export-statement`
 
