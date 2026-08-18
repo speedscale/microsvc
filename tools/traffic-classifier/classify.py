@@ -48,19 +48,73 @@ def load_actions(path):
                 yield json.loads(line)
 
 
+FENCE_RE = re.compile(r"```\n(.*?)\n```", re.S)
+
+
+def parse_rrpair_md(text):
+    """Turn one proxymock RRPair markdown file into the snapshot record shape.
+
+    The INTERNAL block carries the envelope (service, direction, timestamps,
+    signature) but not headers or bodies; those live only in the fenced blocks
+    under REQUEST and RESPONSE. Without reading them there is no identity and
+    nothing to classify, so both are merged back into the record.
+    """
+    rec = None
+    for line in text.split("\n"):
+        m = INTERNAL_RE.match(line.strip())
+        if m:
+            rec = json.loads(m.group(1))
+            break
+    if rec is None:
+        return None
+    http = rec.setdefault("http", {})
+    req = http.setdefault("req", {})
+    res = http.setdefault("res", {})
+
+    def section(name):
+        start = text.find(f"### {name} ###")
+        if start < 0:
+            return []
+        end = text.find("\n### ", start + 1)
+        return [b.group(1) for b in FENCE_RE.finditer(text[start:end if end > 0 else len(text)])]
+
+    def headers_of(block):
+        out = {}
+        for hl in block.split("\n")[1:]:
+            k, sep, v = hl.partition(":")
+            if sep:
+                out.setdefault(k.strip(), []).append(v.strip().replace("\\,", ","))
+        return out
+
+    blocks = section("REQUEST")
+    if blocks:
+        first = blocks[0].split("\n", 1)[0].split()
+        if len(first) >= 2:
+            req.setdefault("method", first[0])
+            target = first[1]
+            path = re.sub(r"^https?://[^/]+", "", target)
+            req.setdefault("uri", path)
+            req.setdefault("url", path.split("?")[0])
+        req.setdefault("headers", headers_of(blocks[0]))
+        if len(blocks) > 1 and "body" not in req:
+            req["body"] = blocks[1]
+    blocks = section("RESPONSE")
+    if blocks and len(blocks) > 1 and "body" not in res:
+        res["body"] = blocks[1]
+    return rec
+
+
 def load_rrpair_dir(root):
-    """Read proxymock RRPair .md files; the INTERNAL block holds the same object."""
+    """Read proxymock RRPair .md files, merging headers and bodies from the visible blocks."""
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [d for d in dirnames if d != "results"]
         for name in sorted(filenames):
             if not name.endswith(".md"):
                 continue
             with open(os.path.join(dirpath, name)) as f:
-                for line in f:
-                    m = INTERNAL_RE.match(line.strip())
-                    if m:
-                        yield json.loads(m.group(1))
-                        break
+                rec = parse_rrpair_md(f.read())
+            if rec is not None:
+                yield rec
 
 
 def template(url):

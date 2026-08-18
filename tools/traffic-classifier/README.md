@@ -7,10 +7,10 @@ It is a few hundred lines of standard-library Python. There is nothing to instal
 ## Try it on the sample
 
 ```bash
-python3 classify.py --actions sample/inbound.jsonl.gz --reactions sample/downstream.jsonl.gz --out-dir out
+python3 classify.py --rrpair-dir sample --out-dir out
 ```
 
-That is 30 minutes of traffic from this banking demo (3,826 calls, 320 sessions) and finishes in a couple of seconds. Open `out/report.md`. A model-named version of the same run is checked in as [`sample/example-report.md`](sample/example-report.md).
+`sample/` is a proxymock recording: ten minutes of traffic through this banking demo, 1,158 inbound calls and 97 sessions, one readable markdown file per call. The run finishes in a couple of seconds. Open `out/report.md`. A model-named version of the same run is checked in as [`sample-report.md`](sample-report.md).
 
 ## Run it on your own traffic
 
@@ -63,4 +63,4 @@ python3 classify.py ... --namer anthropic
 
 ## Where the sample came from
 
-`sample/inbound.jsonl.gz` is 30 minutes of inbound traffic to `banking-gateway` from the simulation client in this repo, captured by Speedscale. `sample/downstream.jsonl.gz` is up to 12 downstream calls per endpoint, enough to classify response fields that the inbound capture drops. Long list responses were truncated to five elements; the classifier only inspects the first few. All users, accounts and amounts are synthetic.
+`sample/localhost/` is ten minutes of inbound traffic to `banking-gateway`, driven by the simulation client in this repo and captured by Speedscale, then exported with `proxymock import`. `sample/banking-*/` holds up to ten of the gateway's downstream calls per endpoint, enough to classify response fields. Three edits were made to the files: the cluster name was replaced, password values were masked to `<redacted>` (consistently across the visible body, the signature and the internal record), and list responses over 20 KB were cut to five elements, which the classifier never reads past. All users, accounts and amounts are synthetic.
