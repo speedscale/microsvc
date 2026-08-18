@@ -213,6 +213,19 @@ make proxymock-stop    # Stop all proxymock processes
 | api-gateway | All backend services | API routing and gateway testing |
 | frontend | api-gateway | UI testing with mocked backend |
 
+### Reading workflows out of a recording
+
+`tools/traffic-classifier/` turns a proxymock recording or a Speedscale snapshot into named business workflows and the data classes each one touches. It ships with a 30 minute sample of this app's traffic and runs on the standard library:
+
+```bash
+python3 tools/traffic-classifier/classify.py \
+  --actions tools/traffic-classifier/sample/inbound.jsonl.gz \
+  --reactions tools/traffic-classifier/sample/downstream.jsonl.gz \
+  --out-dir out
+```
+
+See [tools/traffic-classifier/README.md](tools/traffic-classifier/README.md).
+
 ## Key Features
 
 - **Authentication**: JWT-based authentication with HttpOnly cookies
