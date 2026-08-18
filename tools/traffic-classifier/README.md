@@ -2,7 +2,7 @@
 
 Reads captured API traffic and works out the business workflows in it, without anyone writing them down first. For each workflow it reports the steps in order, how often it runs, its error rate, and the data classes it touches, with a sensitivity tier on the fields.
 
-It is a few hundred lines of standard-library Python. There is nothing to install for the default run.
+`classify.py` is about 400 lines of standard-library Python with nothing to install. `name_workflows.py` is an optional second step that asks a model for readable workflow names.
 
 ## Try it on the sample
 
@@ -36,14 +36,14 @@ For gRPC the HTTP method is always POST, so intent is read from the RPC name ins
 
 ## Naming workflows with a model
 
-Names like `create transactions, then check accounts, balance` are the built-in fallback. For readable names, pass `--namer`. The model sees endpoint sequences and field **names** only, never a single field value.
+Names like `create transactions, then check accounts, balance` are the built-in fallback. For readable names, run the second script on the output directory. It rewrites `classification.json` and `report.md` in place. The model sees endpoint sequences and field **names** only, never a single field value.
 
 ```bash
 # any OpenAI-compatible server: Ollama, LM Studio, vLLM, oMLX
-python3 classify.py ... --namer local --base-url http://localhost:11434/v1 --model llama3.1
+python3 name_workflows.py out --base-url http://localhost:11434/v1 --model llama3.1
 
 # Anthropic (needs ANTHROPIC_API_KEY and `pip install anthropic`)
-python3 classify.py ... --namer anthropic
+python3 name_workflows.py out --provider anthropic
 ```
 
 ## Useful flags
