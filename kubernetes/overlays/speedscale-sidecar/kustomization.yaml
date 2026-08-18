@@ -15,6 +15,15 @@ kind: Kustomization
 # Used by staging-decoy, where we want goproxy in path so outbound rrpairs
 # show up in the live tap and replays can compare per-request bodies.
 # dev-decoy stays on the eBPF overlay.
+#
+# The Java workloads (accounts, transactions, gateway) also get
+# sidecar.speedscale.com/tls-java-tool-options. Without the java agent, the JVM
+# only trusts the goproxy MITM cert if it is pointed at the injected JKS. The
+# operator surfaces those flags as SPEEDSCALE_JAVA_OPTS, but the base manifests
+# launch with `exec java $JAVA_OPTS ...`, which never reads it, so every
+# outbound HTTPS call (Plaid, Moody's, exchange rates) failed with PKIX and
+# that traffic never reached goproxy. The annotation makes the operator fold
+# the trust-store flags into JAVA_TOOL_OPTIONS, which the JVM honors on its own.
 
 resources:
   - ../speedscale
@@ -47,6 +56,9 @@ patches:
       - op: add
         path: /metadata/annotations/sidecar.speedscale.com~1tls-out
         value: "true"
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1tls-java-tool-options
+        value: "true"
 
   - target:
       kind: Deployment
@@ -64,6 +76,9 @@ patches:
       - op: add
         path: /metadata/annotations/sidecar.speedscale.com~1tls-out
         value: "true"
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1tls-java-tool-options
+        value: "true"
 
   - target:
       kind: Deployment
@@ -80,6 +95,9 @@ patches:
         value: "true"
       - op: add
         path: /metadata/annotations/sidecar.speedscale.com~1tls-out
+        value: "true"
+      - op: add
+        path: /metadata/annotations/sidecar.speedscale.com~1tls-java-tool-options
         value: "true"
 
   - target:
