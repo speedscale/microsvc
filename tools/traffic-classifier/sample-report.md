@@ -1,37 +1,37 @@
 # Traffic classifier run
 
 Source: `sample`  
-Window: 2026-08-06T20:00:12.438851+00:00 to 2026-08-06T20:09:59.633782+00:00  
-Calls: 1158 across 14 endpoints, 95 distinct identities, 97 sessions  
+Window: 2026-08-06T20:00:12.438851+00:00 to 2026-08-06T20:04:59.929276+00:00  
+Calls: 594 across 14 endpoints, 52 distinct identities, 52 sessions  
 
-Identity resolved from: token 984, payload 162, none 12 (12 uncorrelated calls excluded from sessions)
+Identity resolved from: token 493, payload 93, none 8 (8 uncorrelated calls excluded from sessions)
 
 ## Workflows
 
 | # | Workflow | Kind | Sessions | Calls | Steps | Errors | Data tier | Test priority |
 | - | -------- | ---- | -------: | ----: | ----: | -----: | --------- | ------------- |
-| 1 | Account Overview & Transaction History | action | 73 | 492 | 5 | 0.6% | restricted | high |
-| 2 | Fund Deposit | action | 58 | 118 | 1 | 28.0% | restricted | high |
-| 3 | Fund Transfer & Verification | action | 33 | 173 | 5 | 4.6% | restricted | high |
-| 4 | Quick Transfer & History Check | action | 24 | 48 | 2 | 0.0% | confidential | medium |
-| 5 | Transfer & Balance Verification | action | 22 | 79 | 3 | 16.5% | restricted | high |
-| 6 | New Account Creation | action | 19 | 73 | 3 | 0.0% | restricted | high |
-| 7 | User Registration | action | 19 | 19 | 1 | 5.3% | restricted | high |
-| 8 | Login & Account Dashboard | action | 18 | 54 | 3 | 0.0% | restricted | high |
-| 9 | Registration Availability Check | journey | 18 | 36 | 2 | 0.0% | confidential | medium |
-| 10 | Initiate Transfer | action | 14 | 14 | 1 | 7.1% | confidential | high |
-| 11 | User Authentication | action | 13 | 13 | 1 | 92.3% | restricted | high |
-| 12 | Statement Export | action | 6 | 6 | 1 | 16.7% | restricted | medium |
-| 13 | Fund Withdrawal & History | action | 3 | 9 | 2 | 0.0% | restricted | high |
-| 14 | Login & Profile View | action | 2 | 4 | 2 | 0.0% | restricted | medium |
+| 1 | Account Overview & Transaction History | action | 34 | 225 | 5 | 1.3% | restricted | high |
+| 2 | Fund Deposit | action | 23 | 43 | 1 | 27.9% | restricted | high |
+| 3 | Fund Transfer & Verification | action | 20 | 104 | 5 | 7.7% | restricted | high |
+| 4 | Login & Account Dashboard | action | 12 | 36 | 3 | 0.0% | restricted | high |
+| 5 | Registration Availability Check | journey | 12 | 24 | 2 | 0.0% | confidential | medium |
+| 6 | User Registration | action | 12 | 12 | 1 | 0.0% | restricted | high |
+| 7 | Transaction & Balance Check | action | 11 | 37 | 3 | 10.8% | restricted | high |
+| 8 | Transaction Creation & History Review | action | 11 | 22 | 2 | 0.0% | confidential | medium |
+| 9 | User Authentication | action | 9 | 9 | 1 | 88.9% | restricted | high |
+| 10 | Fund Transfer Initiation | action | 8 | 8 | 1 | 12.5% | confidential | high |
+| 11 | Account Creation & Review | action | 7 | 35 | 5 | 0.0% | restricted | medium |
+| 12 | New Account Setup | action | 6 | 18 | 3 | 0.0% | restricted | medium |
+| 13 | Login & Profile View | action | 2 | 4 | 2 | 0.0% | restricted | medium |
+| 14 | Statement Export | action | 2 | 2 | 1 | 0.0% | restricted | low |
 
 ## Workflow detail
 
 ### 1. Account Overview & Transaction History
 
-User logs in and reviews their profile, account balances, and recent transaction history.
+User logs in and navigates through their profile, account list, specific account balance, and transaction history to review their financial status.
 
-Test priority **high** — Covers core authentication, account viewing, and transaction listing which are daily banking activities.
+Test priority **high** — Covers the primary user journey for account monitoring and transaction review, which is critical for daily app usage.
 
 Steps:
 1. `POST /api/users/login`
@@ -44,9 +44,9 @@ Data classes touched: `auth_token` (confidential), `bank_account` (restricted), 
 
 ### 2. Fund Deposit
 
-User initiates a direct deposit into a specific account.
+User initiates a direct deposit transaction into a specific account.
 
-Test priority **high** — Critical financial transaction that directly impacts account balance and requires strict validation.
+Test priority **high** — Direct deposits are a fundamental banking operation with high user volume and financial impact.
 
 Steps:
 1. `POST /api/transactions/deposit`
@@ -55,9 +55,9 @@ Data classes touched: `bank_account` (restricted), `free_text` (confidential), `
 
 ### 3. Fund Transfer & Verification
 
-User creates a payment or transfer between accounts and immediately verifies the updated account details and transaction log.
+User creates a new transaction and immediately verifies the updated account balances and transaction records.
 
-Test priority **high** — Covers the complete transfer lifecycle including creation and post-action verification, central to banking operations.
+Test priority **high** — Covers the critical path for executing and confirming fund movements, essential for financial accuracy.
 
 Steps:
 1. `POST /api/transactions/create`
@@ -68,60 +68,11 @@ Steps:
 
 Data classes touched: `bank_account` (restricted), `free_text` (confidential), `identifier` (internal), `money` (confidential), `timestamp` (internal)
 
-### 4. Quick Transfer & History Check
+### 4. Login & Account Dashboard
 
-User initiates a transaction and immediately views the updated transaction history.
+User authenticates and views their profile and list of associated accounts.
 
-Test priority **medium** — Common user flow but lacks account balance verification, making it slightly less critical than full verification flows.
-
-Steps:
-1. `POST /api/transactions/create`
-2. `GET /api/transactions`
-
-Data classes touched: `free_text` (confidential), `identifier` (internal), `money` (confidential), `timestamp` (internal)
-
-### 5. Transfer & Balance Verification
-
-User executes a transaction and confirms the resulting account balances.
-
-Test priority **high** — Directly tests the core financial operation of moving funds and verifying balance updates.
-
-Steps:
-1. `POST /api/transactions/create`
-2. `GET /api/accounts`
-3. `GET /api/accounts/{id}/balance`
-
-Data classes touched: `bank_account` (restricted), `free_text` (confidential), `identifier` (internal), `money` (confidential), `timestamp` (internal)
-
-### 6. New Account Creation
-
-User opens a new account and verifies its creation and initial balance.
-
-Test priority **high** — Account provisioning is a foundational banking operation with significant compliance and data integrity implications.
-
-Steps:
-1. `POST /api/accounts`
-2. `GET /api/accounts`
-3. `GET /api/accounts/{id}/balance`
-
-Data classes touched: `bank_account` (restricted), `free_text` (confidential), `identifier` (internal), `money` (confidential), `timestamp` (internal)
-
-### 7. User Registration
-
-User creates a new account by providing email, password, and username.
-
-Test priority **high** — Entry point for all new users; failures here block all downstream banking activities.
-
-Steps:
-1. `POST /api/users/register`
-
-Data classes touched: `credential` (restricted), `credentials_hint` (internal), `email` (confidential), `identifier` (internal), `timestamp` (internal)
-
-### 8. Login & Account Dashboard
-
-User authenticates and navigates to their profile and account summary dashboard.
-
-Test priority **high** — Standard post-login navigation flow that users perform frequently; critical for session management and data access.
+Test priority **high** — Represents the standard entry point and dashboard view for most authenticated users.
 
 Steps:
 1. `POST /api/users/login`
@@ -130,11 +81,11 @@ Steps:
 
 Data classes touched: `auth_token` (confidential), `bank_account` (restricted), `credential` (restricted), `credentials_hint` (internal), `email` (confidential), `free_text` (confidential), `identifier` (internal), `money` (confidential), `timestamp` (internal)
 
-### 9. Registration Availability Check
+### 5. Registration Availability Check
 
-User verifies the availability of a desired username and email address before registering.
+System validates the availability of a chosen username and email address before account creation.
 
-Test priority **medium** — Important for registration UX but does not complete a transaction or create persistent state on its own.
+Test priority **medium** — Important for user onboarding UX but does not complete registration or handle funds.
 
 Steps:
 1. `GET /api/users/check-username`
@@ -142,56 +93,97 @@ Steps:
 
 Data classes touched: `free_text` (confidential)
 
-### 10. Initiate Transfer
+### 6. User Registration
 
-User submits a request to create a new financial transaction.
+User submits credentials to create a new account in the system.
 
-Test priority **high** — Core banking action that directly modifies financial records and requires robust error handling and validation.
+Test priority **high** — Account creation is a mandatory prerequisite for all other features and directly impacts user acquisition.
+
+Steps:
+1. `POST /api/users/register`
+
+Data classes touched: `credential` (restricted), `credentials_hint` (internal), `email` (confidential), `identifier` (internal), `timestamp` (internal)
+
+### 7. Transaction & Balance Check
+
+User initiates a transaction and immediately checks the updated account list and specific balance.
+
+Test priority **high** — Combines transaction execution with immediate balance verification, a critical path for user trust.
 
 Steps:
 1. `POST /api/transactions/create`
+2. `GET /api/accounts`
+3. `GET /api/accounts/{id}/balance`
+
+Data classes touched: `bank_account` (restricted), `free_text` (confidential), `identifier` (internal), `money` (confidential), `timestamp` (internal)
+
+### 8. Transaction Creation & History Review
+
+User creates a new transaction and reviews the updated transaction history list.
+
+Test priority **medium** — Covers transaction execution and history but lacks immediate balance/account verification steps.
+
+Steps:
+1. `POST /api/transactions/create`
+2. `GET /api/transactions`
 
 Data classes touched: `free_text` (confidential), `identifier` (internal), `money` (confidential), `timestamp` (internal)
 
-### 11. User Authentication
+### 9. User Authentication
 
-User authenticates their credentials to access the banking platform.
+User submits credentials to authenticate and receive an access token.
 
-Test priority **high** — Fundamental security and access control mechanism; any failure completely blocks user access.
+Test priority **high** — Authentication is the gateway to all protected features and must be highly reliable.
 
 Steps:
 1. `POST /api/users/login`
 
 Data classes touched: `auth_token` (confidential), `credential` (restricted), `credentials_hint` (internal), `email` (confidential), `free_text` (confidential), `identifier` (internal)
 
-### 12. Statement Export
+### 10. Fund Transfer Initiation
 
-User requests and downloads a financial statement for a specific account.
+User submits a request to create a new financial transaction between accounts.
 
-Test priority **medium** — Important compliance and record-keeping feature, but less frequently used than core transactional flows.
-
-Steps:
-1. `POST /api/accounts/{id}/export-statement`
-
-Data classes touched: `bank_account` (restricted), `identifier` (internal), `money` (confidential), `timestamp` (internal)
-
-### 13. Fund Withdrawal & History
-
-User initiates a withdrawal and reviews the transaction log to confirm the action.
-
-Test priority **high** — Directly impacts account balance and involves critical financial outflow validation.
+Test priority **high** — Directly handles monetary movements, making it critical for system integrity and user funds.
 
 Steps:
-1. `POST /api/transactions/withdraw`
-2. `GET /api/transactions`
+1. `POST /api/transactions/create`
+
+Data classes touched: `free_text` (confidential), `identifier` (internal), `money` (confidential), `timestamp` (internal)
+
+### 11. Account Creation & Review
+
+User creates a new account and subsequently views the updated account list, details, balance, and transaction history.
+
+Test priority **medium** — Important for account management but less frequent than daily login or transaction flows.
+
+Steps:
+1. `POST /api/accounts`
+2. `GET /api/accounts`
+3. `GET /api/accounts/{id}/balance`
+4. `GET /api/accounts/{id}`
+5. `GET /api/transactions`
 
 Data classes touched: `bank_account` (restricted), `free_text` (confidential), `identifier` (internal), `money` (confidential), `timestamp` (internal)
 
-### 14. Login & Profile View
+### 12. New Account Setup
 
-User authenticates and immediately views their personal profile information.
+User creates a new account and immediately verifies its listing and initial balance.
 
-Test priority **medium** — Common navigation pattern but focuses only on read-only profile data without account or transaction interactions.
+Test priority **medium** — Covers account provisioning but is a secondary workflow compared to transactions and login.
+
+Steps:
+1. `POST /api/accounts`
+2. `GET /api/accounts`
+3. `GET /api/accounts/{id}/balance`
+
+Data classes touched: `bank_account` (restricted), `identifier` (internal), `money` (confidential), `timestamp` (internal)
+
+### 13. Login & Profile View
+
+User authenticates and retrieves their personal profile information.
+
+Test priority **medium** — Standard post-login action but lower session volume suggests it is a secondary or infrequent path.
 
 Steps:
 1. `POST /api/users/login`
@@ -199,24 +191,35 @@ Steps:
 
 Data classes touched: `auth_token` (confidential), `credential` (restricted), `credentials_hint` (internal), `email` (confidential), `free_text` (confidential), `identifier` (internal), `timestamp` (internal)
 
+### 14. Statement Export
+
+User requests an export of their account statement for a specific account.
+
+Test priority **low** — Statement exports are typically infrequent administrative tasks with lower impact on core daily operations.
+
+Steps:
+1. `POST /api/accounts/{id}/export-statement`
+
+Data classes touched: `bank_account` (restricted), `identifier` (internal), `money` (confidential), `timestamp` (internal)
+
 ## Endpoint health
 
 | Endpoint | Calls | Errors | Status codes | Data tier |
 | -------- | ----: | -----: | ------------ | --------- |
-| `POST /api/transactions/deposit` | 58 | 48.3% | 201 x30, 400 x27, 500 x1 | confidential |
-| `POST /api/accounts/{id}/export-statement` | 6 | 16.7% | 200 x5, 503 x1 | restricted |
-| `GET /api/accounts/{id}/balance` | 211 | 12.3% | 200 x185, 404 x24, 503 x1, 500 x1 | restricted |
-| `POST /api/users/login` | 107 | 11.2% | 200 x95, 401 x11, 503 x1 | restricted |
-| `GET /api/accounts` | 216 | 6.0% | 200 x203, 401 x12, 500 x1 | restricted |
-| `POST /api/users/register` | 19 | 5.3% | 201 x18, 503 x1 | restricted |
-| `POST /api/transactions/create` | 93 | 1.1% | 201 x92, 503 x1 | confidential |
-| `GET /api/users/profile` | 95 | 1.1% | 200 x94, 503 x1 | confidential |
-| `GET /api/transactions` | 214 | 0.5% | 200 x213, 503 x1 | confidential |
-| `GET /api/accounts/{id}` | 81 | 0.0% | 200 x81 | restricted |
-| `POST /api/accounts` | 19 | 0.0% | 201 x19 | restricted |
-| `GET /api/users/check-username` | 18 | 0.0% | 200 x18 | confidential |
-| `GET /api/users/check-email` | 18 | 0.0% | 200 x18 | confidential |
-| `POST /api/transactions/withdraw` | 3 | 0.0% | 201 x3 | confidential |
+| `POST /api/transactions/deposit` | 23 | 52.2% | 400 x12, 201 x11 | confidential |
+| `POST /api/users/login` | 57 | 14.0% | 200 x49, 401 x7, 503 x1 | restricted |
+| `GET /api/accounts/{id}/balance` | 107 | 12.2% | 200 x94, 404 x12, 503 x1 | restricted |
+| `GET /api/accounts` | 114 | 7.0% | 200 x106, 401 x8 | restricted |
+| `GET /api/users/profile` | 49 | 2.0% | 200 x48, 503 x1 | confidential |
+| `POST /api/transactions/create` | 50 | 2.0% | 201 x49, 503 x1 | confidential |
+| `GET /api/transactions` | 100 | 1.0% | 200 x99, 503 x1 | confidential |
+| `GET /api/accounts/{id}` | 42 | 0.0% | 200 x42 | restricted |
+| `POST /api/accounts` | 13 | 0.0% | 201 x13 | restricted |
+| `GET /api/users/check-username` | 12 | 0.0% | 200 x12 | confidential |
+| `GET /api/users/check-email` | 12 | 0.0% | 200 x12 | confidential |
+| `POST /api/users/register` | 12 | 0.0% | 201 x12 | restricted |
+| `POST /api/accounts/{id}/export-statement` | 2 | 0.0% | 200 x2 | restricted |
+| `POST /api/transactions/withdraw` | 1 | 0.0% | 201 x1 | confidential |
 
 ## Data classification by endpoint
 
@@ -320,4 +323,5 @@ None found in this capture.
 
 ## Coverage gaps
 
-Every observed endpoint appears in at least one workflow.
+Endpoints seen in traffic but not part of any named workflow:
+- `POST /api/transactions/withdraw`
