@@ -97,10 +97,14 @@ def as_json(raw):
         return None
 
 
-def identity(headers, body, query):
-    """JWT subject, else a username/email in the body or query (so a login's anonymous
-    prefix stitches to the authenticated calls after it), else a hashed API key or
-    tenant header for machine callers."""
+def identity(rec, headers, body, query):
+    """Speedscale's own session tag first, when the tenant has session tracking
+    configured; that reflects rules somebody set on purpose. Then a JWT subject,
+    then a username/email in the body or query (so a login's anonymous prefix
+    stitches to the authenticated calls after it), then a hashed API key or tenant
+    header for machine callers."""
+    if rec.get("session"):
+        return str(rec["session"]), "session"
     auth = headers.get("authorization", "")
     if auth.startswith("Bearer ") and auth.count(".") >= 2:
         pl = auth.split(".")[1]
@@ -129,7 +133,7 @@ def to_call(rec):
     method = (req.get("method") or rec.get("command") or "").upper()
     query = (req.get("uri") or "") + "".join(f"&{k}={v}" for k, vs in (req.get("queryParams") or {}).items() for v in (vs if isinstance(vs, list) else [vs]))
     body = as_json(req.get("body"))
-    user, source = identity(headers, body, query)
+    user, source = identity(rec, headers, body, query)
     tags = rec.get("tags") or {}
     grpc = "grpc" in f"{rec.get('tech', '')}{rec.get('l7protocol', '')}".lower()
     rpc = url.rstrip("/").split("/")[-1]
