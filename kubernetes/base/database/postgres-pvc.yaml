@@ -11,4 +11,6 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi
+      # 1Gi filled during a db-fixture restore and crashed postgres (banking-replay
+      # on dev-decoy, expanded by hand 2026-08-28); banking-app sits at ~80% and grows.
+      storage: 3Gi
