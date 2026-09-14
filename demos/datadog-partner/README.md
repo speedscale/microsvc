@@ -1,5 +1,7 @@
 # Microsvc + Datadog partner demo
 
+For the existing GKE demo cluster, use the [GKE partner overlay](../../kubernetes/overlays/gke-partner/README.md), which preserves GCS payload storage and Datadog links. The installer below is a separate opt-in path for staging-decoy.
+
 Use the existing Apex Banking application on `do-nyc1-staging-decoy`. Its simulator generates banking sessions, and its services already emit OpenTelemetry traces. Speedscale captures HTTP requests and responses. An opt-in collector sends both to the dedicated Datadog partner account under `env:partner-demo`.
 
 The service names stay `frontend`, `api-gateway`, `user-service`, `accounts-service`, `transactions-service`, `fraud-service`, `notification-service`, and `ai-service`. The simulator uses `simulation-client`. Kubernetes workload names remain available on capture logs as `speedscale.workload`.
