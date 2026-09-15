@@ -158,6 +158,19 @@ class TransactionControllerTest {
     }
 
     @Test
+    void deposit_NullPointerException() throws Exception {
+        when(transactionService.deposit(any(DepositRequest.class), anyLong(), any(HttpServletRequest.class)))
+                .thenThrow(new NullPointerException());
+
+        mockMvc.perform(post("/api/transactions/deposit")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(depositRequest)))
+                .andExpect(status().isInternalServerError());
+
+        verify(transactionService, times(1)).deposit(any(DepositRequest.class), eq(testUserId), any(HttpServletRequest.class));
+    }
+
+    @Test
     void withdraw_Success() throws Exception {
         // Arrange
         TransactionResponse withdrawResponse = new TransactionResponse();
