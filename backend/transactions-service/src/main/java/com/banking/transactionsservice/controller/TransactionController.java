@@ -5,6 +5,7 @@ import com.banking.transactionsservice.dto.*;
 import com.banking.transactionsservice.security.UserAuthenticationDetails;
 import com.banking.transactionsservice.service.TransactionService;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -141,6 +142,11 @@ public class TransactionController {
             }
 
             return ResponseEntity.status(HttpStatus.CREATED).body(transaction);
+        } catch (NullPointerException e) {
+            span.recordException(e);
+            span.setStatus(StatusCode.ERROR, e.getClass().getSimpleName());
+            logger.error("Deposit failed unexpectedly", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         } catch (RuntimeException e) {
             span.recordException(e);
             logger.error("Deposit failed", e);
