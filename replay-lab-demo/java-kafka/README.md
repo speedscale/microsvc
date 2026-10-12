@@ -12,7 +12,7 @@ Use Java 17, Maven, Docker, Python 3 and proxymock. Run from this repository che
 docker compose -p java-kafka-quality-loop -f replay-lab-demo/java-kafka/compose.yml up -d
 mvn -f replay-lab-demo/java-kafka/consumer/pom.xml verify
 mvn -f backend/transactions-service/pom.xml -DskipTests package
-python3 -m unittest discover -s replay-lab-demo/java-kafka -p test_checks.py
+python3 -m unittest discover -s replay-lab-demo/java-kafka -p 'test_*.py'
 python3 replay-lab-demo/java-kafka/demo.py capture
 python3 replay-lab-demo/java-kafka/demo.py run baseline
 ```

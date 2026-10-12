@@ -27,4 +27,4 @@ jobs:
         env:
           OTEL_SDK_DISABLED: 'true'
       - name: Gate regression tests
-        run: python3 -m unittest discover -s replay-lab-demo/java-kafka -p test_checks.py
+        run: python3 -m unittest discover -s replay-lab-demo/java-kafka -p 'test_*.py'

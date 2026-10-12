@@ -13,6 +13,7 @@ import sys
 import time
 import urllib.request
 import uuid
+import xml.etree.ElementTree as ET
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from checks import evaluate
 
@@ -113,6 +114,20 @@ def frozen_hash():
     return digest.hexdigest()
 
 
+def resolve_jar(module):
+    pom = ET.parse(module / "pom.xml").getroot()
+    ns = {"m": "http://maven.apache.org/POM/4.0.0"}
+    artifact = pom.findtext("m:artifactId", namespaces=ns)
+    version = pom.findtext("m:version", namespaces=ns) or pom.findtext("m:parent/m:version", namespaces=ns)
+    final_name = pom.findtext("m:build/m:finalName", namespaces=ns) or f"{artifact}-{version}"
+    if not artifact or not version or "${" in final_name or Path(final_name).name != final_name:
+        raise ValueError("Unsupported Maven artifact name; package with an explicit finalName")
+    jar = module / "target" / (final_name + ".jar")
+    if not jar.is_file():
+        raise FileNotFoundError(f"Current artifact is missing: {jar}; run Maven package")
+    return jar
+
+
 class Fixture(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path != "/assessment/70668":
@@ -175,12 +190,12 @@ def run(phase):
     env = dict(os.environ, KAFKA_BROKERS="localhost:19092", KAFKA_TOPIC=topic, KAFKA_GROUP=group,
                OTEL_SDK_DISABLED="true", JWT_SECRET=SECRET, SERVER_PORT="18088",
                PARTNER_API_URL="http://localhost:18098")
-    consumer_jar = HERE / "consumer/target/ledger-consumer-1.4.130.jar"
+    consumer_jar = resolve_jar(HERE / "consumer")
     consumer_hash = hashlib.sha256(consumer_jar.read_bytes()).hexdigest()
     start(["java", "-Duser.timezone=UTC", "-Dhttp.proxyHost=localhost", "-Dhttp.proxyPort=14141", "-Dhttp.nonProxyHosts=",
            "-jar", str(consumer_jar)], out / "consumer.log", env)
     wait_for("consumer assignment", lambda: request(18088, "/ready", True)["assigned"])
-    producer_jar = ROOT / "backend/transactions-service/target/transactions-service-1.4.130.jar"
+    producer_jar = resolve_jar(ROOT / "backend/transactions-service")
     env.update(SERVER_PORT="18087", DB_HOST="localhost", DB_PORT="15439", DB_NAME="banking_app",
                ACCOUNTS_SERVICE_URL="http://localhost:8082", FRAUD_SERVICE_HOST="localhost",
                FRAUD_SERVICE_PORT="19991", DEMO_MEMO_BUG_ENABLED="false",
