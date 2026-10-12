@@ -1,0 +1,30 @@
+name: Java Kafka demo checks
+on:
+  pull_request:
+    paths:
+      - 'replay-lab-demo/java-kafka/**'
+      - '.github/workflows/java-kafka-demo.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'replay-lab-demo/java-kafka/**'
+      - '.github/workflows/java-kafka-demo.yml'
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Consumer tests and coverage
+        run: mvn -B -f replay-lab-demo/java-kafka/consumer/pom.xml verify
+        env:
+          OTEL_SDK_DISABLED: 'true'
+      - name: Gate regression tests
+        run: python3 -m unittest discover -s replay-lab-demo/java-kafka -p test_checks.py
