@@ -1,0 +1,4 @@
+**
+!backend/transactions-service/target/*.jar
+!replay-lab-demo/java-kafka/consumer/target/*.jar
+!replay-lab-demo/java-kafka/output/tools/proxymock-linux-amd64

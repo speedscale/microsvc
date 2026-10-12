@@ -2,7 +2,7 @@
 
 Run the existing Java 17/Spring Boot transactions producer with a Spring Boot ledger consumer, a private plaintext Kafka broker and recorded HTTP dependency mocks. The gate checks the API response, produced record, consumed business outcome and committed offset. HTTP success alone cannot pass it.
 
-This is an isolated local rehearsal for an AWS/EKS service pattern. It does not deploy to EKS, implement a required SCM check, authenticate Kafka or prove brokerless consumer replay. The consumer's assessment API is a synthetic third-party fixture recorded once and then stopped. Existing payment API recordings contain authentication failures; they are mocked dependency behavior, not successful payment integrations. The existing fraud client fails open against an unavailable service and is outside this scenario's assertions.
+The local recipe runs without EKS. The optional EKS runner deploys an isolated version of the same service pattern to the dedicated AWS demo cluster and replays recorded Kafka Fetch traffic with proxymock. Neither recipe implements a required SCM check, authenticates Kafka or proves brokerless consumer replay. The consumer's assessment API is a synthetic third-party fixture recorded once and then stopped. Existing payment API recordings contain authentication failures; they are mocked dependency behavior, not successful payment integrations. The existing fraud client fails open against an unavailable service and is outside this scenario's assertions.
 
 ## Start and validate
 
@@ -60,5 +60,31 @@ docker compose -p java-kafka-quality-loop -f replay-lab-demo/java-kafka/compose.
 ```
 
 This stops only the two dedicated local containers and preserves their data. It does not stop the AWS demo, remove recordings or delete volumes. Use a fresh phase name when rehearsing again.
+
+## EKS consumer replay
+
+`eks_demo.py` is a demo-account-specific adapter, not a general cluster installer. It targets account `763455676074`, cluster `eks-quality-factory` and namespace `banking-app`. It creates only `ihg-*` demo workloads: a private plaintext Kafka broker, Postgres, the unchanged producer, ledger consumer and a proxymock API mock. It uses the authorized dev config in a Kubernetes Secret, not Secrets Manager. Application capture is eBPF-based; the application pods have no capture sidecars.
+
+Prepare the released proxymock v2.5.1179 binaries for macOS and Linux in the ignored `output/tools` directory. Verify the published SHA256 before running them. Build the consumer and producer with Maven, then use `Dockerfile.eks` with `JAR_PATH` pointing at the current module's packaged JAR. Publish separate immutable baseline, faulty and repaired consumer tags in the demo ECR repository. The Dockerfile-specific ignore file excludes recordings and credentials from the build context.
+
+Run `python3 replay-lab-demo/java-kafka/eks_demo.py setup`, then `seed` once. Seed sends the recorded HTTP deposit to the isolated producer, validates its event and ledger outcome, and checks a zstd batch on the broker. Import only that consumer's eBPF capture from the demo BYOC bucket into `output/eks/recording`. Freeze this corpus before testing candidates. Do not rerun setup or seed during the candidate sequence.
+
+Set `DLP_CONFIG_FILE` to the existing demo DLP JSON before the first candidate run. The runner stages those rules inline in `output/eks/ihg-kafka-local.json`, because a cloud-free replay cannot resolve a cloud-only DLP name. The config ID must match its filename. Subsequent runs reuse the same config.
+
+```bash
+python3 replay-lab-demo/java-kafka/eks_demo.py run baseline --image "$BASELINE_IMAGE"
+python3 replay-lab-demo/java-kafka/eks_demo.py run faulty --image "$FAULTY_IMAGE"
+kiro-cli chat --agent-engine v2 --agent ledger-fix --no-interactive \
+  "Read replay-lab-demo/java-kafka/output/eks/faulty/gate.json and repair only replay-lab-demo/java-kafka/consumer/src/main/java/com/banking/demo/Ledger.java. Preserve all checks, recordings, tests and expected values. Do not execute shell commands."
+mvn -f replay-lab-demo/java-kafka/consumer/pom.xml verify
+# Build and publish the repaired image before running it.
+python3 replay-lab-demo/java-kafka/eks_demo.py run repaired --image "$REPAIRED_IMAGE"
+```
+
+Each candidate run stops only `ihg-ledger`, restarts only the ephemeral `ihg-kafka` broker and recreates its dedicated topic. This discards that broker's previous demo events and offsets. It does not reset the existing banking Kafka broker or database. The recording and phase evidence are preserved. Use fresh phase names; existing evidence cannot be overwritten.
+
+The native generator selects `(command IS "Fetch") AND (location IS "ihg-quality-transactions")` and produces the captured batch to the broker without modifying the consumer workload. Independent checks compare the value, key, CreateTime, zstd codec, consumed business status and committed offset. Native replay can pass while the consumer business check fails. Exit 0 is combined functional pass, exit 1 is an assertion failure, and exit 2 is native replay setup failure. Compare recording, test-config, assertion and harness fingerprints across candidates.
+
+EKS payment dependency calls can have certificate-trust failures and are outside this gate. The demonstrated successful third-party response is the recorded assessment response. SASL, TLS, brokerless replay, Kafka-native output assertions and observability export remain separate acceptance work.
 
 The broker configuration follows the [Apache Kafka Docker documentation](https://kafka.apache.org/40/getting-started/docker/). The restricted profile uses Kiro's [custom-agent configuration](https://kiro.dev/docs/custom-agents/configuration-reference/).

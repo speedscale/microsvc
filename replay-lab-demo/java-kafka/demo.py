@@ -32,7 +32,7 @@ def token():
     def encode(value):
         return base64.urlsafe_b64encode(value).decode().rstrip("=")
     data = encode(b'{"alg":"HS256","typ":"JWT"}') + "." + encode(
-        json.dumps({"sub": "replay-lab-demo", "userId": "1", "roles": "USER", "exp": 1893456000}).encode())
+        json.dumps({"sub": "replay-lab-demo", "userId": "1", "roles": "USER", "exp": int(time.time()) + 3600}).encode())
     return data + "." + encode(hmac.new(SECRET.encode(), data.encode(), hashlib.sha256).digest())
 
 
