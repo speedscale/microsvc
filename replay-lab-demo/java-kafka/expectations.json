@@ -1,0 +1,12 @@
+{
+  "requestCount": 1,
+  "httpStatuses": [201],
+  "accountId": 70668,
+  "amount": 3.33,
+  "transactionType": "DEPOSIT",
+  "eventStatus": "COMPLETED",
+  "ledgerOutcome": "COMPLETED",
+  "partnerDecision": "APPROVED",
+  "maxDuplicates": 0,
+  "maxRejected": 0
+}
