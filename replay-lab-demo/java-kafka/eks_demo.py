@@ -8,13 +8,14 @@ from pathlib import Path
 import subprocess
 import time
 import urllib.request
-from demo import HERE, ROOT, token, frozen_hash, resolve_jar
+from demo import HERE, ROOT, token, frozen_hash, resolve_jar, prepare_request
 from checks import evaluate
 
 CONTEXT = "arn:aws:eks:us-east-1:763455676074:cluster/eks-quality-factory"
 NS = "banking-app"
 TOPIC = "ihg-quality-transactions"
 GROUP = "ihg-quality-ledger"
+KAFKA_LOG_DIR = "/tmp/kafka-logs"
 IMAGE = "763455676074.dkr.ecr.us-east-1.amazonaws.com/quality-factory/java-ledger"
 OUT = HERE / "output/eks"
 CLI = HERE / "output/tools/proxymock-eks"
@@ -91,7 +92,7 @@ def setup():
         "KAFKA_CONTROLLER_LISTENER_NAMES": "CONTROLLER", "KAFKA_CONTROLLER_QUORUM_VOTERS": "1@localhost:9093",
         "KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR": "1", "KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR": "1",
         "KAFKA_TRANSACTION_STATE_LOG_MIN_ISR": "1", "KAFKA_AUTO_CREATE_TOPICS_ENABLE": "false",
-        "KAFKA_HEAP_OPTS": "-Xms256m -Xmx512m"}, 9092)
+        "KAFKA_LOG_DIRS": KAFKA_LOG_DIR, "KAFKA_HEAP_OPTS": "-Xms256m -Xmx512m"}, 9092)
     deploy("ihg-postgres", "postgres:16-alpine", {"POSTGRES_DB": "banking_app", "POSTGRES_USER": "postgres",
         "POSTGRES_PASSWORD": "quality-loop-local-only"}, 5432,
         [{"name": "init", "configMap": {"name": "ihg-db-init"}}],
@@ -163,7 +164,7 @@ def broker_evidence(out):
                             "end": int(fields[4]) if fields[4] != "-" else None,
                             "lag": int(fields[5]) if fields[5] != "-" else None})
     dump = call(K + ["exec", "deployment/ihg-kafka", "--", "sh", "-c",
-        f'for f in /tmp/kafka-logs/{TOPIC}-0/*.log; do /opt/kafka/bin/kafka-dump-log.sh --files "$f"; done']).stdout
+        f'for f in {KAFKA_LOG_DIR}/{TOPIC}-0/*.log; do /opt/kafka/bin/kafka-dump-log.sh --files "$f"; done']).stdout
     (out / "batch-dump.txt").write_text(dump)
     codecs = [line.split("compresscodec: ", 1)[1].split()[0] for line in dump.splitlines() if "baseOffset:" in line and "compresscodec: " in line]
     return records, commits, codecs
@@ -179,7 +180,7 @@ def seed():
             if http(18188, "/ready")["assigned"]:
                 break
             time.sleep(1)
-        request_dir = HERE / "traffic"
+        request_dir = prepare_request(out / "request")
         result = call(PM + ["replay", "--in", str(request_dir), "--test-against", "http://localhost:18187",
             "--ignore-body-changes", "--fail-if", "requests.result-match-pct != 100", "--out", str(out / "http-replay"),
             "--out-format", "json", "--timeout", "90s"], timeout=120, check=False)

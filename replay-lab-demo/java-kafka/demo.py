@@ -6,6 +6,7 @@ import hmac
 import html
 import json
 import os
+import re
 from pathlib import Path
 import socket
 import subprocess
@@ -34,6 +35,30 @@ def token():
     data = encode(b'{"alg":"HS256","typ":"JWT"}') + "." + encode(
         json.dumps({"sub": "replay-lab-demo", "userId": "1", "roles": "USER", "exp": int(time.time()) + 3600}).encode())
     return data + "." + encode(hmac.new(SECRET.encode(), data.encode(), hashlib.sha256).digest())
+
+
+def prepare_request(directory):
+    source = SOURCE_REQUEST.read_bytes()
+    original = HERE / "traffic/localhost/deposit.md"
+    if original.exists() and original.read_bytes() != source:
+        raise RuntimeError("Runtime request differs from the existing approved fixture")
+    original.parent.mkdir(parents=True, exist_ok=True)
+    if not original.exists():
+        original.write_bytes(source)
+    request, marker, response = source.partition(b"### RESPONSE ###")
+    if not marker:
+        raise RuntimeError("Recorded request has no response boundary")
+    header_end = request.find(b"```", request.find(b"```") + 3)
+    if header_end < 0:
+        raise RuntimeError("Recorded request has no header boundary")
+    headers, count = re.subn(rb"(?m)^Authorization: Bearer [^\r\n]+",
+                            lambda _: b"Authorization: Bearer " + token().encode(), request[:header_end])
+    if count != 1:
+        raise RuntimeError("Recorded request must have exactly one bearer header")
+    path = directory / "localhost/deposit.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(headers + request[header_end:] + marker + response)
+    return directory
 
 
 def command(args, **kwargs):
@@ -164,12 +189,6 @@ def capture():
 
 
 def run(phase):
-    request_path = HERE / "traffic/localhost/deposit.md"
-    if request_path.exists() and request_path.read_bytes() != SOURCE_REQUEST.read_bytes():
-        raise RuntimeError("Runtime request differs from the existing approved fixture")
-    request_path.parent.mkdir(parents=True, exist_ok=True)
-    if not request_path.exists():
-        request_path.write_bytes(SOURCE_REQUEST.read_bytes())
     expected = json.loads((HERE / "expectations.json").read_text())
     corpus = HERE / "output/partner-recording"
     if not corpus.exists():
@@ -207,7 +226,7 @@ def run(phase):
     wait_for("producer authentication", lambda: isinstance(request(18087, "/api/transactions", True), list), 10)
     command(COMPOSE + ["exec", "-T", "postgres", "psql", "-U", "postgres", "-d", "banking_app",
                       "-c", "TRUNCATE transactions_service.transactions RESTART IDENTITY"])
-    replay_result = subprocess.run(pm("replay", "--in", HERE / "traffic", "--test-against",
+    replay_result = subprocess.run(pm("replay", "--in", prepare_request(out / "request"), "--test-against",
                                      "http://localhost:18087", "--ignore-body-changes",
                                      "--fail-if", "requests.result-match-pct != 100",
                                      "--out", out / "proxymock", "--out-format", "json", "--timeout", "90s"),

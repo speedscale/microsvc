@@ -34,16 +34,18 @@ python3 replay-lab-demo/java-kafka/demo.py run faulty
 
 The faulty runtime must exit 1 while its proxymock HTTP replay passes. Exit 2 means a setup failure and is not the intended regression proof. Tests are deliberately skipped only to build the known faulty fixture; do not describe that candidate as passing the consumer unit tests.
 
-The project-local `ledger-fix` Kiro agent has no shell or MCP tools and is configured to write only the consumer source. Ask it to inspect `output/faulty/gate.json`, preserve the contract and repair `Ledger.java`. Do not allow it to change assertions, tests, recordings or expected values.
+Use Kiro CLI with the V3 engine (tested with CLI 2.30.0). The project-local `ledger-fix` agent uses `permissions.rules`: it allows writes only to Ledger.java and explicitly denies other writes, shell execution and MCP. Ask it to inspect `output/faulty/gate.json`, preserve the contract and repair the consumer. Do not allow it to change assertions, tests, recordings or expected values.
 
 ```bash
-kiro-cli chat --agent-engine v2 --agent ledger-fix --no-interactive \
+kiro-cli chat --agent-engine v3 --agent ledger-fix --no-interactive \
   "Read replay-lab-demo/java-kafka/output/faulty/gate.json and repair only replay-lab-demo/java-kafka/consumer/src/main/java/com/banking/demo/Ledger.java. Preserve all checks and expected values. Do not execute shell commands."
 mvn -f replay-lab-demo/java-kafka/consumer/pom.xml verify
 python3 replay-lab-demo/java-kafka/demo.py run repaired
 ```
 
 Compare `assertionsSha256` in the baseline, faulty and repaired gate files. They must match. Check the source diff and the consumer JAR hash; a successful agent message is not fix evidence. The producer JAR must be unchanged. The repaired runtime must exit 0 with the same request and checks.
+
+The original request fixture stays byte-for-byte unchanged. Each local run and EKS seed stages a phase-local copy with a fresh, one-hour synthetic JWT in the request Authorization header. The request body, other headers and recorded response remain unchanged. Frozen fingerprints cover the original corpus, not the rotating authentication header; request copies stay in ignored output directories. This avoids replaying the fixture's expired token after January 2030.
 
 ## Read the evidence
 
@@ -74,14 +76,14 @@ Set `DLP_CONFIG_FILE` to the existing demo DLP JSON before the first candidate r
 ```bash
 python3 replay-lab-demo/java-kafka/eks_demo.py run baseline --image "$BASELINE_IMAGE"
 python3 replay-lab-demo/java-kafka/eks_demo.py run faulty --image "$FAULTY_IMAGE"
-kiro-cli chat --agent-engine v2 --agent ledger-fix --no-interactive \
+kiro-cli chat --agent-engine v3 --agent ledger-fix --no-interactive \
   "Read replay-lab-demo/java-kafka/output/eks/faulty/gate.json and repair only replay-lab-demo/java-kafka/consumer/src/main/java/com/banking/demo/Ledger.java. Preserve all checks, recordings, tests and expected values. Do not execute shell commands."
 mvn -f replay-lab-demo/java-kafka/consumer/pom.xml verify
 # Build and publish the repaired image before running it.
 python3 replay-lab-demo/java-kafka/eks_demo.py run repaired --image "$REPAIRED_IMAGE"
 ```
 
-Each candidate run stops only `ihg-ledger`, restarts only the ephemeral `ihg-kafka` broker and recreates its dedicated topic. This discards that broker's previous demo events and offsets. It does not reset the existing banking Kafka broker or database. The recording and phase evidence are preserved. Use fresh phase names; existing evidence cannot be overwritten.
+The isolated broker explicitly sets `KAFKA_LOG_DIRS=/tmp/kafka-logs`. Broker evidence uses the same configured path instead of relying on the image default. Each candidate run stops only `ihg-ledger`, restarts only the ephemeral `ihg-kafka` broker and recreates its dedicated topic. This discards that broker's previous demo events and offsets. It does not reset the existing banking Kafka broker or database. The recording and phase evidence are preserved. Use fresh phase names; existing evidence cannot be overwritten.
 
 The native generator selects `(command IS "Fetch") AND (location IS "ihg-quality-transactions")` and produces the captured batch to the broker without modifying the consumer workload. Independent checks compare the value, key, CreateTime, zstd codec, consumed business status and committed offset. Native replay can pass while the consumer business check fails. Exit 0 is combined functional pass, exit 1 is an assertion failure, and exit 2 is native replay setup failure. Compare recording, test-config, assertion and harness fingerprints across candidates.
 
