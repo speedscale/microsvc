@@ -45,4 +45,4 @@ propagator"; gRPC exporter on `:4318` or `http/protobuf` against gRPC → connec
 5. Confirm Prometheus targets are up and transaction histograms appear.
 
 Known issue: frontend pod logs may not appear in `kubectl logs` (Next.js edge-runtime
-routing of the structured logger); tracing is unaffected (tasks.md task 3).
+routing of the structured logger); tracing is unaffected (tasks.md task 4).

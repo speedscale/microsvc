@@ -3,7 +3,8 @@
 Distributed tracing, metrics and logs. Currently instrumented with OpenTelemetry:
 `frontend`, `api-gateway`, `accounts-service`, `transactions-service` and `ai-service`.
 `user-service`, `fraud-service` and `notification-service` have no OTel SDK yet (tasks.md
-task 1), so requirements 1 and 5 do not hold for them. The monitoring stack is
+task 1), so requirements 1 and 5 do not hold for them. The frontend has no Prometheus endpoint yet
+(task 2). The monitoring stack is
 otel-collector, Jaeger, Prometheus, Grafana and Loki.
 
 ## Requirements

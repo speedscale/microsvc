@@ -11,7 +11,8 @@ event to Kafka `transaction-events` for notification-service.
 1. The service SHALL expose `POST /api/transactions/deposit`, `/withdraw`, `/transfer`
    and `/create` (dispatches on `type`); success returns `201` with `TransactionResponse`.
 2. Validation failure SHALL return `400` with a map of field errors. A transfer to the
-   same account, or without `toAccountId`, is invalid.
+   same account, or without `toAccountId`, is invalid (the same-account check is missing
+   on `/create`: tasks.md task 1).
 3. The acting user SHALL come from the validated JWT, not the request body.
 
 ### 2. Fraud screening
@@ -31,7 +32,7 @@ event to Kafka `transaction-events` for notification-service.
    sorted account-id order.
 2. If crediting the destination fails, the service SHALL attempt to roll back the debit.
 3. Any failed step SHALL persist the record as `FAILED` and surface the error; success
-   persists `COMPLETED` with `processed_at`.
+   persists `COMPLETED` with `processed_at`. (Not met today: see tasks.md task 2.)
 
 ### 5. Payments and compliance
 1. After completion the service SHALL call Stripe, PayPal and ComplyAdvantage
