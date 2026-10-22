@@ -1,9 +1,10 @@
 # Requirements — Observability
 
-Distributed tracing, metrics and logs for `frontend`, `api-gateway`, `user-service`,
-`accounts-service`, `transactions-service`, `fraud-service`, `notification-service`,
-`ai-service` and the monitoring stack (otel-collector, Jaeger,
-Prometheus, Grafana, Loki).
+Distributed tracing, metrics and logs. Currently instrumented with OpenTelemetry:
+`frontend`, `api-gateway`, `accounts-service`, `transactions-service` and `ai-service`.
+`user-service`, `fraud-service` and `notification-service` have no OTel SDK yet (tasks.md
+task 1), so requirements 1 and 5 do not hold for them. The monitoring stack is
+otel-collector, Jaeger, Prometheus, Grafana and Loki.
 
 ## Requirements
 
