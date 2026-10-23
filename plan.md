@@ -19,7 +19,6 @@
 - [x] Complete backend testing suite (unit, integration, API tests)
 - [x] Frontend testing with Jest, React Testing Library, and Playwright E2E tests
 - [x] Achieve >80% test coverage across all services
-- [x] **API Route Testing with Proxymock**: Set up proxymock server with predefined responses for all API endpoints to enable direct testing of Next.js API routes without database dependencies
 - [x] **Backend Test Fixes**: Resolved JWT configuration issues in accounts-service by removing OAuth2 resource server configuration and using consistent custom JWT filter approach across all services
 
 ## Phase 5: Observability & Monitoring ✅ COMPLETED
