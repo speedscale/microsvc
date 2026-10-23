@@ -123,17 +123,13 @@ A PostSync hook (`kubernetes/overlays/speedscale/responders/tr-postsync-reroll.y
 ## Development
 
 ### Individual Service Development
-Each service has its own Makefile for isolated development and testing:
+
+Build and run a Java service from its module directory:
 
 ```bash
-cd backend/user-service
-make build
-make run
-
-# Run with dependencies mocked using proxymock
-make proxymock-record  # Record traffic with real dependencies
-make proxymock-mock    # Run with mocked dependencies
-make proxymock-replay  # Test with recorded traffic
+cd backend/accounts-service
+mvn package
+mvn spring-boot:run
 ```
 
 ### Frontend Development
@@ -170,9 +166,6 @@ cd backend/fraud-service && go test ./...
 
 # Python service
 cd backend/ai-service && pytest
-
-# Service-in-isolation
-cd backend/user-service && make proxymock-mock
 ```
 
 ### Frontend Tests
@@ -182,53 +175,24 @@ npm test               # Unit tests
 npm run test:e2e       # End-to-end tests
 ```
 
-## Debugging with Proxymock
+### CI Replay Validation
 
-Each service supports isolated testing without running all dependencies:
-
-```bash
-# 1. Record traffic while system is working
-cd backend/user-service
-make proxymock-record
-
-# 2. Test service in isolation with mocked dependencies
-make proxymock-mock    # Starts service with postgres/other services mocked
-make proxymock-replay  # Replays recorded requests
-
-# 3. Inspect / clean up
-make proxymock-list    # See recorded traffic files
-make proxymock-env     # Show environment variables needed
-make proxymock-stop    # Stop all proxymock processes
-```
-
-### Service Isolation Testing
-| Service | What Gets Mocked | Use Case |
-|---|---|---|
-| user-service | postgres, accounts-service, transactions-service | Auth and user management testing |
-| accounts-service | postgres, user-service, Plaid | Account operations testing |
-| transactions-service | postgres, accounts-service, fraud-service, Stripe / PayPal / ComplyAdvantage | Transaction processing testing |
-| ai-service | 5 LLM provider APIs | Chat-flow testing with deterministic LLM replies |
-| fraud-service | Sift / MaxMind / Stripe Radar | Risk-scoring testing |
-| notification-service | Kafka, Slack / SendGrid / Twilio | Notification fan-out testing |
-| api-gateway | All backend services | API routing and gateway testing |
-| frontend | api-gateway | UI testing with mocked backend |
-
-### Reading workflows out of a recording
-
-`tools/traffic-classifier/` turns a proxymock recording or a Speedscale snapshot into named business workflows and the data classes each one touches. About 400 lines of standard-library Python, shipped with a five minute recording of this app's traffic:
+The required `proxymock-validation` CI job checks user-service against the recordings in `backend/user-service/proxymock/recorded-complete/`. Run the same check locally from the repository root:
 
 ```bash
-python3 tools/traffic-classifier/classify.py --rrpair-dir tools/traffic-classifier/sample --out-dir out
+make proxymock-validation
+# If local Postgres occupies port 5432:
+make proxymock-validation-docker
 ```
 
-See [tools/traffic-classifier/README.md](tools/traffic-classifier/README.md).
+These fixtures and validation scripts support application tests. Keep optional recordings, standalone traffic-analysis tools, and internal demonstration workflows outside this repository.
 
 ## Key Features
 
 - **Authentication**: JWT-based authentication with HttpOnly cookies
 - **Observability**: Distributed tracing (OTel + Jaeger), Prometheus metrics, Loki logs, Grafana dashboards
 - **Speedscale integration**: Responder mocks for every third party, deterministic replay
-- **Development Tools**: Service-specific Makefiles with proxymock integration
+- **Development Tools**: Service-specific build and test commands
 - **Container Ready**: Docker and Kubernetes deployment configurations
 - **Load generation**: Simulation client drives realistic burst traffic with configurable negative-path coverage
 
@@ -266,7 +230,7 @@ kubectl apply -k kubernetes/overlays/speedscale/
 1. **Prerequisites**: Docker, Docker Compose, Node.js 20+, Java 17+, Maven 3.8+, Go 1.21+, Python 3.12+
 2. **Quick start**: Run `docker-compose up -d` to start everything
 3. **Development**: Use service-specific Makefiles for isolated development
-4. **Testing**: Use proxymock for dependency-free testing
+4. **Testing**: Run service tests and the CI replay validation above
 5. **Deployment**: Use Kubernetes manifests for production deployment
 
 ## Health Checks

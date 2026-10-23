@@ -104,19 +104,11 @@ spring-shell.log
 application-local.yml
 application-local.properties
 
-# proxymock (results and logs — recordings used by CI stay tracked)
-**/proxymock/results/
+# Local traffic recordings; existing CI fixtures remain tracked.
+proxymock/
 **/*proxymock*.log
 **/*.log
 
 # Claude Code
 .claude/
 thoughts/
-gate-out/
-replay-lab-demo/incident/
-replay-lab-demo/incident-mocks/
-replay-lab-demo/incident-out/
-replay-lab-demo/uidemo/
-replay-lab-demo/web/
-replay-lab-demo/java-kafka/output/
-replay-lab-demo/java-kafka/traffic/

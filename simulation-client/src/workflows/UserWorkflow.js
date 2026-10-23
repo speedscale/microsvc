@@ -584,7 +584,6 @@ class UserWorkflow {
       'statementExport',                                     // 200 /api/accounts/{id}/export-statement unless S3 is wired up
       'badLogin',                                            // 401 (light realism)
       'expiredToken',                                        // 401 (light realism)
-      'nullDescriptionDeposit',                              // 201 normally; 400 when demo.memo-bug.enabled (Replay Lab fixture)
     ];
     const scenario = bag[Math.floor(Math.random() * bag.length)];
 
@@ -599,19 +598,6 @@ class UserWorkflow {
 
         case 'expiredToken':
           await this.apiClient.getAccounts('invalid.expired.token');
-          break;
-
-        case 'nullDescriptionDeposit':
-          // Replay Lab fixture: a deposit with no description field. Succeeds (201)
-          // normally. With demo.memo-bug.enabled=true the planted null-memo
-          // regression throws an NPE, and TransactionController catches
-          // RuntimeException as BAD_REQUEST, so the fixture surfaces as 400.
-          if (account) {
-            await this.apiClient.deposit({
-              amount: 50,
-              accountId: account.id,
-            }, user.token);
-          }
           break;
 
         case 'missingAccount':
