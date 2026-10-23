@@ -113,7 +113,7 @@ jobs:
         go test ./...
 
   build-and-push:
-    needs: [test-backend, test-frontend, test-go-services]
+    needs: [test-backend, test-frontend, test-go-services, proxymock-validation, e2e-test]
     runs-on: ubuntu-latest
     # Runs on PRs too (amd64-only, no push) so the image build gates the merge,
     # and on push to master (full multi-arch, pushed). Platforms/push are set
