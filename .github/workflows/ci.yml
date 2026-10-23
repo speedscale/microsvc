@@ -283,9 +283,8 @@ jobs:
         exit 1
 
   e2e-test:
-    needs: [build-and-push]
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: [test-frontend]
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     
     steps:
@@ -298,17 +297,6 @@ jobs:
         cache: 'npm'
         cache-dependency-path: frontend/package-lock.json
     
-    - name: Cache Playwright browsers
-      uses: actions/cache@v4
-      id: playwright-cache
-      with:
-        path: |
-          ~/.cache/playwright
-          ~/.cache/ms-playwright
-        key: ${{ runner.os }}-playwright-${{ hashFiles('frontend/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-playwright-
-    
     - name: Install dependencies
       run: |
         cd frontend
@@ -318,7 +306,6 @@ jobs:
       run: |
         cd frontend
         npx playwright install --with-deps chromium
-      if: steps.playwright-cache.outputs.cache-hit != 'true'
     
     - name: Create test results directory
       run: |
@@ -328,7 +315,7 @@ jobs:
     - name: Run simplified E2E tests
       run: |
         cd frontend
-        npm run test:e2e:ci
+        npx playwright test --config=playwright.config.ci.ts
       timeout-minutes: 15
     
     - name: Upload test results
@@ -350,6 +337,7 @@ jobs:
       - test-frontend
       - test-go-services
       - proxymock-validation
+      - e2e-test
       - build-and-push
     if: ${{ always() }}
     runs-on: ubuntu-latest
@@ -362,6 +350,7 @@ jobs:
           echo "  test-frontend=${{ needs.test-frontend.result }}"
           echo "  test-go-services=${{ needs.test-go-services.result }}"
           echo "  proxymock-validation=${{ needs.proxymock-validation.result }}"
+          echo "  e2e-test=${{ needs.e2e-test.result }}"
           echo "  build-and-push=${{ needs.build-and-push.result }}"
           exit 1
       - name: All required checks passed

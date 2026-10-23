@@ -10,7 +10,7 @@ test.describe('Core Application Functionality', () => {
     await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
     
     // Check that the page title is correct (it's set in layout.tsx)
-    await expect(page).toHaveTitle(/Banking Application/);
+    await expect(page).toHaveTitle(/Apex Banking/);
   });
 
   test('should load registration page and display form', async ({ page }) => {
