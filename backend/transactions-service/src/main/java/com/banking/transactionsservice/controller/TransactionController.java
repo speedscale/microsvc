@@ -12,7 +12,6 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -38,13 +37,6 @@ public class TransactionController {
     
     @Autowired
     private Tracer tracer;
-
-    // Demo flag: when enabled, deposit responds with a wrapped envelope and 200 OK
-    // instead of the bare TransactionResponse and 201 Created — a plausible
-    // "API standardization" refactor that breaks existing consumers. Used to stage
-    // a contract regression for the Replay Lab demo. Never enable in production.
-    @Value("${demo.contract-refactor.enabled:false}")
-    private boolean contractRefactorEnabled;
 
     @GetMapping
     public ResponseEntity<List<TransactionResponse>> getUserTransactions(
@@ -132,14 +124,6 @@ public class TransactionController {
             span.setAttribute("account.id", request.getAccountId());
             span.setAttribute("transaction.amount", request.getAmount().toString());
             span.setAttribute("transaction.id", transaction.getId());
-
-            if (contractRefactorEnabled) {
-                // Standardized response envelope (see demo.contract-refactor.enabled).
-                Map<String, Object> envelope = new HashMap<>();
-                envelope.put("status", "success");
-                envelope.put("data", transaction);
-                return ResponseEntity.ok(envelope);
-            }
 
             return ResponseEntity.status(HttpStatus.CREATED).body(transaction);
         } catch (NullPointerException e) {

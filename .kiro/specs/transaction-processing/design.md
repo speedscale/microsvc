@@ -66,8 +66,6 @@ schema; `ddl-auto=validate`.
 - Balance updates go over REST outside the local DB transaction: compensation, not
   atomicity.
 - The lock is per JVM and does not serialize writes across replicas.
-- Demo flags `demo.contract-refactor.enabled` and `demo.memo-bug.enabled` default off,
-  stage regressions for the Replay Lab demo, and must never be enabled in production.
 
 ## Testing
 

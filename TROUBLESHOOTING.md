@@ -144,56 +144,11 @@ docker-compose exec user-service env | grep OTEL
 export OTEL_LOG_LEVEL=DEBUG
 ```
 
-## Debugging with Proxymock
+## CI Replay Validation
 
-### Individual Service Testing
+Run `make proxymock-validation` from the repository root to reproduce the user-service CI check. If port 5432 is occupied, use `make proxymock-validation-docker`. The validation scripts print the initialization requirements and preserve failure logs for inspection.
 
-Use service-specific Makefiles for isolated testing:
-
-```bash
-# Test user-service in isolation
-cd backend/user-service
-make proxymock-record  # Record traffic
-make proxymock-mock    # Start with mocked dependencies
-make proxymock-replay  # Replay recorded requests
-
-# Test without database
-make proxymock-mock  # This mocks postgres connection
-```
-
-### Recording and Replaying Workflows
-
-1. **Record real traffic**:
-   ```bash
-   cd backend/user-service
-   make proxymock-record
-   # In another terminal, make actual API calls
-   curl -X POST http://localhost:4181/api/users/register \
-     -H "Content-Type: application/json" \
-     -d '{"username":"test","email":"test@test.com","password":"pass123"}'
-   ```
-
-2. **Replay without dependencies**:
-   ```bash
-   make proxymock-mock    # Start service with mocked postgres
-   make proxymock-replay  # Replay the recorded requests
-   ```
-
-3. **Debug failed replays**:
-   ```bash
-   make proxymock-list    # See recorded files
-   tail -f proxymock.log  # Check proxymock logs
-   ```
-
-### Service Isolation Matrix
-
-| Service | Mocked Dependencies | Use Case |
-|---------|-------------------|----------|
-| user-service | postgres, accounts-service, transactions-service | User registration/auth testing |
-| accounts-service | postgres, user-service | Account operations testing |
-| transactions-service | postgres, accounts-service, user-service | Transaction testing |
-| api-gateway | All backend services | API routing testing |
-| frontend | api-gateway | UI testing |
+The checked-in user-service recordings are CI fixtures. Use a separate working directory for optional traffic captures and internal demos.
 
 ## Performance Issues
 

@@ -10,6 +10,12 @@ Before working on this codebase, read:
 - `PLAN.md` — Implementation plan with phases and testing criteria for each sub-phase
 - `architecture.md` — System architecture and design decisions
 
+## Repository Scope
+
+Keep application services, deployment assets, and automated application tests in this repository. Checked-in traffic fixtures must be consumed by an automated application test; keep generated recordings and replay results ignored.
+
+Internal demo orchestration, customer rehearsals, cloud-account-specific runners, standalone traffic-analysis tools, and demo-only agent profiles belong in a separate project or private repository. Do not add planted application defects or alternate response contracts for those demonstrations.
+
 ## Development Workflow
 
 This project follows a phased implementation approach. Each phase must be completed and tested before moving to the next:
