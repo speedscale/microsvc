@@ -106,6 +106,18 @@ application-local.properties
 
 # Local traffic recordings; existing CI fixtures remain tracked.
 proxymock/
+# The shared proxymock test tooling (not recorded traffic) is tracked.
+!scripts/proxymock/
+# Checked-in golden fixtures consumed by automated application tests (force-tracked).
+# Each service's proxymock/ dir holds ONLY recorded data (recorded-golden/) + its README;
+# replay/mock output under results/ and the .replay marker stay ignored.
+!backend/*/proxymock/
+backend/*/proxymock/*
+!backend/*/proxymock/recorded-golden/
+!backend/*/proxymock/recorded-complete/
+!backend/*/proxymock/README.md
+backend/*/proxymock/results/
+backend/*/proxymock/recorded-golden/**/.replay/
 **/*proxymock*.log
 **/*.log
 

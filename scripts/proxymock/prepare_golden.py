@@ -1,0 +1,369 @@
+#!/usr/bin/env python3
+"""Prepare a checked-in golden snapshot for an offline, deterministic proxymock replay.
+
+Service-agnostic: run it against any backend/<service>/proxymock/recorded-golden tree
+(see the proxymock-service-tests skill). It normalizes cloud-captured traffic in place and
+is idempotent (re-running is a no-op). It does four things:
+
+1. Strips the DLP artifact. The capture's DLP rule injects a synthetic {"$api_key":
+   "REDACTED-..."} field into request bodies (and the request-body match signature). The
+   real app forwards requests without it, so a downstream mock keyed on the synthetic body
+   never matches. We drop $api_key from the body block AND from the INTERNAL json
+   signature.http:requestBodyJSON (base64) that proxymock actually matches on.
+
+2. Re-signs expiring JWTs. Captured HS256 bearers expire ~24h after capture, so a later
+   replay 401s. Every bearer is re-signed with the same claims, a far-future expiry, and
+   the public test secret below. The same source token maps to the same re-signed token
+   everywhere, so an inbound request and the downstream mock it drives stay consistent, and
+   the app (run with JWT_SECRET set to this value) validates them.
+
+3. Relocates known gaps. Inbound requests that cannot be served offline (downstream
+   fan-out not captured, or an environment-specific status) are moved to known-gaps/ so the
+   replay gate stays 100% on coverable traffic. Configure with --known-gap-pattern (a regex
+   matched against the inbound rrpair text, repeatable) and --known-gap-status URL:STATUS.
+
+4. Prunes unused mocks. The pull holds many redundant/large downstream variants; only one
+   representative (smallest file) per needed (method,url,query,body) signature is kept.
+
+The secret here is NOT a real credential; it is a public test key. The app under replay
+must run with JWT_SECRET set to exactly this value (the replay harness does that).
+
+Usage:
+  prepare_golden.py --golden <recorded-golden-dir>
+                    [--downstream-dir banking-user ...]       # default: auto-detect
+                    [--known-gap-pattern 'http:queryparams:accountId is' ...]
+                    [--known-gap-status /api/transactions:503 ...]
+"""
+import argparse
+import base64
+import hashlib
+import hmac
+import json
+import os
+import re
+import sys
+
+# Public test key shared by every service's golden snapshot and set as JWT_SECRET by the
+# replay harness. Not a real credential.
+JWT_SECRET = b"proxymock-golden-test-secret-key-change-this-32bytes-min-0987654321"
+FAR_FUTURE = 1893456000  # 2030-01-01T00:00:00Z
+
+RESERVED_DIRS = {"localhost", "known-gaps", "results"}
+
+
+def b64url_decode(s: str) -> bytes:
+    return base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
+
+
+def b64url_encode(b: bytes) -> str:
+    return base64.urlsafe_b64encode(b).rstrip(b"=").decode()
+
+
+def resign(token: str):
+    """Re-sign an HS256 JWT with a far-future expiry, or return None if not one."""
+    parts = token.split(".")
+    if len(parts) != 3:
+        return None
+    try:
+        header = json.loads(b64url_decode(parts[0]))
+        payload = json.loads(b64url_decode(parts[1]))
+    except Exception:
+        return None
+    if header.get("alg") != "HS256":
+        return None
+    payload["exp"] = FAR_FUTURE
+    h = b64url_encode(json.dumps(header, separators=(",", ":")).encode())
+    p = b64url_encode(json.dumps(payload, separators=(",", ":")).encode())
+    sig = b64url_encode(hmac.new(JWT_SECRET, f"{h}.{p}".encode(), hashlib.sha256).digest())
+    return f"{h}.{p}.{sig}"
+
+
+# The request section holds two fenced blocks: the request headers then the request body.
+_REQUEST_SECTION = re.compile(r"(### REQUEST ###\n)(.*?)(\n### RESPONSE ###)", re.DOTALL)
+_FENCED = re.compile(r"```\n(.*?)\n```", re.DOTALL)
+# The signature line carrying the (DLP-polluted) request body JSON.
+_SIG_LINE = re.compile(r"^http:requestBodyJSON is (\{.*\})\s*$", re.MULTILINE)
+
+
+def _strip_api_key_json(blob: str):
+    """Drop the synthetic $api_key field from a JSON object string.
+
+    Returns (new_blob, changed). An object that was ONLY $api_key becomes empty,
+    which the caller renders as a blank body so a GET with no body matches.
+    """
+    try:
+        obj = json.loads(blob)
+    except Exception:
+        return blob, False
+    if not isinstance(obj, dict) or "$api_key" not in obj:
+        return blob, False
+    obj.pop("$api_key", None)
+    return obj, True
+
+
+def strip_dlp(txt: str) -> str:
+    # 1) Request body block: remove $api_key, preserving the pretty 2-space style.
+    def fix_section(m):
+        section = m.group(2)
+        fences = list(_FENCED.finditer(section))
+        if len(fences) < 2:
+            return m.group(0)  # no body block present
+        body_fence = fences[-1]
+        body = body_fence.group(1)
+        obj, changed = _strip_api_key_json(body)
+        if not changed:
+            return m.group(0)
+        if obj:
+            new_body = json.dumps(obj, indent=2)
+        else:
+            new_body = ""  # body was only $api_key -> empty body
+        new_section = section[: body_fence.start(1)] + new_body + section[body_fence.end(1):]
+        return m.group(1) + new_section + m.group(3)
+
+    txt = _REQUEST_SECTION.sub(fix_section, txt)
+
+    # 2) Signature line: drop $api_key from the recorded request-body signature so
+    #    proxymock recomputes/matches against the real forwarded body.
+    def fix_sig(m):
+        obj, changed = _strip_api_key_json(m.group(1))
+        if not changed:
+            return m.group(0)
+        if obj:
+            return "http:requestBodyJSON is " + json.dumps(obj, separators=(",", ":"), sort_keys=True)
+        return "http:requestBodyJSON is -NONE-"
+
+    txt = _SIG_LINE.sub(fix_sig, txt)
+
+    # 3) INTERNAL json: proxymock matches on signature.http:requestBodyJSON (base64),
+    #    NOT the human-readable block, so patch it there too. Decode, drop $api_key,
+    #    re-encode; an object that becomes empty gets an empty signature value.
+    txt = _fix_internal_json(txt)
+    return txt
+
+
+_INTERNAL_JSON = re.compile(r"(\njson: )(\{.*\})(\s*\n```)", re.DOTALL)
+
+
+def _fix_internal_json(txt: str) -> str:
+    m = _INTERNAL_JSON.search(txt)
+    if not m:
+        return txt
+    try:
+        doc = json.loads(m.group(2))
+    except Exception:
+        return txt
+    sig = doc.get("signature")
+    if not isinstance(sig, dict) or "http:requestBodyJSON" not in sig:
+        return txt
+    try:
+        decoded = base64.b64decode(sig["http:requestBodyJSON"]).decode("utf-8")
+    except Exception:
+        return txt
+    obj, changed = _strip_api_key_json(decoded)
+    if not changed:
+        return txt
+    if obj:
+        new_val = json.dumps(obj, separators=(",", ":"), sort_keys=True)
+        sig["http:requestBodyJSON"] = base64.b64encode(new_val.encode()).decode()
+    else:
+        sig["http:requestBodyJSON"] = ""
+    new_json = json.dumps(doc, separators=(",", ":"))
+    return txt[: m.start()] + m.group(1) + new_json + m.group(3) + txt[m.end():]
+
+
+def refresh_tokens(txt: str) -> str:
+    for old in set(re.findall(r"Bearer ([A-Za-z0-9._-]+)", txt)):
+        new = resign(old)
+        if new and new != old:
+            txt = txt.replace(old, new)
+    return txt
+
+
+# A "known gap" is an inbound request that cannot be replayed faithfully offline, so it is
+# relocated to known-gaps/ and excluded from the pass/fail gate. Two kinds, both config'd
+# per service (defaults are empty -> nothing is parked unless asked):
+#   - downstream fan-out not captured (no mock can serve it) -> match by --known-gap-pattern
+#   - environment-specific status (e.g. a load-dependent 503) -> match by --known-gap-status
+
+def _recorded_status(txt: str):
+    m = re.search(r'"res":\{[^}]*"statusCode":(\d+)', txt)
+    return int(m.group(1)) if m else None
+
+
+def _is_known_gap(txt, gap_patterns, gap_status) -> bool:
+    if any(p.search(txt) for p in gap_patterns):
+        return True
+    status = _recorded_status(txt)
+    for url_sub, code in gap_status:
+        if status == code and f"http:url is {url_sub}" in txt:
+            return True
+    return False
+
+
+def relocate_known_gaps(golden, gap_patterns, gap_status) -> int:
+    localhost = os.path.join(golden, "localhost")
+    if not os.path.isdir(localhost):
+        return 0
+    if not gap_patterns and not gap_status:
+        return 0
+    gap_dir = os.path.join(golden, "known-gaps", "localhost")
+    moved = 0
+    for name in sorted(os.listdir(localhost)):
+        if not name.endswith(".md"):
+            continue
+        path = os.path.join(localhost, name)
+        with open(path) as f:
+            txt = f.read()
+        if _is_known_gap(txt, gap_patterns, gap_status):
+            os.makedirs(gap_dir, exist_ok=True)
+            os.replace(path, os.path.join(gap_dir, name))
+            moved += 1
+    return moved
+
+
+def detect_downstream_dirs(golden):
+    """Every top-level dir under golden/ except the inbound set and bookkeeping dirs."""
+    return sorted(
+        d for d in os.listdir(golden)
+        if os.path.isdir(os.path.join(golden, d)) and d not in RESERVED_DIRS
+    )
+
+
+def _sig_tuple(txt: str):
+    """(method, url, queryparams, requestBody) from an rrpair's SIGNATURE block.
+
+    Must mirror proxymock's HTTP match dimensions: method, url, query params AND the
+    request body (POST bodies distinguish /login and /transactions/create variants), so
+    pruning keeps a mock that actually matches the inbound request the gateway forwards.
+    """
+    method = re.search(r"^http:method is (.+)$", txt, re.MULTILINE)
+    url = re.search(r"^http:url is (.+)$", txt, re.MULTILINE)
+    qps = sorted(re.findall(r"^http:queryparams(?::\w+)? is (.+)$", txt, re.MULTILINE))
+    qps = [q for q in qps if q != "-NONE-"]
+    body = re.search(r"^http:requestBodyJSON is (.+)$", txt, re.MULTILINE)
+    body_val = body.group(1).strip() if body else "-NONE-"
+    if body_val == "-NONE-":
+        body_val = ""
+    return (
+        method.group(1).strip() if method else "",
+        url.group(1).strip() if url else "",
+        "&".join(qps),
+        body_val,
+    )
+
+
+def prune_unused_mocks(golden, downstream_dirs) -> tuple:
+    """Keep only the downstream mocks the inbound set actually drives.
+
+    The app under test is a path-through proxy, so each inbound request produces a
+    downstream request with the same (method, url, queryparams, body). The pulled snapshot
+    holds many redundant and very large mock variants that are never hit. We keep one
+    representative mock -- the smallest file -- per needed signature in each downstream dir
+    and drop the rest, shrinking the committed golden without changing what the replay
+    exercises.
+    """
+    needed = set()
+    for sub in ("localhost", os.path.join("known-gaps", "localhost")):
+        d = os.path.join(golden, sub)
+        if not os.path.isdir(d):
+            continue
+        for name in os.listdir(d):
+            if name.endswith(".md"):
+                with open(os.path.join(d, name)) as f:
+                    needed.add(_sig_tuple(f.read()))
+
+    kept = dropped = 0
+    for dd in downstream_dirs:
+        ddir = os.path.join(golden, dd)
+        if not os.path.isdir(ddir):
+            continue
+        by_sig = {}
+        for name in os.listdir(ddir):
+            if not name.endswith(".md"):
+                continue
+            path = os.path.join(ddir, name)
+            with open(path) as f:
+                sig = _sig_tuple(f.read())
+            by_sig.setdefault(sig, []).append(path)
+        keep_paths = set()
+        for sig, paths in by_sig.items():
+            if sig in needed:
+                keep_paths.add(min(paths, key=lambda p: os.path.getsize(p)))
+        for name in os.listdir(ddir):
+            if not name.endswith(".md"):
+                continue
+            path = os.path.join(ddir, name)
+            if path in keep_paths:
+                kept += 1
+            else:
+                os.remove(path)
+                dropped += 1
+    return kept, dropped
+
+
+def _parse_gap_status(values):
+    out = []
+    for v in values or []:
+        url, _, code = v.rpartition(":")
+        if not url or not code.isdigit():
+            raise SystemExit(f"--known-gap-status must be URL:STATUS, got {v!r}")
+        out.append((url, int(code)))
+    return out
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--golden", required=True, help="path to a recorded-golden dir")
+    ap.add_argument("--downstream-dir", action="append", default=[],
+                    help="downstream mock dir name (repeatable); default: auto-detect")
+    ap.add_argument("--known-gap-pattern", action="append", default=[],
+                    help="regex matched against inbound rrpair text; matches -> known-gaps/ (repeatable)")
+    ap.add_argument("--known-gap-status", action="append", default=[],
+                    help="URL:STATUS; an inbound rrpair recording that status for that url -> known-gaps/ (repeatable)")
+    args = ap.parse_args()
+
+    golden = args.golden
+    if not os.path.isdir(golden):
+        print(f"golden dir not found: {golden}", file=sys.stderr)
+        return 1
+
+    gap_patterns = [re.compile(p) for p in args.known_gap_pattern]
+    gap_status = _parse_gap_status(args.known_gap_status)
+    downstream_dirs = args.downstream_dir or detect_downstream_dirs(golden)
+
+    changed_dlp = 0
+    changed_tok = 0
+    for root, _dirs, files in os.walk(golden):
+        for name in files:
+            if not name.endswith(".md"):
+                continue
+            path = os.path.join(root, name)
+            with open(path) as f:
+                txt = f.read()
+            before = txt
+            t2 = strip_dlp(txt)
+            if t2 != txt:
+                changed_dlp += 1
+            txt = t2
+            t3 = refresh_tokens(txt)
+            if t3 != txt:
+                changed_tok += 1
+            txt = t3
+            if txt != before:
+                with open(path, "w") as f:
+                    f.write(txt)
+
+    moved = relocate_known_gaps(golden, gap_patterns, gap_status)
+    kept, dropped = prune_unused_mocks(golden, downstream_dirs)
+    print(f"prepared golden snapshot at {golden}")
+    print(f"  downstream dirs: {', '.join(downstream_dirs) or '(none)'}")
+    print(f"  stripped DLP $api_key body in {changed_dlp} rrpair(s)")
+    print(f"  refreshed bearer tokens in {changed_tok} rrpair(s) (exp -> 2030)")
+    print(f"  relocated {moved} inbound request(s) to known-gaps/")
+    print(f"  kept {kept} downstream mock(s), dropped {dropped} unused/redundant")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

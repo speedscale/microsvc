@@ -117,6 +117,19 @@ proxymock-validation:
 proxymock-validation-docker:
 	./scripts/run-proxymock-validation-docker.sh
 
+# Externalized proxymock replay integration tests for a backend service, driven by its
+# checked-in golden snapshot (backend/<service>/proxymock/recorded-golden). Add new
+# services via scripts/proxymock/services/<service>.env (see the proxymock-service-tests skill).
+.PHONY: proxymock-replay
+proxymock-replay:
+	./scripts/proxymock/replay-service.sh api-gateway
+
+# Enable the tracked pre-commit hook (runs the api-gateway replay when the gateway changes).
+.PHONY: install-git-hooks
+install-git-hooks:
+	git config core.hooksPath .githooks
+	@echo "Git hooks enabled (core.hooksPath=.githooks)."
+
 # Kubernetes targets - Consolidated
 .PHONY: k8s-deploy observability-deploy speedscale-deploy k8s-cleanup k8s-status
 k8s-deploy:
