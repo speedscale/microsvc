@@ -59,7 +59,7 @@ backend/<service>/proxymock/
   recorded-golden/
     localhost/                 # inbound requests -> the replay TEST SET
     <dep-host>/ ...            # outbound calls per dependency -> downstream MOCKS
-    known-gaps/localhost/      # inbound parked out of the gate (optional)
+    known-gaps/localhost/      # inbound parked out of the gate (git-ignored, never committed)
   README.md                    # short, data-focused (copy api-gateway's and adjust)
   results/                     # generated per run, git-ignored
 ```
@@ -168,7 +168,9 @@ gate stays 100% on coverable traffic. Two kinds: a downstream fan-out the snapsh
 capture (match with `--known-gap-pattern`, e.g. a query param that has no mock), and an
 environment-specific status such as a load-dependent 503 (match with `--known-gap-status`,
 e.g. `/api/transactions:503`). Only add a gap rule once a replay run shows the request can't
-be served — do not pre-emptively park things.
+be served — do not pre-emptively park things. Parked recordings are not consumed by any test,
+so they are not committed (AGENTS.md): `known-gaps/` is git-ignored, the pruner keeps only
+mocks the replayed `localhost/` set needs, and each gap is documented in the service README.
 
 ### 4. Write scripts/proxymock/services/<service>.env
 
@@ -293,6 +295,12 @@ api-gateway):
   tracked — no change needed.
 - The harness picks up `services/<service>.blueprint.json` and `.invariants.json` by name;
   no extra wiring.
+- The harness always rebuilds the service from current sources (`BUILD_CMD` must `clean`
+  so exactly one jar matches `JAR_GLOB`), so a change is never tested against a stale jar.
+  `PROXYMOCK_SKIP_BUILD=1` reuses a jar for local iteration only; the hook clears it.
+- Missing or uninitialized proxymock makes the harness skip (exit 0), keeping the hook
+  non-blocking for contributors without Speedscale. Automated runs that must not skip set
+  `PROXYMOCK_REQUIRED=1`.
 - The pre-commit hook (`.githooks/pre-commit`) auto-discovers any
   `scripts/proxymock/services/<service>.env`, so a new service is gated as soon as its config
   exists. Enable hooks once with `make install-git-hooks`.

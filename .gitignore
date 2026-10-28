@@ -118,6 +118,9 @@ backend/*/proxymock/*
 !backend/*/proxymock/README.md
 backend/*/proxymock/results/
 backend/*/proxymock/recorded-golden/**/.replay/
+# Parked known-gap recordings are excluded from the replay gate, so no test consumes them;
+# keep them local only (AGENTS.md: checked-in fixtures must be consumed by a test).
+backend/*/proxymock/recorded-golden/known-gaps/
 **/*proxymock*.log
 **/*.log
 

@@ -198,12 +198,19 @@ def main():
     applied_rules = set()
     failures = []
     for method, url, status, body, path in iter_replay(args.replay):
-        if body is None:
-            continue
         for ri, rule in enumerate(rules):
             if not _match(rule["match"], method, url, status):
                 continue
             applied_rules.add(ri)
+            if body is None:
+                # An invariant targets this operation, so a JSON body is expected; an empty
+                # or unparsable one violates it rather than being skipped.
+                checked += 1
+                failed += 1
+                failures.append((f"{method} {url_pattern(url)} [{status}]",
+                                 os.path.basename(path),
+                                 ["$: expected a JSON body, got an empty or non-JSON body"]))
+                continue
             errs = []
             for chk in rule["assert"]:
                 for present, value in _resolve(body, chk["field"]):

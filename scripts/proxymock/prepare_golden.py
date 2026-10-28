@@ -26,6 +26,8 @@ is idempotent (re-running is a no-op). It does four things:
    fan-out not captured, or an environment-specific status) are moved to known-gaps/ so the
    replay gate stays 100% on coverable traffic. Configure with --known-gap-pattern (a regex
    matched against the inbound rrpair text, repeatable) and --known-gap-status URL:STATUS.
+   known-gaps/ is git-ignored: parked recordings are not consumed by any test, so they stay
+   local for inspection and are never committed (the service README documents each gap).
 
 4. Prunes unused mocks. The pull holds many redundant/large downstream variants; only one
    representative (smallest file) per needed (method,url,query,body) signature is kept.
@@ -285,8 +287,11 @@ def prune_unused_mocks(golden, downstream_dirs) -> tuple:
     and drop the rest, shrinking the committed golden without changing what the replay
     exercises.
     """
+    # Only the inbound TEST SET drives what is kept. Parked known-gaps are not replayed, so
+    # mocks that only they would need are unconsumed fixtures and are dropped; known-gaps/ is
+    # also git-ignored, so counting it would make pruning differ between machines.
     needed = set()
-    for sub in ("localhost", os.path.join("known-gaps", "localhost")):
+    for sub in ("localhost",):
         d = os.path.join(golden, sub)
         if not os.path.isdir(d):
             continue

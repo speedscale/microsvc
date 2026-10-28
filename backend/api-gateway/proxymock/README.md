@@ -11,7 +11,7 @@ recorded-golden/
   banking-user/             # gateway's outbound calls          -> downstream MOCKS
   banking-accounts/         # gateway's outbound calls          -> downstream MOCKS
   banking-transactions/     # gateway's outbound calls          -> downstream MOCKS
-  known-gaps/localhost/     # inbound requests parked out of the gate (see below)
+  known-gaps/localhost/     # parked inbound requests (git-ignored, local only; see below)
 results/                    # replay/mock output + reports (git-ignored, generated per run)
 ```
 
@@ -49,10 +49,13 @@ into a 401.
 Reports land in `results/` (git-ignored). Quick offline checks without a build:
 `make proxymock-check-golden` and `make proxymock-lint-invariants`.
 
-## known-gaps/
+## Known gaps (not committed)
 
 Inbound requests parked out of the pass/fail gate because they cannot be reproduced
-faithfully offline — a capture/environment limitation, not a gateway defect:
+faithfully offline — a capture/environment limitation, not a gateway defect. No test consumes
+them, so the recordings are **not committed**: `make proxymock-prepare-golden` moves them to
+`recorded-golden/known-gaps/`, which is git-ignored (local inspection only), and the downstream
+mocks only they would need are pruned. The gaps are:
 
 - `GET /api/transactions?accountId=<id>` — the downstream fan-out was not captured, so no
   mock can serve it.

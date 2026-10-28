@@ -23,6 +23,9 @@
 # Example: scripts/proxymock/replay-service.sh api-gateway
 # Env:     PROXYMOCK_REPLAY_FAIL_IF            override the replay pass/fail condition
 #          PROXYMOCK_STRICT_FIELD_COVERAGE=1   also fail on missing field-level coverage
+#          PROXYMOCK_REQUIRED=1                fail (instead of skip) if proxymock is missing
+#                                              or uninitialized -- use for automated runs
+#          PROXYMOCK_SKIP_BUILD=1              reuse an existing jar (local iteration only)
 
 set -euo pipefail
 
@@ -54,10 +57,23 @@ source "$CONFIG"
 SERVICE_DIR="${PROJECT_ROOT}/${SERVICE_DIR_REL}"
 GOLD="${SERVICE_DIR}/proxymock/recorded-golden"
 
+# proxymock is optional for local contributors: when it is missing or not initialized the
+# harness SKIPS (exit 0) so the pre-commit hook stays non-blocking for people without
+# Speedscale. Automated runs that must not silently skip set PROXYMOCK_REQUIRED=1, which turns
+# both cases into failures.
+skip_or_fail() {
+  if [ "${PROXYMOCK_REQUIRED:-}" = "1" ]; then
+    echo "error: $1 (PROXYMOCK_REQUIRED=1)" >&2
+    exit 1
+  fi
+  echo "Skipping $SERVICE replay: $1."
+  exit 0
+}
+
 if ! command -v proxymock >/dev/null 2>&1; then
-  echo "error: proxymock not found. Install with:"
+  echo "proxymock not found. Install with:"
   echo "  curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh"
-  exit 1
+  skip_or_fail "proxymock is not installed"
 fi
 
 # proxymock mock/replay require a one-time init; skip gracefully if not set up (fork PRs,
@@ -65,8 +81,7 @@ fi
 PM_VER_OUT=$(proxymock version 2>&1) || true
 if echo "$PM_VER_OUT" | grep -Fq "not initialized"; then
   if [ -z "${PROXYMOCK_API_KEY:-}" ]; then
-    echo "Skipping $SERVICE replay: proxymock not initialized and no PROXYMOCK_API_KEY."
-    exit 0
+    skip_or_fail "proxymock is not initialized and no PROXYMOCK_API_KEY is set"
   fi
   proxymock init -y --app-url app.speedscale.com --api-key "$PROXYMOCK_API_KEY"
 fi
@@ -79,13 +94,24 @@ fi
 
 cd "$SERVICE_DIR"
 
-# Build the app artifact if the jar is missing.
-JAR=$(ls -1 $JAR_GLOB 2>/dev/null | head -1 || true)
-if [ -z "$JAR" ]; then
-  echo "Building $SERVICE..."
+# Always build from the current sources. Reusing a jar already in target/ would let the
+# pre-commit hook validate a source change against an older, working binary. BUILD_CMD
+# cleans first, so exactly one fresh artifact matches JAR_GLOB afterwards.
+# PROXYMOCK_SKIP_BUILD=1 reuses an existing jar for fast local iteration only; the pre-commit
+# hook clears it, so a commit is always tested against what it contains.
+if [ "${PROXYMOCK_SKIP_BUILD:-}" = "1" ] && ls -1 $JAR_GLOB >/dev/null 2>&1; then
+  echo "PROXYMOCK_SKIP_BUILD=1: reusing existing artifact (not valid for gating a change)."
+else
+  echo "Building $SERVICE from current sources..."
   eval "$BUILD_CMD"
-  JAR=$(ls -1 $JAR_GLOB | head -1)
 fi
+JARS=$(ls -1 $JAR_GLOB 2>/dev/null || true)
+if [ "$(printf '%s\n' "$JARS" | grep -c .)" -ne 1 ]; then
+  echo "error: expected exactly one artifact matching $JAR_GLOB, found:" >&2
+  printf '  %s\n' $JARS >&2
+  exit 1
+fi
+JAR="$JARS"
 echo "Using artifact: $JAR"
 
 if command -v nc >/dev/null 2>&1 && nc -z 127.0.0.1 "$APP_PORT" 2>/dev/null; then

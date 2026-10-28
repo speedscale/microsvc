@@ -357,11 +357,22 @@ def main():
     observed_ops = set()               # endpoint keys the replay actually produced
     observed_fields = {}               # endpoint key -> set of field paths seen across responses
     for key, body, path in iter_replay(args.replay):
-        if body is None:
-            continue  # empty/non-JSON observed response (e.g. 401) -> nothing to validate
         node = schemas.get(key)
         if node is None:
-            no_schema += 1
+            # No golden JSON schema for this (method, url, status): e.g. a 401 whose golden
+            # body was empty. Nothing to validate the shape against.
+            if body is not None:
+                no_schema += 1
+            continue
+        if body is None:
+            # The golden recorded a JSON body for this operation+status, so an empty or
+            # unparsable body is a broken response, not something to skip. It also must not
+            # count toward coverage.
+            checked += 1
+            failed += 1
+            failures.append((key, os.path.basename(path),
+                             ["$: expected a JSON body (golden has a schema), got an empty "
+                              "or non-JSON body"]))
             continue
         observed_ops.add(key)
         observed_fields.setdefault(key, set()).update(observed_field_paths(body))
