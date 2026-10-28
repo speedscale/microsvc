@@ -43,8 +43,9 @@ fi
 
 export PATH="${HOME}/.speedscale:${PATH}"
 
-# Public test key the golden tokens are re-signed with (see prepare_golden.py). Exported so
-# a service config can reference it (e.g. JWT_SECRET=${PROXYMOCK_JWT_SECRET}).
+# Public test key (not a real credential). The golden's tokens are committed REDACTED; the
+# service's blueprint re-signs them with this key at replay time, and the app is started with
+# it (service config: JWT_SECRET=${PROXYMOCK_JWT_SECRET}) so it accepts the refreshed tokens.
 export PROXYMOCK_JWT_SECRET="proxymock-golden-test-secret-key-change-this-32bytes-min-0987654321"
 
 # shellcheck source=/dev/null
@@ -103,6 +104,39 @@ for d in "${DOWNSTREAM_DIRS[@]}"; do
   [ -d "$GOLD/$d" ] && cp -R "$GOLD/$d" "$MOCK_DIR/"
 done
 
+# The golden stores auth tokens REDACTED (no usable credential is committed); they are
+# refreshed at replay time by the service's proxymock blueprint. proxymock replay only
+# discovers blueprints next to its --in dir (<in>/blueprints or <parent>/blueprints), and the
+# service's proxymock/ dir holds only recorded data, so assemble a replay workspace under
+# results/: a copy of the inbound set plus the blueprint, with its key placeholder rendered
+# from the same test key the app is started with (JWT_SECRET=${PROXYMOCK_JWT_SECRET}).
+REPLAY_WS="${RESULTS_DIR}/replay-workspace"
+mkdir -p "$REPLAY_WS"
+cp -R "$GOLD/localhost" "$REPLAY_WS/localhost"
+BLUEPRINT="${SCRIPT_DIR}/services/${SERVICE}.blueprint.json"
+REQUIRE_BLUEPRINT=()
+if [ -f "$BLUEPRINT" ]; then
+  mkdir -p "$REPLAY_WS/blueprints"
+  BLUEPRINT_NAME=$(python3 - "$BLUEPRINT" "$REPLAY_WS/blueprints/$(basename "$BLUEPRINT")" <<'PY'
+import json, os, sys
+src, dst = sys.argv[1], sys.argv[2]
+with open(src, encoding="utf-8") as f:
+    text = f.read()
+# Render as a JSON string value so any character in the key stays valid JSON.
+key = json.dumps(os.environ["PROXYMOCK_JWT_SECRET"])[1:-1]
+with open(dst, "w", encoding="utf-8") as f:
+    f.write(text.replace("__PROXYMOCK_JWT_SECRET__", key))
+print(json.loads(text)["name"])
+PY
+  )
+  # Fail the replay if the token-refresh blueprint is not loaded or none of its chains ran,
+  # rather than silently replaying redacted tokens into a wall of 401s.
+  REQUIRE_BLUEPRINT=(--require-blueprint "$BLUEPRINT_NAME")
+  echo "Token refresh blueprint: $BLUEPRINT_NAME"
+else
+  echo "No ${SERVICE}.blueprint.json; replaying recorded tokens as-is."
+fi
+
 pkill -f "proxymock mock" 2>/dev/null || true
 pkill -f "$JAR" 2>/dev/null || true
 
@@ -155,13 +189,14 @@ REPLAY_FAIL_IF="${PROXYMOCK_REPLAY_FAIL_IF:-requests.result-match-pct != 100}"
 echo "Replaying inbound golden traffic against $SERVICE..."
 set +e
 proxymock replay \
-  --in "$GOLD/localhost" \
+  --in "$REPLAY_WS/localhost" \
   --test-against "127.0.0.1:${APP_PORT}" \
   --rewrite-host \
   --ignore-body-changes \
   --out "${RESULTS_DIR}/replayed" \
   --log-to "${RESULTS_DIR}/replay.log" \
-  --fail-if "$REPLAY_FAIL_IF"
+  --fail-if "$REPLAY_FAIL_IF" \
+  ${REQUIRE_BLUEPRINT[@]+"${REQUIRE_BLUEPRINT[@]}"}
 REPLAY_RC=$?
 set -e
 

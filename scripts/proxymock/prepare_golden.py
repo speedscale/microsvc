@@ -11,11 +11,16 @@ is idempotent (re-running is a no-op). It does four things:
    never matches. We drop $api_key from the body block AND from the INTERNAL json
    signature.http:requestBodyJSON (base64) that proxymock actually matches on.
 
-2. Re-signs expiring JWTs. Captured HS256 bearers expire ~24h after capture, so a later
-   replay 401s. Every bearer is re-signed with the same claims, a far-future expiry, and
-   the public test secret below. The same source token maps to the same re-signed token
-   everywhere, so an inbound request and the downstream mock it drives stay consistent, and
-   the app (run with JWT_SECRET set to this value) validates them.
+2. Redacts auth tokens. No usable credential is committed: every JWT keeps its header and
+   claims but its SIGNATURE is replaced with "REDACTED", so the token cannot authenticate
+   anywhere. This covers every copy -- the readable request/response blocks, the INTERNAL
+   json (including the DLP tokenList whose base64 replacementValue holds the ORIGINAL
+   captured token), and any base64 request/response body. Tokens are refreshed at replay
+   time instead, by the service's proxymock blueprint
+   (scripts/proxymock/services/<service>.blueprint.json): a jwt_resign transform chain
+   re-signs each redacted bearer with the replay's test key and a fresh expiry. jwt_resign
+   reads the header + claims without verifying the old signature, which is why the claims
+   (userId, roles, ...) are kept and only the signature is redacted.
 
 3. Relocates known gaps. Inbound requests that cannot be served offline (downstream
    fan-out not captured, or an environment-specific status) are moved to known-gaps/ so the
@@ -25,8 +30,7 @@ is idempotent (re-running is a no-op). It does four things:
 4. Prunes unused mocks. The pull holds many redundant/large downstream variants; only one
    representative (smallest file) per needed (method,url,query,body) signature is kept.
 
-The secret here is NOT a real credential; it is a public test key. The app under replay
-must run with JWT_SECRET set to exactly this value (the replay harness does that).
+No signing key is used or needed here; the replay key lives with the harness/blueprint.
 
 Usage:
   prepare_golden.py --golden <recorded-golden-dir>
@@ -38,46 +42,71 @@ Usage:
 """
 import argparse
 import base64
-import hashlib
-import hmac
 import json
 import os
 import re
 import sys
 
-# Public test key shared by every service's golden snapshot and set as JWT_SECRET by the
-# replay harness. Not a real credential.
-JWT_SECRET = b"proxymock-golden-test-secret-key-change-this-32bytes-min-0987654321"
-FAR_FUTURE = 1893456000  # 2030-01-01T00:00:00Z
-
 RESERVED_DIRS = {"localhost", "known-gaps", "results"}
 
-
-def b64url_decode(s: str) -> bytes:
-    return base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
-
-
-def b64url_encode(b: bytes) -> str:
-    return base64.urlsafe_b64encode(b).rstrip(b"=").decode()
+# A JWT is header.claims.signature, each base64url; header and claims are JSON objects, so
+# both start with "eyJ" ('{"'). Only the signature is the credential.
+REDACTED_SIG = "REDACTED"
+_JWT = re.compile(r"(eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+)\.[A-Za-z0-9_-]+")
 
 
-def resign(token: str):
-    """Re-sign an HS256 JWT with a far-future expiry, or return None if not one."""
-    parts = token.split(".")
-    if len(parts) != 3:
-        return None
+def redact_jwts(text: str) -> str:
+    """Replace the signature of every JWT in text with REDACTED (idempotent)."""
+    return _JWT.sub(lambda m: f"{m.group(1)}.{REDACTED_SIG}", text)
+
+
+def _redact_b64(value: str):
+    """Redact JWTs inside a std-base64 string; return the new value or None if unchanged."""
     try:
-        header = json.loads(b64url_decode(parts[0]))
-        payload = json.loads(b64url_decode(parts[1]))
+        decoded = base64.b64decode(value).decode("utf-8")
     except Exception:
         return None
-    if header.get("alg") != "HS256":
+    redacted = redact_jwts(decoded)
+    if redacted == decoded:
         return None
-    payload["exp"] = FAR_FUTURE
-    h = b64url_encode(json.dumps(header, separators=(",", ":")).encode())
-    p = b64url_encode(json.dumps(payload, separators=(",", ":")).encode())
-    sig = b64url_encode(hmac.new(JWT_SECRET, f"{h}.{p}".encode(), hashlib.sha256).digest())
-    return f"{h}.{p}.{sig}"
+    return base64.b64encode(redacted.encode()).decode()
+
+
+def redact_tokens(txt: str) -> str:
+    """Redact every copy of every auth token in an rrpair so none is a usable credential.
+
+    Plain-text copies (readable headers/bodies, tokenList keys) are handled by a text-wide
+    substitution; base64 copies (tokenList replacementValue, bodyBase64) are decoded,
+    redacted and re-encoded inside the INTERNAL json.
+    """
+    txt = redact_jwts(txt)
+    m = _INTERNAL_JSON.search(txt)
+    if not m:
+        return txt
+    try:
+        doc = json.loads(m.group(2))
+    except Exception:
+        return txt
+    changed = False
+    for entry in (doc.get("tokenList") or {}).values():
+        for tok in entry.get("tokens", []):
+            inner = tok.get("token", {})
+            if "replacementValue" in inner:
+                new = _redact_b64(inner["replacementValue"])
+                if new is not None:
+                    inner["replacementValue"] = new
+                    changed = True
+    for side in ("req", "res"):
+        part = doc.get("http", {}).get(side, {})
+        if part.get("bodyBase64"):
+            new = _redact_b64(part["bodyBase64"])
+            if new is not None:
+                part["bodyBase64"] = new
+                changed = True
+    if not changed:
+        return txt
+    new_json = json.dumps(doc, separators=(",", ":"))
+    return txt[: m.start()] + m.group(1) + new_json + m.group(3) + txt[m.end():]
 
 
 # The request section holds two fenced blocks: the request headers then the request body.
@@ -171,14 +200,6 @@ def _fix_internal_json(txt: str) -> str:
         sig["http:requestBodyJSON"] = ""
     new_json = json.dumps(doc, separators=(",", ":"))
     return txt[: m.start()] + m.group(1) + new_json + m.group(3) + txt[m.end():]
-
-
-def refresh_tokens(txt: str) -> str:
-    for old in set(re.findall(r"Bearer ([A-Za-z0-9._-]+)", txt)):
-        new = resign(old)
-        if new and new != old:
-            txt = txt.replace(old, new)
-    return txt
 
 
 # A "known gap" is an inbound request that cannot be replayed faithfully offline, so it is
@@ -351,7 +372,7 @@ def main() -> int:
                 path = os.path.join(root, name)
                 with open(path) as f:
                     txt = f.read()
-                if refresh_tokens(strip_dlp(txt)) != txt:
+                if redact_tokens(strip_dlp(txt)) != txt:
                     dirty.append(os.path.relpath(path, golden))
         if dirty:
             print(f"SNAPSHOT NOT NORMALIZED: {len(dirty)} rrpair(s) would change if prepared:")
@@ -378,7 +399,7 @@ def main() -> int:
             if t2 != txt:
                 changed_dlp += 1
             txt = t2
-            t3 = refresh_tokens(txt)
+            t3 = redact_tokens(txt)
             if t3 != txt:
                 changed_tok += 1
             txt = t3
@@ -391,7 +412,7 @@ def main() -> int:
     print(f"prepared golden snapshot at {golden}")
     print(f"  downstream dirs: {', '.join(downstream_dirs) or '(none)'}")
     print(f"  stripped DLP $api_key body in {changed_dlp} rrpair(s)")
-    print(f"  refreshed bearer tokens in {changed_tok} rrpair(s) (exp -> 2030)")
+    print(f"  redacted auth token signatures in {changed_tok} rrpair(s)")
     print(f"  relocated {moved} inbound request(s) to known-gaps/")
     print(f"  kept {kept} downstream mock(s), dropped {dropped} unused/redundant")
     return 0

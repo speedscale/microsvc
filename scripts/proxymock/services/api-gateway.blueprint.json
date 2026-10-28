@@ -1,0 +1,26 @@
+{
+  "active": true,
+  "id": "api-gateway-token-refresh",
+  "name": "api-gateway token refresh",
+  "description": "The golden stores auth tokens with a REDACTED signature (prepare_golden.py), so none is a usable credential. At replay time this generator chain re-signs each recorded Authorization bearer with jwt_resign: header and claims (userId, roles, sub) are kept, iat/exp are refreshed, and the token is signed with the replay key the gateway is started with. Non-JWT bearers (e.g. the recorded 'invalid.expired.token' 401 case) are left as recorded. The key is a placeholder rendered by scripts/proxymock/replay-service.sh from PROXYMOCK_JWT_SECRET; never commit a real key here.",
+  "services": ["api-gateway"],
+  "tokenizeConfig": {
+    "id": "api-gateway-token-refresh",
+    "name": "api-gateway token refresh",
+    "services": ["api-gateway"],
+    "generator": [
+      {
+        "extractor": {
+          "type": "http_req_header",
+          "config": { "name": "Authorization" }
+        },
+        "transforms": [
+          {
+            "type": "jwt_resign",
+            "config": { "key": "__PROXYMOCK_JWT_SECRET__" }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -39,6 +39,13 @@ downstream dependencies), replays `localhost/` against it, and applies four gate
    (`prepare_golden.py --check` changes nothing), so the verdict is repeatable and fixture
    drift is visible.
 
+**Auth tokens are redacted.** Every JWT in `recorded-golden/` has its signature replaced with
+`REDACTED` (header and claims kept), so nothing committed is a usable credential. At replay
+time the blueprint `scripts/proxymock/services/api-gateway.blueprint.json` re-signs each
+recorded bearer with `jwt_resign` using the replay's test key and a fresh expiry, and the
+harness requires that blueprint to run. Replaying without it turns every authenticated request
+into a 401.
+
 Reports land in `results/` (git-ignored). Quick offline checks without a build:
 `make proxymock-check-golden` and `make proxymock-lint-invariants`.
 

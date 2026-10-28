@@ -1,6 +1,6 @@
 ---
 name: proxymock-service-tests
-description: Add externalized, proxymock-driven integration tests to a backend service in the speedscale/microsvc banking app. The tests ARE recorded traffic (a committed golden snapshot), not code: proxymock mock serves the service's downstream dependencies while proxymock replay drives the recorded inbound requests at the running service and asserts four gates -- the recorded HTTP status is reproduced, each observed response matches a schema derived from the golden AND every golden operation is exercised (contract coverage), replayed response values satisfy agreed business invariants (property tests), and the golden is a normalized, stable fixed point (snapshot consistency). A pre-commit hook runs it. Use when asked to write/replicate proxymock integration tests, a golden snapshot, replay/mock tests, response schema/contract validation, property/invariant tests, or snapshot-consistency checks for a service like accounts-service, transactions-service, user-service, etc. Mirrors what already exists for api-gateway.
+description: Add externalized, proxymock-driven integration tests to a backend service in the speedscale/microsvc banking app. The tests ARE recorded traffic (a committed golden snapshot), not code: proxymock mock serves the service's downstream dependencies while proxymock replay drives the recorded inbound requests at the running service and asserts four gates -- the recorded HTTP status is reproduced, each observed response matches a schema derived from the golden AND every golden operation is exercised (contract coverage), replayed response values satisfy agreed business invariants (property tests), and the golden is a normalized, stable fixed point (snapshot consistency). Auth tokens are committed redacted and refreshed at replay time by a proxymock blueprint (jwt_resign). A pre-commit hook runs it. Use when asked to write/replicate proxymock integration tests, a golden snapshot, replay/mock tests, response schema/contract validation, property/invariant tests, or snapshot-consistency checks for a service like accounts-service, transactions-service, user-service, etc. Mirrors what already exists for api-gateway.
 triggers: proxymock tests for, replay tests for, golden snapshot for, add proxymock to, integration tests with proxymock, mock downstreams and replay, schema validation for responses, contract coverage for, property tests for, business invariants for, snapshot consistency for, pre-commit proxymock gate, replicate the api-gateway proxymock setup, record and replay tests for the service
 ---
 
@@ -48,6 +48,7 @@ scripts/proxymock/
   schema_validate.py           # derive + validate schemas; --require-coverage for contract coverage
   property_validate.py         # assert business invariants over replayed values
   services/<service>.env             # per-service harness config (required)
+  services/<service>.blueprint.json  # per-service token-refresh blueprint (redacted golden tokens)
   services/<service>.invariants.json # per-service business invariants (optional, gate 3)
 ```
 
@@ -112,7 +113,7 @@ nothing drifts silently.** It rests on the golden being a normalized, stable fix
 - **Repeatability** — `prepare_golden.py` is idempotent, so a correctly prepared golden is a
   fixed point: `prepare_golden.py --golden <golden> --check` re-derives the normalization
   without writing and must report "already normalized". If it lists files, the committed
-  golden drifted (a stray DLP `$api_key`, a token re-signed to the wrong expiry, a hand-edit)
+  golden drifted (a stray DLP `$api_key`, an unredacted token from a fresh pull, a hand-edit)
   — re-run `make proxymock-prepare-golden` and commit. The harness runs `--check` every time,
   so a drifted fixture fails the gate rather than quietly changing what the tests assert.
 - **Drift visibility** — the gates themselves make service drift observable: gate 2 reports
@@ -150,9 +151,17 @@ python3 scripts/proxymock/prepare_golden.py --golden backend/<service>/proxymock
 
 It is idempotent and does four things: strips the DLP `$api_key` artifact (from request
 bodies AND the INTERNAL json `signature.http:requestBodyJSON` that proxymock matches on),
-re-signs expiring JWTs to 2030 with the shared public test secret, relocates known gaps,
-and prunes redundant/huge downstream mocks to one smallest file per needed signature.
-Downstream dirs are auto-detected (everything except `localhost`/`known-gaps`/`results`).
+redacts auth tokens, relocates known gaps, and prunes redundant/huge downstream mocks to one
+smallest file per needed signature. Downstream dirs are auto-detected (everything except
+`localhost`/`known-gaps`/`results`).
+
+**Auth tokens are never committed usable.** Every JWT keeps its header and claims but its
+signature becomes `REDACTED`, in every copy: readable headers/bodies, `tokenList` keys, and
+the base64 `tokenList.replacementValue` (which otherwise holds the ORIGINAL captured,
+production-signed token) and `bodyBase64`. Tokens are refreshed at replay time by a
+blueprint (step 5), not re-signed in the golden. Claims are kept on purpose: `jwt_resign`
+reads header + claims without verifying the old signature, so the refreshed token carries the
+same identity (`userId`, roles) the recorded request had.
 
 **Known gaps** are inbound requests that cannot replay faithfully offline — park them so the
 gate stays 100% on coverable traffic. Two kinds: a downstream fan-out the snapshot did not
@@ -184,13 +193,56 @@ Copy `services/api-gateway.env` and adjust. Fields:
 - `KNOWN_GAP_PATTERNS`, `KNOWN_GAP_STATUS` — the same values you passed in step 3 (kept here
   for `make proxymock-prepare-golden` reproducibility).
 
-### 5. Author business invariants (optional, gate 3)
+### 5. Write the token-refresh blueprint (required if the service takes auth tokens)
+
+Because the golden's tokens are redacted, the replay must refresh them. Do that with a
+proxymock **blueprint**, not by committing valid tokens. Copy
+`scripts/proxymock/services/api-gateway.blueprint.json` to `services/<service>.blueprint.json`
+and adjust:
+
+- It is a blueprint wrapper (`active`, `name`, `tokenizeConfig`) whose `tokenizeConfig.generator`
+  holds one chain: extractor `http_req_header` `Authorization` → `jwt_resign`. The generator
+  side changes what the replay SENDS to the service. `jwt_resign` strips `Bearer `, keeps the
+  claims, rewrites `iat`/`exp` (now / now+2d), and signs with the original algorithm. Non-JWT
+  bearers (e.g. a recorded `invalid.expired.token` 401 case) are left as recorded, so negative
+  auth tests keep their meaning.
+- The key is the placeholder `__PROXYMOCK_JWT_SECRET__`. The harness renders it from
+  `PROXYMOCK_JWT_SECRET`, the same public test key it starts the app with
+  (`JWT_SECRET=${PROXYMOCK_JWT_SECRET}` in the `.env`), so there is one source for the key and
+  none is committed in the blueprint. For HS* the key is the raw secret; RS*/ES* need a PEM
+  (use `secretPath`).
+- Leave the chain unfiltered, or filter on location/method. Do not filter on
+  `network_address`: replay matches it against the `--test-against` target, not the recorded host.
+- If a token is carried somewhere else (a body field, a cookie), add a chain with the matching
+  extractor (`http_res_body` + `json_path`, etc.).
+
+**Fetching new tokens instead of re-signing.** Re-signing requires holding the signing key,
+which is true here (the replay controls `JWT_SECRET`). When replaying against an environment
+whose key you do not hold, fetch tokens instead: either replay the recorded login first and
+chain its response token into later requests (`http_res_body` → `json_path token` →
+`var_store`, then `http_req_header Authorization` → `var_load`), or, for a third-party IdP,
+use an `oauth_client_credentials` chain with the client secret as a `${{secret:...}}`
+reference. Either way the golden stays redacted.
+
+The harness copies the inbound set and the rendered blueprint into
+`results/.../replay-workspace/` (replay only discovers blueprints next to its `--in` dir, and
+the service's `proxymock/` dir holds only recorded data) and passes `--require-blueprint
+"<name>"`, so a blueprint that is missing or runs no chain fails the replay. Preview it offline:
+
+```
+proxymock transform test --transform-config <rendered blueprint>.json --in backend/<service>/proxymock/recorded-golden/localhost
+```
+
+Verify the negative too: replaying without the blueprint should turn every authenticated 2xx
+into 401. That proves the committed tokens are not credentials.
+
+### 6. Author business invariants (optional, gate 3)
 
 Copy `services/api-gateway.invariants.json` and scope it to THIS service's agreed invariants
 (see "Property testing" above). Skip the file to skip the gate. Lint it with
 `make proxymock-lint-invariants` (or `property_validate.py --rules <file> --lint`).
 
-### 6. Run and iterate
+### 7. Run and iterate
 
 ```
 scripts/proxymock/replay-service.sh <service>        # or: make proxymock-replay in the service dir
@@ -217,14 +269,21 @@ api-gateway):
   request. Usually the DLP `$api_key` still in the INTERNAL signature (re-run prepare_golden),
   or the pruner kept a wrong-body mock (the prune key includes the request body), or the
   downstream fan-out genuinely wasn't captured (make it a known-gap).
-- **401 where a 200 was recorded** — expired/mis-signed JWT. Confirm prepare_golden re-signed
-  the tokens and the app runs with `JWT_SECRET` = the shared test secret.
+- **401 where a 200 was recorded** — the redacted token was not refreshed. Check the replay
+  log for `Loaded blueprint "<name>"` and `N transform chain(s) ran`; the harness passes
+  `--require-blueprint`, so a blueprint that loads but runs no chain fails the replay. Also
+  confirm the app runs with `JWT_SECRET=${PROXYMOCK_JWT_SECRET}` (the key the blueprint
+  signs with). Do not "fix" this by committing a valid token.
+- **`Blueprint ... not loaded` / no chains ran** — the blueprint must sit next to the replay
+  `--in` dir (the harness renders it into `results/.../replay-workspace/blueprints/`); a chain
+  filtered on `network_address` matches the `--test-against` target (`127.0.0.1`), not the
+  recorded host, so keep the token chain unfiltered or filter on location/method instead.
 - **500 on startup / NoSuchMethodError HttpSpanNameExtractor.builder** — the OTel starter;
   add the three autoconfigure excludes to APP_FLAGS.
 - **Recorded 503 flips to 200** — a load/rate-limiter-dependent status; park it via
   `--known-gap-status`.
 
-### 7. Wire it in
+### 8. Wire it in
 
 - Add `proxymock-replay`, `proxymock-check-golden`, `proxymock-lint-invariants`, and
   `proxymock-prepare-golden` targets to the service Makefile (copy api-gateway's, swap
@@ -232,6 +291,8 @@ api-gateway):
 - The root `.gitignore` already force-tracks `backend/*/proxymock/recorded-golden/` and
   ignores `results/`; `scripts/proxymock/` (including the `.invariants.json` files) is
   tracked — no change needed.
+- The harness picks up `services/<service>.blueprint.json` and `.invariants.json` by name;
+  no extra wiring.
 - The pre-commit hook (`.githooks/pre-commit`) auto-discovers any
   `scripts/proxymock/services/<service>.env`, so a new service is gated as soon as its config
   exists. Enable hooks once with `make install-git-hooks`.
@@ -241,7 +302,7 @@ api-gateway):
   analogous small, production-safe toggle to run a dependency offline. Keep such changes
   minimal and default-on in production.
 
-### 8. Demonstrate the pre-commit gate (passing vs failing change)
+### 9. Demonstrate the pre-commit gate (passing vs failing change)
 
 The hook (`.githooks/pre-commit`) runs the full four-gate harness for any service whose tree
 the commit touches. Demonstrate both outcomes once hooks are enabled (`make install-git-hooks`):
@@ -267,6 +328,9 @@ committed without either fixing it or consciously updating the committed golden.
   `scripts/proxymock/`.
 - Commit only `recorded-golden/` (and README); never commit `results/` or the `.replay/`
   marker `proxymock replay` drops into the input dir.
+- Never commit a usable auth token. Run `prepare_golden.py` on every fresh pull (it redacts
+  every copy, including the base64 `tokenList` originals), and refresh tokens at replay time
+  with the service blueprint. `--check` fails if any unredacted token sneaks back in.
 - Keep the golden small: prune to the mocks the inbound set drives (prepare_golden does this).
 - The gates are layered on purpose, each asserting a different thing while letting volatile
   values vary: status (behavior), schema + coverage (shape and that the whole contract is
