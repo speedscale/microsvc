@@ -4,18 +4,25 @@
 # A service's integration tests live as recorded traffic (a committed golden snapshot), not
 # as code. This harness starts the real service behind `proxymock mock` -- which serves the
 # service's downstream dependencies from the golden -- then replays the recorded inbound
-# requests at it and asserts two things:
+# requests at it and asserts four things:
 #   1. behavioral: the service routes each request and reproduces the recorded STATUS code
 #      (proxymock replay --ignore-body-changes; bodies come from mocks and carry volatile data)
-#   2. structural: each observed response conforms to the SCHEMA derived from the golden
-#      responses (scripts/proxymock/schema_validate.py)
-# The run fails if either gate fails. No real dependencies, DB, Redis, or mesh are needed.
+#   2. structural + coverage: each observed response conforms to the SCHEMA derived from the
+#      golden responses, AND every golden operation was exercised -- missing operations are
+#      reported and fail the run (scripts/proxymock/schema_validate.py --require-coverage)
+#   3. properties: replayed response VALUES satisfy agreed business invariants, if the service
+#      ships scripts/proxymock/services/<service>.invariants.json (property_validate.py)
+#   4. snapshot consistency: the golden is a normalized, stable fixed point -- re-preparing it
+#      changes nothing (prepare_golden.py --check)
+# The run fails if any gate fails. No real dependencies, DB, Redis, or mesh are needed.
 #
-# Per-service specifics live in scripts/proxymock/services/<service>.env.
+# Per-service specifics live in scripts/proxymock/services/<service>.env; optional business
+# invariants in scripts/proxymock/services/<service>.invariants.json.
 #
 # Usage:   scripts/proxymock/replay-service.sh <service>
 # Example: scripts/proxymock/replay-service.sh api-gateway
-# Env:     PROXYMOCK_REPLAY_FAIL_IF   override the pass/fail condition (default: match pct != 100)
+# Env:     PROXYMOCK_REPLAY_FAIL_IF            override the replay pass/fail condition
+#          PROXYMOCK_STRICT_FIELD_COVERAGE=1   also fail on missing field-level coverage
 
 set -euo pipefail
 
@@ -167,18 +174,57 @@ if [ "$REPLAY_RC" -ne 0 ]; then
   echo "Recent replay log:"; tail -30 "${RESULTS_DIR}/replay.log" 2>/dev/null || true
 fi
 
-# --- Gate 2: schema validation (response shape) -----------------------------------------
+# --- Gate 2: schema validation + contract coverage (response shape) ---------------------
+# schema_validate derives a schema per (method, url-pattern, status) from the golden and
+# checks every observed response against it. --require-coverage adds the contract-coverage
+# gate: every golden OPERATION must be exercised by the replay (missing operations/statuses
+# are reported and fail the run), so a vacuous replay cannot pass. Field-level coverage is
+# reported for visibility; opt into failing on it with PROXYMOCK_STRICT_FIELD_COVERAGE=1.
+STRICT_FIELD=""
+[ "${PROXYMOCK_STRICT_FIELD_COVERAGE:-}" = "1" ] && STRICT_FIELD="--strict-field-coverage"
 echo ""
-echo "=== Schema validation ==="
+echo "=== Schema validation + contract coverage ==="
 set +e
-python3 "${SCRIPT_DIR}/schema_validate.py" --golden "$GOLD" --replay "${RESULTS_DIR}/replayed"
+python3 "${SCRIPT_DIR}/schema_validate.py" --golden "$GOLD" --replay "${RESULTS_DIR}/replayed" \
+  --require-coverage $STRICT_FIELD
 SCHEMA_RC=$?
+set -e
+
+# --- Gate 3: property / business-invariant validation (response VALUES) -----------------
+# If the service ships an agreed invariants file, assert business properties (e.g. balance
+# >= 0, amount > 0, status in the allowed set) over the replayed VALUES. Skipped (not
+# failed) when no invariants file exists, so a service opts in by authoring one.
+INVARIANTS="${SCRIPT_DIR}/services/${SERVICE}.invariants.json"
+PROP_RC=0
+if [ -f "$INVARIANTS" ]; then
+  echo ""
+  echo "=== Property / business-invariant validation ==="
+  set +e
+  python3 "${SCRIPT_DIR}/property_validate.py" --rules "$INVARIANTS" \
+    --golden "$GOLD" --replay "${RESULTS_DIR}/replayed"
+  PROP_RC=$?
+  set -e
+else
+  echo ""
+  echo "=== Property validation: skipped (no ${SERVICE}.invariants.json) ==="
+fi
+
+# --- Gate 4: snapshot consistency (repeatability + drift visibility) --------------------
+# Confidence in this suite rests on the golden being a STABLE, normalized fixed point: two
+# people running it get the same verdict, and nothing silently drifts between runs. Verify
+# that by re-preparing the golden in --check mode -- it must change nothing. (Behavioral and
+# shape drift in the service itself are already caught by gates 1-2; this guards the fixture.)
+echo ""
+echo "=== Snapshot consistency (golden is normalized + stable) ==="
+set +e
+python3 "${SCRIPT_DIR}/prepare_golden.py" --golden "$GOLD" --check
+SNAP_RC=$?
 set -e
 
 echo ""
 echo "Reports and observed traffic: ${RESULTS_DIR} (git-ignored)"
 
-if [ "$REPLAY_RC" -ne 0 ] || [ "$SCHEMA_RC" -ne 0 ]; then
+if [ "$REPLAY_RC" -ne 0 ] || [ "$SCHEMA_RC" -ne 0 ] || [ "$PROP_RC" -ne 0 ] || [ "$SNAP_RC" -ne 0 ]; then
   exit 1
 fi
 exit 0

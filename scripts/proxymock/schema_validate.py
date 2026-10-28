@@ -18,11 +18,28 @@ What is allowed (not a break):
   - ADDITIVE fields the observed response gained (reported as info, not a failure)
   - empty arrays/objects in golden (treated as permissive -- no element/field constraints)
 
+Contract coverage (--require-coverage):
+  Validation only inspects responses the replay actually produced. On its own it cannot
+  tell you that an operation the golden documents went UNtested -- a replay that exercised
+  zero endpoints would "pass" vacuously. The coverage report closes that gap: it treats the
+  golden as the contract and reports, explicitly,
+    - MISSING OPERATIONS: a (method, url-pattern, status) the golden documents that the
+      replay never produced,
+    - MISSING FIELDS: a response field present in the golden schema for a covered operation
+      that no observed response for it carried.
+  With --require-coverage, any missing operation (and, with --strict-field-coverage, any
+  missing field) fails the run, so the gate asserts the contract is fully exercised, not
+  just that whatever ran conformed.
+
 Dependency-free (stdlib only) so it runs in a pre-commit hook and CI without `pip install`.
 
 Usage:
   schema_validate.py --golden <recorded-golden-dir> --replay <replay-out-dir>
   schema_validate.py --golden <dir> --print-schemas      # dump derived schemas and exit
+  schema_validate.py --golden <dir> --replay <dir> --require-coverage
+      # additionally fail if any golden operation was not exercised by the replay
+  schema_validate.py --golden <dir> --replay <dir> --require-coverage --strict-field-coverage
+      # also fail if a covered operation left any golden field unobserved
 """
 import argparse
 import json
@@ -238,6 +255,43 @@ def extra_fields(node, value, path, extras):
         extra_fields(node["elem"], value[0], f"{path}[0]", extras)
 
 
+# ---- contract coverage ----------------------------------------------------
+
+def schema_field_paths(node, prefix="$"):
+    """Flatten a schema node to the set of REQUIRED field paths it documents.
+
+    Only required fields count toward field coverage (optional/additive fields are not part
+    of the contract every response must carry). Arrays descend into their element schema
+    with a [] marker so object fields inside a list are reported once, not per index.
+    """
+    paths = set()
+    if "object" in node.get("types", set()):
+        for k, child in node.get("props", {}).items():
+            if not child.get("_required", True):
+                continue
+            cp = f"{prefix}.{k}"
+            paths.add(cp)
+            paths |= schema_field_paths(child, cp)
+    if "array" in node.get("types", set()) and node.get("elem") is not None:
+        paths |= schema_field_paths(node["elem"], f"{prefix}[]")
+    return paths
+
+
+def observed_field_paths(value, prefix="$"):
+    """Flatten an observed response body to the set of field paths actually present."""
+    paths = set()
+    tag = _type_tag(value)
+    if tag == "object":
+        for k, v in value.items():
+            cp = f"{prefix}.{k}"
+            paths.add(cp)
+            paths |= observed_field_paths(v, cp)
+    elif tag == "array":
+        for item in value:
+            paths |= observed_field_paths(item, f"{prefix}[]")
+    return paths
+
+
 def iter_replay(replay_dir):
     """Yield (endpoint_key, body-or-None) for every observed replayed response."""
     for root, _d, files in os.walk(replay_dir):
@@ -281,6 +335,12 @@ def main():
     ap.add_argument("--golden", required=True)
     ap.add_argument("--replay")
     ap.add_argument("--print-schemas", action="store_true")
+    ap.add_argument("--require-coverage", action="store_true",
+                    help="fail if any golden operation (method, url, status) was not "
+                         "exercised by the replay")
+    ap.add_argument("--strict-field-coverage", action="store_true",
+                    help="with --require-coverage, also fail if a covered operation left any "
+                         "required golden field unobserved")
     args = ap.parse_args()
 
     schemas = build_schemas(args.golden)
@@ -294,6 +354,8 @@ def main():
     checked = failed = no_schema = 0
     all_extras = []
     failures = []
+    observed_ops = set()               # endpoint keys the replay actually produced
+    observed_fields = {}               # endpoint key -> set of field paths seen across responses
     for key, body, path in iter_replay(args.replay):
         if body is None:
             continue  # empty/non-JSON observed response (e.g. 401) -> nothing to validate
@@ -301,6 +363,8 @@ def main():
         if node is None:
             no_schema += 1
             continue
+        observed_ops.add(key)
+        observed_fields.setdefault(key, set()).update(observed_field_paths(body))
         checked += 1
         errs = []
         validate(node, body, "$", errs)
@@ -317,12 +381,49 @@ def main():
         print(f"  ({no_schema} observed response(s) had no golden schema and were skipped)")
     for key, extras in all_extras:
         print(f"  INFO additive field(s) in {key}: {', '.join(sorted(set(extras)))}")
+
+    # --- contract coverage -------------------------------------------------------------
+    # The golden is the contract. Report operations/fields it documents that the replay did
+    # not exercise. Always printed (visibility); only gates when --require-coverage.
+    golden_ops = {k for k, n in schemas.items()}
+    missing_ops = sorted(golden_ops - observed_ops)
+    missing_fields = []  # (op, [paths])
+    for key in sorted(observed_ops):
+        want = schema_field_paths(schemas[key])
+        got = observed_fields.get(key, set())
+        gap = sorted(want - got)
+        if gap:
+            missing_fields.append((key, gap))
+
+    print(f"\ncontract coverage: {len(observed_ops)}/{len(golden_ops)} golden operation(s) "
+          "exercised by the replay")
+    if missing_ops:
+        print(f"  MISSING OPERATIONS ({len(missing_ops)}): golden operations not exercised:")
+        for k in missing_ops:
+            print(f"      - {k}")
+    if missing_fields:
+        print("  MISSING FIELDS: golden fields never present in any observed response:")
+        for key, gap in missing_fields:
+            print(f"      {key}: {', '.join(gap)}")
+    if not missing_ops and not missing_fields:
+        print("  full contract coverage: every golden operation and field was observed.")
+
+    coverage_failed = False
+    if args.require_coverage and missing_ops:
+        coverage_failed = True
+    if args.require_coverage and args.strict_field_coverage and missing_fields:
+        coverage_failed = True
+
     if failures:
         print(f"\nSCHEMA VALIDATION FAILED ({failed} response(s)):")
         for key, fname, errs in failures:
             print(f"  {key}  ({fname})")
             for e in errs:
                 print(f"      - {e}")
+        return 1
+    if coverage_failed:
+        print("\nCONTRACT COVERAGE FAILED: golden operations/fields were not exercised "
+              "(see above). Re-record the missing traffic or park it as a known-gap.")
         return 1
     print("schema validation PASSED")
     return 0

@@ -26,10 +26,21 @@ make proxymock-replay                      # from backend/api-gateway/
 ```
 
 The harness starts the gateway behind `proxymock mock` (serving `banking-*` as the
-downstream dependencies), replays `localhost/` against it, and applies two gates: the
-recorded **status code** must be reproduced, and each observed response must match the
-**schema** derived from the golden responses (field presence + types; volatile values may
-vary). Reports land in `results/` (git-ignored).
+downstream dependencies), replays `localhost/` against it, and applies four gates:
+
+1. **status** — the recorded status code must be reproduced.
+2. **schema + contract coverage** — each observed response must match the schema derived
+   from the golden (field presence + types; volatile values may vary), AND every golden
+   operation must be exercised (missing operations/statuses/fields are reported and fail).
+3. **properties** — replayed response values must satisfy the agreed business invariants in
+   `scripts/proxymock/services/api-gateway.invariants.json` (e.g. balances `>= 0`, amounts
+   `> 0`, type/status enums, well-formed email, present token).
+4. **snapshot consistency** — the committed golden must be a normalized, stable fixed point
+   (`prepare_golden.py --check` changes nothing), so the verdict is repeatable and fixture
+   drift is visible.
+
+Reports land in `results/` (git-ignored). Quick offline checks without a build:
+`make proxymock-check-golden` and `make proxymock-lint-invariants`.
 
 ## known-gaps/
 

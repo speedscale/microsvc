@@ -33,6 +33,8 @@ Usage:
                     [--downstream-dir banking-user ...]       # default: auto-detect
                     [--known-gap-pattern 'http:queryparams:accountId is' ...]
                     [--known-gap-status /api/transactions:503 ...]
+                    [--check]   # verify the golden is already normalized (idempotent);
+                                # make no changes and exit non-zero if any would be made.
 """
 import argparse
 import base64
@@ -321,6 +323,9 @@ def main() -> int:
                     help="regex matched against inbound rrpair text; matches -> known-gaps/ (repeatable)")
     ap.add_argument("--known-gap-status", action="append", default=[],
                     help="URL:STATUS; an inbound rrpair recording that status for that url -> known-gaps/ (repeatable)")
+    ap.add_argument("--check", action="store_true",
+                    help="verify the golden is already normalized; make NO changes and exit "
+                         "non-zero if any normalization (DLP/token) would still apply")
     args = ap.parse_args()
 
     golden = args.golden
@@ -331,6 +336,33 @@ def main() -> int:
     gap_patterns = [re.compile(p) for p in args.known_gap_pattern]
     gap_status = _parse_gap_status(args.known_gap_status)
     downstream_dirs = args.downstream_dir or detect_downstream_dirs(golden)
+
+    # --check: snapshot-consistency / repeatability gate. prepare_golden is idempotent, so a
+    # committed golden must already be a fixed point -- re-running it changes nothing. In
+    # check mode we compute what WOULD change without writing, and fail if anything would.
+    # This is how "the golden is normalized and stable" becomes a verifiable claim in CI/hooks
+    # rather than an assumption.
+    if args.check:
+        dirty = []
+        for root, _dirs, files in os.walk(golden):
+            for name in files:
+                if not name.endswith(".md"):
+                    continue
+                path = os.path.join(root, name)
+                with open(path) as f:
+                    txt = f.read()
+                if refresh_tokens(strip_dlp(txt)) != txt:
+                    dirty.append(os.path.relpath(path, golden))
+        if dirty:
+            print(f"SNAPSHOT NOT NORMALIZED: {len(dirty)} rrpair(s) would change if prepared:")
+            for rel in sorted(dirty):
+                print(f"  - {rel}")
+            print("Run `make proxymock-prepare-golden` (or prepare_golden.py without --check) "
+                  "and commit the result.")
+            return 1
+        print(f"snapshot consistency: golden at {golden} is already normalized (idempotent) -- "
+              "re-preparing would change nothing.")
+        return 0
 
     changed_dlp = 0
     changed_tok = 0
