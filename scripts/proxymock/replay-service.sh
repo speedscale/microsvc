@@ -163,14 +163,41 @@ else
   echo "No ${SERVICE}.blueprint.json; replaying recorded tokens as-is."
 fi
 
-pkill -f "proxymock mock" 2>/dev/null || true
-pkill -f "$JAR" 2>/dev/null || true
+# Never touch processes this run did not start: a contributor may have another proxymock
+# session or app running. If the proxy port is taken, report the conflict instead of killing
+# its owner (the app port was checked above).
+PROXY_PORT=4140
+if command -v nc >/dev/null 2>&1 && nc -z 127.0.0.1 "$PROXY_PORT" 2>/dev/null; then
+  echo "error: proxymock proxy port $PROXY_PORT is in use (another proxymock mock session?)." >&2
+  echo "Stop it and retry; this harness does not kill processes it did not start." >&2
+  exit 1
+fi
+
+# All descendants of a pid, collected before anything is signalled so children cannot be
+# reparented away from us mid-cleanup.
+descendants() {
+  local child
+  for child in $(pgrep -P "$1" 2>/dev/null); do
+    descendants "$child"
+    echo "$child"
+  done
+}
 
 MOCK_PID=""
 cleanup() {
-  [ -n "$MOCK_PID" ] && kill "$MOCK_PID" 2>/dev/null || true
-  pkill -f "proxymock mock" 2>/dev/null || true
-  pkill -f "$JAR" 2>/dev/null || true
+  [ -n "$MOCK_PID" ] || return 0
+  # Only this run's process tree: proxymock mock and the app it launched.
+  local pids
+  pids="$(descendants "$MOCK_PID") $MOCK_PID"
+  kill $pids 2>/dev/null || true
+  local p alive
+  for _ in 1 2 3 4 5; do
+    alive=""
+    for p in $pids; do kill -0 "$p" 2>/dev/null && alive="$alive $p"; done
+    [ -n "$alive" ] || return 0
+    sleep 1
+  done
+  kill -9 $alive 2>/dev/null || true
 }
 trap cleanup EXIT
 
