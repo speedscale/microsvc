@@ -1,0 +1,72 @@
+[
+  {
+    "_comment": "Account balance endpoint: a balance is a non-negative number, the account identity fields are present, and an account number is a numeric string.",
+    "match": {"method": "GET", "url": "/api/accounts/{id}/balance", "status": "200"},
+    "assert": [
+      {"field": "$.balance", "type": "number", "required": true, "min": 0},
+      {"field": "$.accountId", "type": "number", "required": true},
+      {"field": "$.accountNumber", "type": "string", "required": true, "pattern": "^[0-9]+$"}
+    ]
+  },
+  {
+    "_comment": "Single account: identity present, balance non-negative, account type from the known set.",
+    "match": {"method": "GET", "url": "/api/accounts/{id}", "status": "200"},
+    "assert": [
+      {"field": "$.id", "type": "number", "required": true},
+      {"field": "$.userId", "type": "number", "required": true},
+      {"field": "$.balance", "type": "number", "required": true, "min": 0},
+      {"field": "$.accountNumber", "type": "string", "required": true, "pattern": "^[0-9]+$"},
+      {"field": "$.accountType", "type": "string", "enum": ["CHECKING", "SAVINGS", "CREDIT"]}
+    ]
+  },
+  {
+    "_comment": "Account list: every element carries identity and a non-negative balance.",
+    "match": {"method": "GET", "url": "/api/accounts", "status": "200"},
+    "assert": [
+      {"field": "$[].id", "type": "number", "required": true},
+      {"field": "$[].userId", "type": "number", "required": true},
+      {"field": "$[].balance", "type": "number", "required": true, "min": 0},
+      {"field": "$[].accountType", "type": "string", "enum": ["CHECKING", "SAVINGS", "CREDIT"]}
+    ]
+  },
+  {
+    "_comment": "Account creation: a new account starts identified and with a non-negative balance.",
+    "match": {"method": "POST", "url": "/api/accounts", "status": "201"},
+    "assert": [
+      {"field": "$.id", "type": "number", "required": true},
+      {"field": "$.userId", "type": "number", "required": true},
+      {"field": "$.balance", "type": "number", "required": true, "min": 0}
+    ]
+  },
+  {
+    "_comment": "Transaction creation: amount is strictly positive, type and status are from the agreed sets, and the transaction is identified.",
+    "match": {"method": "POST", "url": "/api/transactions/create", "status": "201"},
+    "assert": [
+      {"field": "$.id", "type": "number", "required": true},
+      {"field": "$.amount", "type": "number", "required": true, "min": 0.01},
+      {"field": "$.type", "type": "string", "enum": ["DEPOSIT", "WITHDRAWAL", "TRANSFER"]},
+      {"field": "$.status", "type": "string", "enum": ["PENDING", "COMPLETED", "FAILED", "PROCESSING"]},
+      {"field": "$.toAccountId", "type": "number", "required": true}
+    ]
+  },
+  {
+    "_comment": "Login success: a usable bearer token is returned with the authenticated identity.",
+    "match": {"method": "POST", "url": "/api/users/login", "status": "200"},
+    "assert": [
+      {"field": "$.token", "type": "string", "required": true, "non_empty": true},
+      {"field": "$.type", "type": "string", "enum": ["Bearer"]},
+      {"field": "$.id", "type": "number", "required": true},
+      {"field": "$.username", "type": "string", "required": true, "non_empty": true}
+    ]
+  },
+  {
+    "_comment": "User profile: a successful envelope carries the user's identity and a well-formed email.",
+    "match": {"method": "GET", "url": "/api/users/profile", "status": "200"},
+    "assert": [
+      {"field": "$.success", "type": "bool", "enum": [true]},
+      {"field": "$.data.id", "type": "number", "required": true},
+      {"field": "$.data.email", "type": "string", "required": true, "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"},
+      {"field": "$.data.username", "type": "string", "required": true, "non_empty": true}
+    ]
+  }
+]

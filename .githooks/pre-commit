@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Repo pre-commit hook. Tracked in .githooks/ and enabled with:
+#   git config core.hooksPath .githooks      (or: make install-git-hooks)
+#
+# For each backend service that has a proxymock replay config
+# (scripts/proxymock/services/<service>.env), if the commit touches that service's tree, it
+# runs the externalized proxymock replay tests: the recorded golden traffic is driven at the
+# running service and the observed responses are checked for status and schema.
+#
+# Skip for a single commit with:  SKIP_PROXYMOCK_REPLAY=1 git commit ...
+
+set -euo pipefail
+
+if [ "${SKIP_PROXYMOCK_REPLAY:-}" = "1" ]; then
+  echo "pre-commit: SKIP_PROXYMOCK_REPLAY=1 set, skipping proxymock replay."
+  exit 0
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+SERVICES_DIR="${REPO_ROOT}/scripts/proxymock/services"
+[ -d "$SERVICES_DIR" ] || exit 0
+
+CHANGED="$(git diff --cached --name-only)"
+rc=0
+
+for cfg in "$SERVICES_DIR"/*.env; do
+  [ -e "$cfg" ] || continue
+  service="$(basename "$cfg" .env)"
+
+  # Read the service's source dir from its config without executing the whole file.
+  rel="$(grep -m1 '^SERVICE_DIR_REL=' "$cfg" | cut -d'"' -f2)"
+  [ -n "$rel" ] || rel="backend/${service}"
+
+  if ! printf '%s\n' "$CHANGED" | grep -qE "^${rel}/"; then
+    continue
+  fi
+
+  echo "pre-commit: ${service} changed; running proxymock replay integration tests..."
+  # The harness exits 0 and skips when proxymock is not installed/initialized, so this stays
+  # non-blocking for contributors without Speedscale while still gating when present.
+  # PROXYMOCK_SKIP_BUILD is cleared so the commit is always tested against a fresh build of
+  # its own sources, never a stale jar left in target/.
+  if ! env -u PROXYMOCK_SKIP_BUILD "${REPO_ROOT}/scripts/proxymock/replay-service.sh" "$service"; then
+    echo ""
+    echo "pre-commit: ${service} proxymock replay FAILED. Fix the service or update its"
+    echo "golden snapshot (${rel}/proxymock/), or bypass once with:"
+    echo "  SKIP_PROXYMOCK_REPLAY=1 git commit ..."
+    rc=1
+  else
+    echo "pre-commit: ${service} proxymock replay passed."
+  fi
+done
+
+exit "$rc"

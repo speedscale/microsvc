@@ -17,6 +17,11 @@ public class GatewayConfig {
     @Autowired
     AuthenticationFilter authFilter;
 
+    // Rate limiting is backed by Redis. It can be disabled (e.g. in tests or
+    // environments without Redis) so the gateway still routes without a Redis backend.
+    @Value("${gateway.rate-limiter.enabled:true}")
+    private boolean rateLimiterEnabled;
+
     @Value("${services.user-service.url}")
     private String userServiceUrl;
 
@@ -27,6 +32,8 @@ public class GatewayConfig {
     private String transactionsServiceUrl;
 
     @Bean
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+            name = "gateway.rate-limiter.enabled", havingValue = "true", matchIfMissing = true)
     public RedisRateLimiter redisRateLimiter() {
         return new RedisRateLimiter(10, 20, 1);
     }
@@ -61,14 +68,22 @@ public class GatewayConfig {
                         .filters(f -> f.filter(authFilter))
                         .uri(userServiceUrl))
                 .route("accounts-service", r -> r.path("/api/accounts/**")
-                        .filters(f -> f
-                                .filter(authFilter)
-                                .requestRateLimiter(c -> c.setRateLimiter(redisRateLimiter()).setKeyResolver(userKeyResolver())))
+                        .filters(f -> {
+                            f.filter(authFilter);
+                            if (rateLimiterEnabled) {
+                                f.requestRateLimiter(c -> c.setRateLimiter(redisRateLimiter()).setKeyResolver(userKeyResolver()));
+                            }
+                            return f;
+                        })
                         .uri(accountsServiceUrl))
                 .route("transactions-service", r -> r.path("/api/transactions/**")
-                        .filters(f -> f
-                                .filter(authFilter)
-                                .requestRateLimiter(c -> c.setRateLimiter(redisRateLimiter()).setKeyResolver(userKeyResolver())))
+                        .filters(f -> {
+                            f.filter(authFilter);
+                            if (rateLimiterEnabled) {
+                                f.requestRateLimiter(c -> c.setRateLimiter(redisRateLimiter()).setKeyResolver(userKeyResolver()));
+                            }
+                            return f;
+                        })
                         .uri(transactionsServiceUrl))
                 .build();
     }
