@@ -61,11 +61,20 @@ fi
 echo "Proxymock version:"
 proxymock version || echo "Failed to get proxymock version"
 
-# proxymock's Postgres mock binds 127.0.0.1:5432; fail fast if Docker/local Postgres uses it.
-if command -v nc >/dev/null 2>&1 && nc -z 127.0.0.1 5432 2>/dev/null; then
-  echo "error: port 127.0.0.1:5432 is in use. Stop local Postgres (e.g. docker compose stop)"
-  echo "       or run: make proxymock-validation-docker"
-  exit 1
+# proxymock's Postgres mock binds 127.0.0.1:5432 and the service listens on 127.0.0.1:8080.
+# Fail fast if either is taken (e.g. Docker/local Postgres, a leftover run) rather than killing
+# processes we did not start.
+if command -v nc >/dev/null 2>&1; then
+  if nc -z 127.0.0.1 5432 2>/dev/null; then
+    echo "error: port 127.0.0.1:5432 is in use. Stop local Postgres (e.g. docker compose stop)"
+    echo "       or run: make proxymock-validation-docker"
+    exit 1
+  fi
+  if nc -z 127.0.0.1 8080 2>/dev/null; then
+    echo "error: port 127.0.0.1:8080 is in use (leftover user-service/proxymock run or api-gateway?)."
+    echo "       Stop that process or run: make proxymock-validation-docker"
+    exit 1
+  fi
 fi
 
 # --- 2. build user-service -------------------------------------------------------------------
@@ -92,16 +101,15 @@ echo "Using proxymock recordings from: $PROXYMOCK_DIR"
 echo "Using .NET app: $DLL_FILE"
 
 # --- 3. run the service under proxymock mock -------------------------------------------------
-pkill -f user-service-dotnet 2>/dev/null || true
-pkill -f proxymock 2>/dev/null || true
-
+# Only stop processes this script started: the `proxymock mock` PID and its child (the app).
+# A broad `pkill -f proxymock` would match this script's own command line and kill it.
 PROXYMOCK_PID=""
 cleanup() {
   if [ -n "$PROXYMOCK_PID" ]; then
+    pkill -P "$PROXYMOCK_PID" 2>/dev/null || true
     kill "$PROXYMOCK_PID" 2>/dev/null || true
+    wait "$PROXYMOCK_PID" 2>/dev/null || true
   fi
-  pkill -f "user-service-dotnet" 2>/dev/null || true
-  pkill -f "proxymock mock" 2>/dev/null || true
   for logf in proxymock-startup.log app.log proxymock.log; do
     if [ -f "$logf" ]; then
       echo ""
