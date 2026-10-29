@@ -67,9 +67,6 @@ These tests work with the actual backend services to test the complete integrati
 # From project root
 make test-e2e
 
-# Or directly
-./scripts/validate-e2e.sh
-
 # Or from frontend directory
 cd frontend
 npm run test:e2e:ci

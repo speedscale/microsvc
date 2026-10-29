@@ -19,7 +19,7 @@ exec docker run --rm \
   -e HOME=/root \
   -v "${ROOT}:/work" \
   -w /work \
-  eclipse-temurin:17-jdk-jammy \
+  mcr.microsoft.com/dotnet/sdk:8.0 \
   bash -lc 'set -euo pipefail
     apt-get update -qq && apt-get install -y -qq curl ca-certificates >/dev/null
     curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh
