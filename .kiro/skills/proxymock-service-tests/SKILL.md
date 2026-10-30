@@ -11,6 +11,18 @@ reference implementation is **api-gateway**; this skill replicates it for anothe
 The shared tooling is already written and service-agnostic — most of the work is producing
 a good golden snapshot and a small per-service config.
 
+## Schema coverage against an accepted API specification
+
+When asked for schema coverage, use native `proxymock coverage` and `proxymock validate` against a reviewed, pinned OpenAPI specification. Follow the [schema coverage requirements](../../specs/service-schema-coverage/requirements.md) and [design](../../specs/service-schema-coverage/design.md). The existing gateway helper measures the operations present in its golden recording; label that result **golden-operation coverage**. It cannot establish coverage of API operations or fields absent from that recording.
+
+Obtain the service's accepted spec before measuring. For FastAPI services such as ai-service, an OpenAPI export from the selected baseline build is a starting point for review; pin its revision/hash and disclose missing response models or underspecified fields. Do not derive the accepted contract only from the observed traffic, regenerate it from each changed build, or silently replace it with an inferred schema. If no usable accepted spec exists, report specification-based coverage as unavailable and continue independent replay checks.
+
+Run the native commands on the selected inbound recording and on the observed inbound replay output. Keep the spec and denominator fixed. Save their outputs with the spec hash, source snapshot, application revision and CLI version. Report operation, documented response-status and response-property coverage separately, with the exact missing routes/statuses/field paths. Show unknown routes, undocumented statuses, unsupported bodies and zero matched pairs explicitly. A conformant response or a passing replay does not imply complete schema coverage.
+
+`proxymock coverage` reports gaps but does not fail just because coverage is incomplete. Inspect its JSON and apply only the agreed coverage acceptance policy in the existing test entry point. Command errors, malformed output and zero matched pairs cannot establish a passing coverage assessment. Keep any golden exclusions visible; do not remove unexercised spec entries to improve percentages. Candidate requests count as proposed coverage until executed and measured against the same spec.
+
+The current generic harness below builds Java JARs. Adapt the launch/build procedure to the selected service's actual runtime before claiming support for Python ai-service; these instructions alone do not establish a working native-coverage gate there.
+
 ## Architecture (how it already works for api-gateway)
 
 Two processes, one golden snapshot, **four gates** — all run by one harness and gated by a
@@ -66,9 +78,9 @@ backend/<service>/proxymock/
 
 ## The four gates in depth
 
-### Contract coverage (gate 2, `--require-coverage`)
+### Golden-operation coverage (gate 2, `--require-coverage`)
 
-The golden IS the contract. Schema validation alone only inspects responses the replay
+This helper uses the golden as its comparison contract, independently of the accepted-spec coverage above. Schema validation alone only inspects responses the replay
 happened to produce, so it can pass vacuously. Coverage closes that by reporting, explicitly:
 
 - **MISSING OPERATIONS** — a `(method, url-pattern, status)` the golden documents that the

@@ -92,3 +92,7 @@
 - [ ] Application deployed to production Kubernetes with security hardening
 - [ ] Production monitoring, performance optimization, and security audit complete
 - [ ] Advanced features and load testing validated
+
+## Accepted-spec integration-test coverage
+
+The project skill distinguishes native OpenAPI coverage from the gateway's golden-operation checks. See [.kiro/specs/service-schema-coverage/requirements.md](.kiro/specs/service-schema-coverage/requirements.md) and its design/tasks for the accepted contract, separate operation/status/property measurements, explicit gaps and service-specific execution acceptance. Documentation is complete; native measurement, runtime integration and gate acceptance for the selected service remain unverified.
