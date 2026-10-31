@@ -2,7 +2,7 @@
 """Prepare a checked-in golden snapshot for an offline, deterministic proxymock replay.
 
 Service-agnostic: run it against any backend/<service>/proxymock/recorded-golden tree
-(see the proxymock-service-tests skill). It normalizes cloud-captured traffic in place and
+(see backend/api-gateway/proxymock/README.md). It normalizes captured traffic in place and
 is idempotent (re-running is a no-op). It does four things:
 
 1. Strips the DLP artifact. The capture's DLP rule injects a synthetic {"$api_key":

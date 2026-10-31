@@ -41,7 +41,7 @@ test:
 # snapshot (proxymock/recorded-golden). Builds the gateway, runs it behind `proxymock mock`,
 # replays recorded inbound traffic, and asserts four gates: recorded response STATUS,
 # response SCHEMA + contract COVERAGE, business INVARIANTS (properties), and golden
-# snapshot CONSISTENCY. See the proxymock-service-tests skill.
+# snapshot CONSISTENCY. See proxymock/README.md.
 .PHONY: proxymock-replay
 proxymock-replay:
 	@echo "Running proxymock replay for $(SERVICE_NAME)..."
@@ -59,8 +59,7 @@ proxymock-lint-invariants:
 	python3 ../../scripts/proxymock/property_validate.py \
 	  --rules ../../scripts/proxymock/services/$(SERVICE_NAME).invariants.json --lint
 
-# Rebuild the golden snapshot from a freshly pulled Speedscale snapshot (see proxymock/README.md
-# and the proxymock-service-tests skill).
+# Rebuild the golden snapshot from a freshly pulled snapshot; see proxymock/README.md.
 .PHONY: proxymock-prepare-golden
 proxymock-prepare-golden:
 	python3 ../../scripts/proxymock/prepare_golden.py --golden proxymock/recorded-golden \

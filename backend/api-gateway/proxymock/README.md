@@ -1,9 +1,6 @@
 # api-gateway proxymock golden snapshot
 
-This directory holds **only recorded traffic** — the golden snapshot that the api-gateway's
-externalized integration tests replay. The tooling that drives and maintains it lives at the
-repo root under `scripts/proxymock/` (shared across services), and the method is documented
-in the `proxymock-service-tests` skill.
+This directory holds the recorded traffic that the api-gateway's integration tests replay. The tooling lives at the repo root under `scripts/proxymock/`. For generating tests for other services, install the [shared Speedscale skills](https://docs.speedscale.com/proxymock/agent-skills/); no repository-specific skill is required.
 
 ```
 recorded-golden/
@@ -64,8 +61,7 @@ mocks only they would need are pruned. The gaps are:
 
 ## Rebuilding the snapshot
 
-See the `proxymock-service-tests` skill for the full procedure. In short: pull a fresh
-snapshot, copy the inbound + downstream dirs into `recorded-golden/`, then normalize it:
+Pull a fresh snapshot with `proxymock cloud pull snapshot <snapshot-id>`, check it for credentials and personal data, and copy the inbound and downstream directories into `recorded-golden/`. Then normalize it:
 
 ```
 make proxymock-prepare-golden              # from backend/api-gateway/
