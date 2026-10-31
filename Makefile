@@ -119,7 +119,7 @@ proxymock-validation-docker:
 
 # Externalized proxymock replay integration tests for a backend service, driven by its
 # checked-in golden snapshot (backend/<service>/proxymock/recorded-golden). Add new
-# services via scripts/proxymock/services/<service>.env (see the proxymock-service-tests skill).
+# services via scripts/proxymock/services/<service>.env.
 .PHONY: proxymock-replay
 proxymock-replay:
 	./scripts/proxymock/replay-service.sh api-gateway

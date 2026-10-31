@@ -88,7 +88,7 @@ fi
 
 if [ ! -d "$GOLD/localhost" ]; then
   echo "error: golden snapshot not found at $GOLD" >&2
-  echo "Build it per the proxymock-service-tests skill (pull snapshot + prepare_golden.py)." >&2
+  echo "See backend/api-gateway/proxymock/README.md for the snapshot preparation procedure." >&2
   exit 1
 fi
 
