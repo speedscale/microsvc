@@ -1,0 +1,57 @@
+{
+  "id": "imp-5ce2dc383590",
+  "name": "Imported from 66a84b94 — group c76bfe76c5fb",
+  "description": "Auto-generated from snapshot 66a84b94-f270-4b02-8dab-0840a6a6a6ac by proxymock pull. Grouping: signature={\"filters\":[{\"include\":true,\"direction\":\"OUT\"},{\"include\":true,\"operator\":\"REGEX\",\"network_address\":\"^banking-(accounts|user|transactions)(:|\\\\.)\"}]}|http_req_header|jwt_claim,store_sig,.",
+  "createdAt": "2026-11-03T20:13:51.320912Z",
+  "snapshotId": "66a84b94-f270-4b02-8dab-0840a6a6a6ac",
+  "tokenizeConfig": {
+    "name": "standard",
+    "id": "banking-jwt-resign",
+    "responder": [
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "direction": "OUT"
+            },
+            {
+              "include": true,
+              "operator": "REGEX",
+              "network_address": "^banking-(accounts|user|transactions)(:|\\.)"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "sub"
+            }
+          },
+          {
+            "type": "store_sig",
+            "config": {
+              "key": "banking_user"
+            }
+          }
+        ],
+        "tags": {
+          "blueprintId": "imp-5ce2dc383590",
+          "method": "pushSnapshot",
+          "source": "speedctl"
+        },
+        "id": "8515f247-56fd-4932-8549-2f3455c55933"
+      }
+    ]
+  },
+  "active": true,
+  "source": "imported",
+  "cloudVersionFingerprint": "5ce2dc383590cfbcd893943f1750d17a97535ea84dd72c6dcaf817ffcee52a98"
+}

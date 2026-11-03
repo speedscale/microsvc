@@ -1,0 +1,46 @@
+{
+  "id": "imp-8bc88f512b67",
+  "name": "Imported from 66a84b94 — group b9b3a0497c65",
+  "description": "Auto-generated from snapshot 66a84b94-f270-4b02-8dab-0840a6a6a6ac by proxymock pull. Grouping: signature={\"filters\":[{\"include\":true,\"direction\":\"IN\"}]}|http_req_header|jwt_resign,.",
+  "createdAt": "2026-11-03T20:13:51.320912Z",
+  "snapshotId": "66a84b94-f270-4b02-8dab-0840a6a6a6ac",
+  "tokenizeConfig": {
+    "name": "standard",
+    "id": "banking-jwt-resign",
+    "generator": [
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "direction": "IN"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "jwt_resign",
+            "config": {
+              "secretPath": "${{secret:banking-jwt-secret/secret}}"
+            }
+          }
+        ],
+        "tags": {
+          "blueprintId": "imp-8bc88f512b67",
+          "method": "pushSnapshot",
+          "source": "speedctl"
+        },
+        "id": "0d141736-a1c2-4ed5-b915-860648c79de8"
+      }
+    ]
+  },
+  "active": true,
+  "source": "imported",
+  "cloudVersionFingerprint": "8bc88f512b678111ce427dd7189b1e45e0fac9c4e03d03c28b6f084930ff8464"
+}

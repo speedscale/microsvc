@@ -1,0 +1,113 @@
+{
+  "id": "readiness-demo-chaos",
+  "generator": {
+    "stages": [
+      {
+        "duration": "180s",
+        "virtualUsers": {
+          "virtualUsers": "2",
+          "requestDelay": {
+            "mode": "FLAT",
+            "requestDelayFlat": "0.2s"
+          }
+        }
+      }
+    ],
+    "evaluationIntervals": 5
+  },
+  "rules": [
+    {
+      "metricName": "passAssertPct",
+      "type": "TOO_LOW",
+      "value": 90,
+      "action": "ALERT"
+    },
+    {
+      "metricName": "p95",
+      "value": 2000,
+      "action": "ALERT"
+    }
+  ],
+  "assertionGroups": [
+    {
+      "configs": [
+        {
+          "type": "httpStatusCode"
+        },
+        {
+          "type": "httpResponseBody",
+          "config": {
+            "ignore": "durationMs"
+          }
+        }
+      ]
+    }
+  ],
+  "responder": {
+    "numReplicas": 1,
+    "responseDelay": {}
+  },
+  "cluster": {
+    "cleanup": "inventory",
+    "replayMode": "full-replay",
+    "sidecarTlsOut": true,
+    "logLevel": "info",
+    "logsCollected": true,
+    "generatorResources": {
+      "limits": {
+        "cpu": "1",
+        "memory": "2147483648"
+      },
+      "requests": {
+        "cpu": "100m",
+        "memory": "134217728"
+      }
+    },
+    "responderResources": {
+      "limits": {
+        "cpu": "500m",
+        "memory": "1073741824"
+      },
+      "requests": {
+        "cpu": "100m",
+        "memory": "134217728"
+      }
+    }
+  },
+  "readiness": {
+    "families": [
+      {
+        "family": "READINESS_FAMILY_RESILIENCE",
+        "role": "READINESS_ROLE_BLOCKS_BELOW",
+        "floor": "READINESS_LETTER_B"
+      },
+      {
+        "family": "READINESS_FAMILY_REGRESSION",
+        "role": "READINESS_ROLE_ADVISES"
+      }
+    ],
+    "resilience": {
+      "maxRetries": 3,
+      "maxLatencyAmplification": 2,
+      "recoveryWindow": "30s"
+    }
+  },
+  "chaos": {
+    "rules": [
+      {
+        "id": "dependency-flaky",
+        "name": "Dependency flaky (15%)",
+        "percent": 15,
+        "effects": [
+          {
+            "status": {
+              "codes": [
+                503
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

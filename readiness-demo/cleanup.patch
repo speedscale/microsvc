@@ -1,0 +1,14 @@
+diff --git a/backend/api-gateway/src/main/java/com/banking/apigateway/config/RouterValidator.java b/backend/api-gateway/src/main/java/com/banking/apigateway/config/RouterValidator.java
+index 144efbc..8fcb2a0 100644
+--- a/backend/api-gateway/src/main/java/com/banking/apigateway/config/RouterValidator.java
++++ b/backend/api-gateway/src/main/java/com/banking/apigateway/config/RouterValidator.java
+@@ -12,8 +12,7 @@ public class RouterValidator {
+     public static final List<String> openApiEndpoints = List.of(
+             "/api/users/register",
+             "/api/users/login",
+-            "/api/users/check-username",
+-            "/api/users/check-email"
++            "/api/users/check-username"
+     );
+ 
+     public Predicate<ServerHttpRequest> requiresAuthentication =

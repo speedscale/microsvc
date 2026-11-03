@@ -1,0 +1,36 @@
+diff --git a/backend/api-gateway/src/main/java/com/banking/apigateway/config/GatewayConfig.java b/backend/api-gateway/src/main/java/com/banking/apigateway/config/GatewayConfig.java
+--- a/backend/api-gateway/src/main/java/com/banking/apigateway/config/GatewayConfig.java
++++ b/backend/api-gateway/src/main/java/com/banking/apigateway/config/GatewayConfig.java
+@@ -9,6 +9,8 @@
+ import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
+ import org.springframework.context.annotation.Bean;
+ import org.springframework.context.annotation.Configuration;
++import org.springframework.http.HttpMethod;
++import org.springframework.http.HttpStatus;
+ import reactor.core.publisher.Mono;
+ 
+ @Configuration
+@@ -65,11 +67,14 @@
+                         .uri(transactionsServiceUrl))
+                 // Main API routes with authentication and rate limiting
+                 .route("user-service", r -> r.path("/api/users/**")
+-                        .filters(f -> f.filter(authFilter))
++                        .filters(f -> f
++                                .filter(authFilter)
++                                .retry(c -> c.setRetries(2).setMethods(HttpMethod.GET).setStatuses(HttpStatus.SERVICE_UNAVAILABLE)))
+                         .uri(userServiceUrl))
+                 .route("accounts-service", r -> r.path("/api/accounts/**")
+                         .filters(f -> {
+                             f.filter(authFilter);
++                            f.retry(c -> c.setRetries(2).setMethods(HttpMethod.GET).setStatuses(HttpStatus.SERVICE_UNAVAILABLE));
+                             if (rateLimiterEnabled) {
+                                 f.requestRateLimiter(c -> c.setRateLimiter(redisRateLimiter()).setKeyResolver(userKeyResolver()));
+                             }
+@@ -79,6 +84,7 @@
+                 .route("transactions-service", r -> r.path("/api/transactions/**")
+                         .filters(f -> {
+                             f.filter(authFilter);
++                            f.retry(c -> c.setRetries(2).setMethods(HttpMethod.GET).setStatuses(HttpStatus.SERVICE_UNAVAILABLE));
+                             if (rateLimiterEnabled) {
+                                 f.requestRateLimiter(c -> c.setRateLimiter(redisRateLimiter()).setKeyResolver(userKeyResolver()));
+                             }
