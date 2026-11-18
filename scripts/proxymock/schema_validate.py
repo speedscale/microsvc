@@ -87,7 +87,8 @@ def _response_body(txt, doc):
     m = re.search(r"### RESPONSE ###\n(.*?)\n### (?:SIGNATURE|METADATA) ###", txt, re.DOTALL)
     if not m:
         return None
-    fences = re.findall(r"```\n(.*?)\n```", m.group(1), re.DOTALL)
+    # The body fence may carry a language tag (```json), depending on the proxymock version.
+    fences = re.findall(r"```[a-z]*\n(.*?)\n```", m.group(1), re.DOTALL)
     if len(fences) < 2:
         return None
     body = fences[1].strip()
